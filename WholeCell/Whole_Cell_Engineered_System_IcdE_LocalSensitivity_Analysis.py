@@ -202,7 +202,7 @@ def main():
 
     # solution params
     fintime = 2.e8
-    tol = 1e-5
+    tol = 1e-12
     nsamples = 100
     timeorig = np.linspace(0,fintime,nsamples)
 
@@ -210,7 +210,7 @@ def main():
     event = lambda t,xs: np.absolute(dSensParams(t,xs)[nVars-1]) - tol
     event.terminal = True
 
-    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun,
+    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun, events=event,
                     t_eval=timeorig, atol=1.0e-6, rtol=1.0e-6)
 
     # plot state variables solution
