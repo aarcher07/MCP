@@ -50,28 +50,24 @@ def compute_jacs(x_sp,params_sens_dict,integration_params,**kwargs):
     and parameters from create_param_symbols
 
     :param x_sp: state variables
-    :param params_sens_dict: params to compute sensitivity wrt
+    :param params_sens_syms: params to compute sensitivity wrt
     :param diffeq_params: dictionary of all paramaters and their values
     :return SDerivSymbolicJacParamsLambFun: jacobian of spatial derivative wrt params
     :return SDerivSymbolicJacConcLambFun: jacobian of spatial derivative wrt concentration
     """
 
     # check if sensitivity to all params
-    if kwargs['diff_params'] is None:
-        param_list = list(params_sens_dict.values())
+    if kwargs['diffeq_params'] is None:
+        diffeq_params = params_sens_dict
         params_sensitivity_sp = list(params_sens_dict.values())
 
     else:
-        diffeq_params = kwargs['diff_params']
-
-        params_sensitivity = list(params_sens_dict.keys())
-
+        diffeq_params = kwargs['diffeq_params'].copy()
         params_sensitivity_sp = list(params_sens_dict.values())
-        param_list = [params_sens_dict[key] if key in params_sensitivity else value
-                      for key,value in diffeq_params.items()]
+        for key,value in params_sens_dict.items():
+            diffeq_params[key] = value
 
-
-    SDerivSymbolic = sp.Matrix(SDeriv(0,x_sp,param_list,integration_params))
+    SDerivSymbolic = sp.Matrix(SDeriv(0,x_sp,integration_params,**diffeq_params))
 
     # derivative of rhs wrt params
     SDerivSymbolicJacParams = SDerivSymbolic.jacobian(params_sensitivity_sp)
@@ -109,14 +105,12 @@ def dSens(t,xs,diffeq_params, integration_params,
     nSensitivityEqs = integration_params['nSensitivityEqs']
 
     # get rhs of x
-    dxs.extend(SDeriv(0, x, list(diffeq_params.values()), integration_params))
-
-    # get values of sensitivity params
-    param_sens_vals = [diffeq_params[key] for key in params_sens_dict.keys()]
-
+    dxs.extend(SDeriv(0, x, integration_params, **diffeq_params))
+    # get values of params
+    param_vals = [diffeq_params[key] for key in params_sens_dict.keys()]
     # compute rhs of sensitivity equations
-    SDerivSymbolicJacParamsMat = SDerivSymbolicJacParamsLambFun(t,x,param_sens_vals)
-    SDerivSymbolicJacConcMat = SDerivSymbolicJacConcLambFun(t,x,param_sens_vals)
+    SDerivSymbolicJacParamsMat = SDerivSymbolicJacParamsLambFun(t,x,param_vals)
+    SDerivSymbolicJacConcMat = SDerivSymbolicJacConcLambFun(t,x,param_vals)
     for i in range(nVars):
         for j in range(nParams):
             dxs.append(np.dot(SDerivSymbolicJacConcMat[i,:], s[range(j,nSensitivityEqs,nParams)])
@@ -156,17 +150,47 @@ def create_jac_sens(x_sp,sensitivity_sp,diffeq_params, integration_params,
 def main():
 
     #initialize differential equation variables
-    [diffeq_params, dimscalings] = initialize(VfDhaB=40.0, KmDhaBG=1.0, KiDhaBH=1., VfIcdE=30., KmIcdED=1.,
-                                           KmIcdEI=1., KiIcdEN=1., KiIcdEA=1.0, perm_mcp=1.0, perm_cell=1.0,
-                                           GInit=100, IInit=100, NInit=50, DInit=50)
-
-    # create dictionary of integration parameters
-    params_sens_dict = create_param_symbols('alpha0','alpha1','kc', 'km', 'GInit', 'IInit')
+    # get parameters
     ngrid = 25
     integration_params = initialize_integration_params(ngrid=ngrid)
-    nVars = 5 * (2 + (integration_params['ngrid'])) + 2
+    params = {'KmDhaTH': 0.77,
+              'KmDhaTN': 0.03,
+              'KiDhaTD': 0.23,
+              'KiDhaTP': 7.4,
+              'VfDhaT' : 86.2,
+              'VfDhaB' : 10.,
+              'KmDhaBG' : 0.01,
+              'KiDhaBH' : 5.,
+              'VfIcdE' : 1.,
+              'KmIcdED' : 1.,
+              'KmIcdEI' : 1.,
+              'KiIcdEN' : 1.,
+              'KiIcdEA' : 1.,
+              'km' : 0.1,
+              'kc': 1.,
+              'GInit':10,
+              'IInit':10,
+              'NInit':20,
+              'DInit':20}
+
+    # create dictionary of integration parameters
+    params_sens_dict = create_param_symbols('VfDhaT',
+                                            'VfDhaB',
+                                            'VfIcdE',
+                                            'km',
+                                            'kc',
+                                            'GInit',
+                                            'IInit')
+
+    # compute non-dimensional scaling
+    dimscalings = initialize_dim_scaling(**params)
+
+    # store info about state variables
+    n_compounds_cell = 5
+    nVars = n_compounds_cell * (2 + (integration_params['ngrid'])) + 2
     integration_params['nVars'] = nVars
 
+    # store info about parameters
     nParams = len(params_sens_dict)
     integration_params['nParams'] = nParams
     integration_params['Sensitivity Params'] = params_sens_dict
@@ -176,84 +200,131 @@ def main():
     # initial conditions -- state variable
     n_compounds_cell = 5
     y0 = np.zeros((integration_params['ngrid'] + 2) * n_compounds_cell + 2)
-    y0[-5] = diffeq_params['GInit']/ dimscalings['G0']  # y0[-5] gives the initial state of the external substrate.
-    y0[-1] = diffeq_params['IInit'] / dimscalings['I0']  # y0[-1] gives the initial state of the external substrate.
-    y0[0] = diffeq_params['NInit'] / dimscalings['N0']  # y0[5] gives the initial state of the external substrate.
-    y0[1] = diffeq_params['DInit'] / dimscalings['D0']  # y0[6] gives the initial state of the external substrate.
+    y0[-5] = params['GInit']/ dimscalings['G0']  # y0[-5] gives the initial state of the external substrate.
+    y0[-1] = params['IInit'] / dimscalings['I0']  # y0[-1] gives the initial state of the external substrate.
+    y0[0] = params['NInit'] / dimscalings['N0']  # y0[5] gives the initial state of the external substrate.
+    y0[1] = params['DInit'] / dimscalings['D0']  # y0[6] gives the initial state of the external substrate.
 
 
     # initial conditions -- sensitivity equation
     sens0 = np.zeros(nSensitivityEqs)
     for i,param in enumerate(params_sens_dict):
-        if param in ['GInit', 'IInit', 'NInit', 'PInit']:
-            sens0[i:nSensitivityEqs:nParams] = 1
+        if param in ['GInit', 'IInit', 'NInit', 'DInit']:
+            sens0[i:nSensitivityEqs:nParams] = 1/params[param]
     xs0 = np.concatenate([y0,sens0])
 
     # setup differential eq
     x_sp, sensitivity_sp = create_state_symbols(integration_params['nVars'], integration_params['nParams'])
-    SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun = compute_jacs(x_sp, params_sens_dict,integration_params, diff_params=diffeq_params)
-    dSensParams = lambda t,xs: dSens(t, xs, diffeq_params, integration_params, SDerivSymbolicJacParamsLambFun,
+    SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun = compute_jacs(x_sp, params_sens_dict,integration_params, diffeq_params=params)
+    dSensParams = lambda t,xs: dSens(t, xs, params, integration_params, SDerivSymbolicJacParamsLambFun,
                                      SDerivSymbolicJacConcLambFun)
 
     #create jacobian of dSensParams
-    dSensSymJacSparseMatLamFun = create_jac_sens(x_sp, sensitivity_sp, diffeq_params, integration_params,
+    dSensSymJacSparseMatLamFun = create_jac_sens(x_sp, sensitivity_sp, params, integration_params,
                                                  SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun)
 
-
     # solution params
-    fintime = 2.e8
-    tol = 1e-12
-    nsamples = 100
-    timeorig = np.linspace(0,fintime,nsamples)
+    fintime = 3.e5
+    tol = 1e-10
+    #nsamples = 100
+    #timeorig = np.linspace(0,fintime,nsamples)
 
     # terminal event
     event = lambda t,xs: np.absolute(dSensParams(t,xs)[nVars-1]) - tol
     event.terminal = True
 
-    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun, events=event,
-                    t_eval=timeorig, atol=1.0e-6, rtol=1.0e-6)
+    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun,
+                    atol=1.0e-3, rtol=1.0e-3)
 
     # plot state variables solution
     print(sol.message)
-    plt.plot(sol.t,sol.y[(nVars-5):nVars,:].T)
+    scalings = list(dimscalings.values())
+    # external solution
+    for i in range(5):
+        plt.plot(sol.t,sol.y[(nVars-i-1):(nVars-i),:].T*scalings[-i-1])
     plt.legend(['G','H','P','A','I'],loc='upper right')
+    plt.title('Plot of external concentrations')
+    plt.xlabel('time')
+    plt.ylabel('concentration')
     #plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/ScipyCode_MCPDynamics.png')
     plt.show()
 
-    plt.plot(sol.t,sol.y[:7,:].T)
+    for i in range(7):
+        plt.plot(sol.t,sol.y[i:(i+1),:].T*scalings[i])
     plt.legend(['N','D','G','H','P','A','I'],loc='upper right')
+    plt.title('Plot of internal concentrations')
+    plt.xlabel('time')
+    plt.ylabel('concentration')
     #filename = "VfDhaB_"+str(VfDhaB)+"_KmDhaBG_" + str(KmDhaBG) + "_KiDhaBH_" + str(KiDhaBH) + "_VfIcdE_"  + str(VfIcdE) + "_KmIcdEA_" + str(KmIcdEA) + "_KmIcdEN_" + str(KmIcdEN) + "_KiIcdED_" + str(KiIcdED) + "_KiIcdEI_" + str(KiIcdEI) + "_GInit_" + str(GInit) + "_NInit_" + "_GInit_" + str(GInit) + "_NInit_" + str(NInit) + "_DInit_" + str(DInit) + "_AInit_" + str(AInit)
     #plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/ScipyCode_MCPDynamics.png')
     plt.show()
 
     # plot sensitivity variable solutions for external variables
-    namesExt = ['G','H','P','A','I']
-    for i in range(0,len(namesExt)):
-        if i == 0:
-            plt.plot(sol.t,sol.y[-nParams:,:].T)
-        else:
-            plt.plot(sol.t, sol.y[-(i+1)*nParams:-(i*nParams), :].T)
-        plt.title(r'Sensitivity, $\partial ' + namesExt[i]+'/\partial p_i$, of the external concentration of '
-                  + namesExt[i] + ' wrt $p_i =  \alpha_0, \alpha_1, k_m, k_c, G_0, I_0$')
-        plt.xlabel('time')
-        plt.ylabel(r'$\partial ' + namesExt[i]+'/\partial p_i$')
-        plt.legend([r'$\alpha_0$',r'$\alpha_1$', r'$k_m$',r'$k_c$',r'$G_0$',r'$I_0$'],loc='upper right')
-        #plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesExt[i]
-        #            + '_ngrid' + str(ngrid) +'.png')
-        plt.show()
+    namesExt = ['I','A','P','H','G']
+    sens_vars_names = [r'$V_f^{DhaT}$', r'$V_f^{DhaB}$', r'$V_f^{IcdE}$', r'$k_m$', r'$k_c$', r'$G_0$', r'$I_0$']
 
-    # plot sensitivity variable solutions for MCP variables
-    namesMCP = ['N','D','G','H','P','A','I']
-    for i in range(0,len(namesMCP)):
-        plt.plot(sol.t,sol.y[(nVars + i*nParams):(nVars+(i+1)*nParams),:].T)
-        plt.title(r'Sensitivity, $\partial ' + namesMCP[i]+'/\partial p_i$, of the internal concentration of '
-                  + namesMCP[i] +' wrt $p_i = \alpha_0, \alpha_1, k_m, k_c, G_0, I_0$')
-        plt.xlabel('time')
-        plt.ylabel(r'$\partial ' + namesMCP[i]+'/\partial p_i$')
-        plt.legend([r'$\alpha_0$',r'$\alpha_1$', r'$k_m$',r'$k_c$',r'$G_0$',r'$I_0$'],loc='upper right')
-        #plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesMCP[i]
-        #            + '_ngrid' + str(ngrid) +'.png')
-        plt.show()
+    #
+    # for i in range(len(namesExt)):
+    #     figure, axes = plt.subplots(nrows=4, ncols=2,figsize=(20,20))
+    #     if i == 0:
+    #         yub = np.max(sol.y[-(nParams):,:])
+    #         lub = np.min(sol.y[-(nParams):,:])
+    #         for j in range(nParams):
+    #             axes[j//2,j % 2].plot(sol.t,sol.y[-(nParams-j),:].T)
+    #             axes[j//2,j % 2].set_xlabel('time')
+    #             axes[j // 2, j % 2].set_ylabel(r'$\partial ' + namesExt[i]+'/\partial ' + sens_vars_names[j][1:])
+    #             axes[j // 2, j % 2].set_title(sens_vars_names[j])
+    #             axes[j // 2, j % 2].set_ylim([lub,yub])
+    #     else:
+    #         yub = np.max(sol.y[-(i+1)*nParams:-i*nParams,:])
+    #         lub = np.min(sol.y[-(i+1)*nParams:-i*nParams,:])
+    #         for j in range(nParams):
+    #             axes[j//2,j % 2].plot(sol.t,sol.y[-((i+1)*nParams-j),:].T)
+    #             axes[j//2,j % 2].set_xlabel('time')
+    #             axes[j // 2, j % 2].set_ylabel(r'$\partial ' + namesExt[i]+'/\partial ' + sens_vars_names[j][1:])
+    #             axes[j // 2, j % 2].set_title(sens_vars_names[j])
+    #             axes[j // 2, j % 2].set_ylim([1.1*lub,1.1*yub])
+    #
+    #     figure.suptitle(r'Sensitivity, $\partial ' + namesExt[i]+'/\partial p_i$, of the external concentration of '
+    #                     + namesExt[i] + ' wrt $p_i$')
+    #     plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesExt[i] + '_ngrid' + str(ngrid) +'.png')
+    #     plt.show()
+    #
+    # # plot sensitivity variable solutions for MCP variables
+    # namesMCP = ['N','D','G','H','P','A','I']
+    # for i in range(0,len(namesMCP)):
+    #     figure, axes = plt.subplots(nrows=4, ncols=2, figsize=(20,20))
+    #     yub = np.max(sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :])
+    #     lub = np.min(sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :])
+    #     for j in range(nParams):
+    #         axes[j // 2, j % 2].plot(sol.t, sol.y[nVars + i*nParams+j, :].T)
+    #         axes[j // 2, j % 2].set_xlabel('time')
+    #         axes[j // 2, j % 2].set_ylabel(r'$\partial ' + namesMCP[i] + '/\partial ' + sens_vars_names[j][1:])
+    #         axes[j // 2, j % 2].set_title(r'$p_i = ' + sens_vars_names[j][1:])
+    #         axes[j // 2, j % 2].set_ylim([1.1*lub, 1.1*yub])
+    #
+    #     figure.suptitle(r'Sensitivity, $\partial ' + namesMCP[i]+'/\partial p_i$, of the MCP concentration of '
+    #                     + namesMCP[i] + ' wrt $p_i$')
+    #     plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesMCP[i] + '_ngrid' + str(ngrid) +'.png')
+    #     plt.show()
+
+
+    #check conservation of mass
+    scalings = list(dimscalings.values())
+
+    volcell = 4*np.pi*(integration_params['Rc']**3)/3
+    volmcp = 4 * np.pi * (integration_params['Rm'] ** 3) / 3
+    volratio = integration_params['Vratio']
+
+    ext_masses_org = np.multiply(y0[-5:],scalings[2:]) * (volcell/volratio)
+    cell_masses_org = np.multiply(y0[13:18],scalings[2:]) * (volcell - volmcp)
+    mcp_masses_org = np.multiply(y0[:7],scalings) * volmcp
+
+    ext_masses_fin = np.multiply(sol.y[(nVars-5):nVars, -1],scalings[2:]) * (volcell/volratio)
+    cell_masses_fin = np.multiply(sol.y[13:18,-1],scalings[2:]) * (volcell - volmcp)
+    mcp_masses_fin = np.multiply(sol.y[:7, -1],scalings) * volmcp
+    print(ext_masses_org.sum() + cell_masses_org.sum() + mcp_masses_org.sum())
+    print(ext_masses_fin.sum() + cell_masses_fin.sum() + mcp_masses_fin.sum())
 
 
 if __name__ == '__main__':

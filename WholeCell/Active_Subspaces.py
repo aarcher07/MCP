@@ -6,10 +6,10 @@ import warnings
 import sympy as sp
 import scipy.sparse as sparse
 from Whole_Cell_Engineered_System_IcdE import *
-from Whole_Cell_Engineered_System_IcdE_LocalSensitivityAnalysis import *
+from Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis import *
 
 
-def cost_fun_unif(jac,M,bounds,maxN=1000):
+def cost_fun_unif(jac,M,names,bounds,maxN=10):
     """
     Monte Carlo integration estimate of the cost function
     :param jac: jacobian of the function
@@ -20,32 +20,43 @@ def cost_fun_unif(jac,M,bounds,maxN=1000):
     """
     N = 0
     C = np.zeros((M,M))
+    bound_diff = bounds[:,1] - bounds[:,0]
     while 1:
+        # updates
+        x = bound_diff*np.random.uniform(0,1,size=M) + bounds[:,0]
+        dict_vals = {name:val for name,val in zip(names,x)}
+        j = jac(dict_vals)
+        outer_prod = np.prod(bound_diff)*np.outer(j,j)  # TODO: Check if needed to multiply by some probability function
+        C +=outer_prod
+        N +=1
+        # break statements
         if N > maxN:
-            warnings.warn("The cost matrix maybe not be full rank. The maximum N needs to be increased.")
+            warnings.warn("The cost matrix may not converged. The maximum N needs to be increased.")
             break
 
-        if M > np.linalg.matrix_rank((1/N)*C):
+        fro_outer = np.linalg.norm(outer_prod, ord='fro')
+        fro_C = np.linalg.norm(C, ord='fro')
+        print(fro_outer/fro_C)
+        if (N > 0) and (fro_outer / fro_C < 1.e-4):
             break
-        x = (bounds[:,1] - bounds[:,0])*np.random.uniform(0,1,size=M) + bounds[:,0]
-        j = jac(x)
-        C += np.dot(j,j.T)
 
     return (1/N)*C
 
-def jac(vars,integration_params, SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun, dSensSymJacSparseMatLamFun,
-        tol, fintime = 2.e8):
+def jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
+        SDerivSymbolicJacConcLambFun, dSensSymJacSparseMatLamFun,
+        tol, fintime = 3.e6):
 
     # get integration parameters
-    param_list = integration_params['param_list']
     params_sens_dict = integration_params['Sensitivity Params']
     nSensitivityEqs = integration_params['nSensitivityEqs']
     nParams = integration_params['nParams']
-    nVars = integration_params['nParams']
+    nVars = integration_params['nVars']
 
     # put differential equation parameters in the dictionary format
-    diffeq_params = {param: arg for param,arg in zip(param_list[:18],vars[:18])}
-    dimscalings = {param: arg for param, arg in zip(param_list[18:], vars[18:])}
+    diffeq_params = integration_params['diffeq_params'].copy()
+    for key, value in dict_vals.items():
+        diffeq_params[key] = value
+    dimscalings = integration_params['dimscalings']
 
 
     # initial conditions
@@ -57,23 +68,37 @@ def jac(vars,integration_params, SDerivSymbolicJacParamsLambFun, SDerivSymbolicJ
     y0[1] = diffeq_params['DInit'] / dimscalings['D0']  # y0[6] gives the initial state of the external substrate.
 
     sens0 = np.zeros(nSensitivityEqs)  #initial conditions -- sensitivity equation
-    for i,param in enumerate(param_list):
-        if param in ['GInit', 'IInit', 'NInit', 'PInit']:
-            sens0[i:nSensitivityEqs:nParams] = 1
+    for i,param in enumerate(params_sens_dict):
+        if param in ['GInit', 'IInit', 'NInit', 'DInit']:
+            sens0[i:nSensitivityEqs:nParams] = 1/diffeq_params[param]
     xs0 = np.concatenate([y0,sens0])
 
     # solve differential equation
+    dSensParams = lambda t,xs: dSens(t, xs, diffeq_params, integration_params,
+                                     SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun) #senstivity equation
 
-    dSensParams = lambda t,xs: dSens(t, xs, diffeq_params, integration_params, SDerivSymbolicJacParamsLambFun,
-                                     SDerivSymbolicJacConcLambFun) #senstivity equation
-    dSensSymJacSparseMatLamFunTXS = lambda t,xs: dSensSymJacSparseMatLamFun(xs,vars) #jacobian
+    dSensSymJacSparseMatLamFunTXS = lambda t,xs: dSensSymJacSparseMatLamFun(t,xs,list(dict_vals.values())) #jacobian
 
 
     event = lambda t,xs: np.absolute(dSensParams(t,xs)[nVars-1]) - tol #terminal event
     event.terminal = True
 
     sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFunTXS,
-                    atol=1.0e-6, rtol=1.0e-6)
+                    atol=1.0e-2, rtol=1.0e-2)
+
+    # scalings = list(dimscalings.values())
+    #
+    # for i in range(7):
+    #     plt.plot(sol.t,sol.y[i,:].T*scalings[i])
+    # plt.legend(['N','D','G','H','P','A','I'],loc='upper right')
+    # plt.show()
+
+
+    # for i in range(5):
+    #     plt.plot(sol.t,sol.y[(nVars-i-1):(nVars-i),:].T*scalings[-i-1])
+    # plt.legend(['G','H','P','A','I'],loc='upper right')
+    # plt.title('Plot of External concentrations')
+    # plt.show()
 
     return sol.y[nVars:,-1].T
 
@@ -92,63 +117,102 @@ def create_jac_sens_param(x_sp,sensitivity_sp,param_sp, integration_params,
 
     # create state variables
     allVars = np.concatenate((x_sp,sensitivity_sp))
+    diffeq_params = integration_params['diffeq_params'].copy()
+    for key, value in param_sp.items():
+        diffeq_params[key] = value
 
     #create RHS
-    dSensSym = sp.Matrix(dSens(0,allVars,param_sp, integration_params,
+    dSensSym = sp.Matrix(dSens(0,allVars,diffeq_params, integration_params,
           SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun))
     dSensSymJac = dSensSym.jacobian(allVars)
 
     # generate jacobian
-    dSensSymJacDenseMatLam = sp.lambdify((allVars,param_sp),dSensSymJac)
-    dSensSymJacSparseMatLamFun = lambda t,xs,param: sparse.csr_matrix(dSensSymJacDenseMatLam(*xs,*param))
+    dSensSymJacDenseMatLam = sp.lambdify((allVars,list(param_sp.values())),dSensSymJac)
+    dSensSymJacSparseMatLamFun = lambda t,xs,param: sparse.csr_matrix(dSensSymJacDenseMatLam(xs,param))
 
     return dSensSymJacSparseMatLamFun
 
 
 def main():
-    # create a dictionary of integration parameters
-    ngrid = 25
-    nParams = 22
+    # create dictionary of differential equation parameters symbols
 
+    params = {'KmDhaTH': 0.77,
+              'KmDhaTN': 0.03,
+              'KiDhaTD': 0.23,
+              'KiDhaTP': 7.4,
+              'VfDhaT' : 86.2,
+              'VfDhaB' : 10.,
+              'KmDhaBG' : 0.01,
+              'KiDhaBH' : 5.,
+              'VfIcdE' : 1.,
+              'KmIcdED' : 1.,
+              'KmIcdEI' : 1.,
+              'KiIcdEN' : 1.,
+              'KiIcdEA' : 1.,
+              'NInit':20,
+              'DInit':20}
+
+    # compute non-dimensional scaling
+    dimscalings = initialize_dim_scaling(**params)
+
+    param_sp = create_param_symbols('km','kc','GInit','IInit')
+
+
+
+
+
+    # create a dictionary of integration parameters
+    ngrid = 2
+    nParams = len(param_sp)
     integration_params = initialize_integration_params(ngrid=ngrid)
     nVars = 5 * (2 + (integration_params['ngrid'])) + 2
+
     integration_params['nVars'] = nVars
-
     integration_params['nParams'] = nParams
-
-
     nSensitivityEqs = integration_params['nParams'] * integration_params['nVars']
     integration_params['nSensitivityEqs'] = nSensitivityEqs
-
-
-    # create dictionary of differential equation parameters symbols
-    param_list = ['alpha' + str(i) for i in range(10)]
-    param_list.extend(['beta' + str(i) for i in range(4)])
-    param_list.extend(['gamma' + str(i) for i in range(4)])
-    param_list.extend(['kc', 'km', 'GInit', 'IInit', 'NInit', 'DInit'])
-    integration_params['param_list'] = param_list
-    params_sens_dict = create_param_symbols(param_list)
-    param_sp = list(params_sens_dict.values())
-    integration_params['params_sens_dict'] = params_sens_dict
     integration_params['n_compounds_cell'] = 5
+    integration_params['diffeq_params'] = params
+    integration_params['dimscalings'] = dimscalings
 
-    # compute jacobians SDev wrt params and state variables
+    # initialize parameter values
     x_sp, sensitivity_sp = create_state_symbols(nVars, nParams)
     integration_params['x_sp'] = x_sp
     integration_params['sensitivity_sp'] = sensitivity_sp
-    SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun = compute_jacs(x_sp, params_sens_dict,
-                                                                                integration_params)
+    integration_params['Sensitivity Params'] = param_sp
+
+    # compute set up senstivity equations
+    SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun = compute_jacs(x_sp, param_sp,
+                                                                                integration_params,
+                                                                                diffeq_params=params)
+
+
     dSensSymJacSparseMatLamFunTXSParam = create_jac_sens_param(x_sp, sensitivity_sp, param_sp, integration_params,
                                                                SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun)
 
     tol = 1e-5
-    jac_F = lambda vars: jac(vars,integration_params, SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun,
-                            dSensSymJacSparseMatLamFunTXSParam, tol)
-    k = 7 + 5*ngrid + 3 + - 1 # index of P_ext at steady state, -1 since python indexes at 0
-    # get jacobian of P ONLY  -- store in jacf
-    # compute cost_fun = cost_fun_unif(jacf, M, bounds, maxN=1000)
+    jac_F = lambda dict_vals: jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
+                             SDerivSymbolicJacConcLambFun, dSensSymJacSparseMatLamFunTXSParam, tol)
+
+    # compute jacobian of P
+    ind_P_ext = 3 # index of P_ext at steady state
+    jac_f = lambda vars: jac_F(vars)[-ind_P_ext*nParams:-(ind_P_ext-1)*nParams]
+
+    # set bounds
+
+    bounds = np.array([[0.01,10],[0.01,10],[1,10],[1,10]])
+    cost_mat = cost_fun_unif(jac_f,nParams,list(param_sp.keys()),bounds,maxN=200)
+    w,v = np.linalg.eig(cost_mat)
+    print('eigenvalues: ' )
+    print(w)
+
+    print('\n')
+    print('eigenvectors: ')
+    print(v)
 
 
 
+if __name__ == '__main__':
+    main()
 
 
