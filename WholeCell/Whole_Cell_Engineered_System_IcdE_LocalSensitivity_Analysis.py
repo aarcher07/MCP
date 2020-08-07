@@ -9,6 +9,8 @@ import math
 import sympy as sp
 import scipy.sparse as sparse
 import time
+import math
+
 from numpy.linalg import LinAlgError
 from Whole_Cell_Engineered_System_IcdE import *
 
@@ -67,7 +69,7 @@ def compute_jacs(x_sp,params_sens_dict,integration_params,**kwargs):
         for key,value in params_sens_dict.items():
             diffeq_params[key] = value
 
-    SDerivSymbolic = sp.Matrix(SDeriv(0,x_sp,integration_params,**diffeq_params))
+    SDerivSymbolic = sp.Matrix(SDeriv(0,x_sp,integration_params,diffeq_params))
 
     # derivative of rhs wrt params
     SDerivSymbolicJacParams = SDerivSymbolic.jacobian(params_sensitivity_sp)
@@ -105,7 +107,7 @@ def dSens(t,xs,diffeq_params, integration_params,
     nSensitivityEqs = integration_params['nSensitivityEqs']
 
     # get rhs of x
-    dxs.extend(SDeriv(0, x, integration_params, **diffeq_params))
+    dxs.extend(SDeriv(0, x, integration_params, diffeq_params))
     # get values of params
     param_vals = [diffeq_params[key] for key in params_sens_dict.keys()]
     # compute rhs of sensitivity equations
@@ -147,26 +149,26 @@ def create_jac_sens(x_sp,sensitivity_sp,diffeq_params, integration_params,
     return dSensSymJacSparseMatLamFun
 
 
-def main():
+def main(nsamples = 100):
 
     #initialize differential equation variables
     # get parameters
-    ngrid = 25
+    ngrid = 100
     integration_params = initialize_integration_params(ngrid=ngrid)
     params = {'KmDhaTH': 0.77,
               'KmDhaTN': 0.03,
               'KiDhaTD': 0.23,
               'KiDhaTP': 7.4,
               'VfDhaT' : 86.2,
-              'VfDhaB' : 10.,
+              'VfDhaB' : 100.,
               'KmDhaBG' : 0.01,
               'KiDhaBH' : 5.,
-              'VfIcdE' : 1.,
-              'KmIcdED' : 1.,
-              'KmIcdEI' : 1.,
-              'KiIcdEN' : 1.,
-              'KiIcdEA' : 1.,
-              'km' : 0.1,
+              'VfIcdE' : 30.,
+              'KmIcdED' : 0.1,
+              'KmIcdEI' : 0.02,
+              'KiIcdEN' : 3.,
+              'KiIcdEA' : 10.,
+              'km' : 10,
               'kc': 1.,
               'GInit':10,
               'IInit':10,
@@ -178,9 +180,7 @@ def main():
                                             'VfDhaB',
                                             'VfIcdE',
                                             'km',
-                                            'kc',
-                                            'GInit',
-                                            'IInit')
+                                            'kc')
 
     # compute non-dimensional scaling
     dimscalings = initialize_dim_scaling(**params)
@@ -224,107 +224,122 @@ def main():
                                                  SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun)
 
     # solution params
-    fintime = 3.e5
+    fintime = 1e8
+    mintime = 1
     tol = 1e-10
-    #nsamples = 100
-    #timeorig = np.linspace(0,fintime,nsamples)
+    timeorig = np.logspace(np.log10(mintime),np.log10(fintime),nsamples)
 
     # terminal event
     event = lambda t,xs: np.absolute(dSensParams(t,xs)[nVars-1]) - tol
     event.terminal = True
+    starttime = time.time()
+    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun, t_eval=timeorig,
+                    atol=1.0e-2, rtol=1.0e-2)
+    endtime = time.time()
 
-    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun,
-                    atol=1.0e-3, rtol=1.0e-3)
-
+    print('code time: ' + str(endtime-starttime))
     # plot state variables solution
     print(sol.message)
+
+    #create grid
+    M_cell = (integration_params['Rc'] / integration_params['Rm']) ** 3  # why?
+    M_mcp = 1.
+    Mgrid = np.linspace(M_mcp, M_cell, integration_params['ngrid']-1)
+    DeltaM = np.divide((M_cell - M_mcp), (integration_params['ngrid']-1))
+
+    # rescaling
     scalings = list(dimscalings.values())
-    # external solution
-    for i in range(5):
-        plt.plot(sol.t,sol.y[(nVars-i-1):(nVars-i),:].T*scalings[-i-1])
-    plt.legend(['G','H','P','A','I'],loc='upper right')
-    plt.title('Plot of external concentrations')
-    plt.xlabel('time')
-    plt.ylabel('concentration')
-    #plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/ScipyCode_MCPDynamics.png')
-    plt.show()
+    volcell = 4 * np.pi * (integration_params['Rc'] ** 3) / 3
+    volmcp = 4 * np.pi * (integration_params['Rm'] ** 3) / 3
+    volratio = integration_params['Vratio']
 
-    for i in range(7):
-        plt.plot(sol.t,sol.y[i:(i+1),:].T*scalings[i])
-    plt.legend(['N','D','G','H','P','A','I'],loc='upper right')
-    plt.title('Plot of internal concentrations')
-    plt.xlabel('time')
-    plt.ylabel('concentration')
-    #filename = "VfDhaB_"+str(VfDhaB)+"_KmDhaBG_" + str(KmDhaBG) + "_KiDhaBH_" + str(KiDhaBH) + "_VfIcdE_"  + str(VfIcdE) + "_KmIcdEA_" + str(KmIcdEA) + "_KmIcdEN_" + str(KmIcdEN) + "_KiIcdED_" + str(KiIcdED) + "_KiIcdEI_" + str(KiIcdEI) + "_GInit_" + str(GInit) + "_NInit_" + "_GInit_" + str(GInit) + "_NInit_" + str(NInit) + "_DInit_" + str(DInit) + "_AInit_" + str(AInit)
-    #plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/ScipyCode_MCPDynamics.png')
-    plt.show()
+    # rescale the solutions
+    numeachcompound = 2 + integration_params['ngrid']
+    ncompounds = 5
 
-    # plot sensitivity variable solutions for external variables
+
+    xvalslogtimeticks = list(range(int(np.log10(fintime))+1))
+    xtexlogtimeticks = [r'$10^{' + str(i) + '}$' for i in range(int(np.log10(fintime))+1)]
+    sol.y[:2, :] = (np.multiply(sol.y[:2, :].T, scalings[:2])).T
+    for i in range(numeachcompound):
+        j = range(2 + i * ncompounds, 2 + (i + 1) * ncompounds)
+        sol.y[j, :] = (np.multiply(sol.y[j, :].T, scalings[2:])).T
+
+    #plot sensitivity variable solutions for external variables
     namesExt = ['I','A','P','H','G']
-    sens_vars_names = [r'$V_f^{DhaT}$', r'$V_f^{DhaB}$', r'$V_f^{IcdE}$', r'$k_m$', r'$k_c$', r'$G_0$', r'$I_0$']
-
-    #
-    # for i in range(len(namesExt)):
-    #     figure, axes = plt.subplots(nrows=4, ncols=2,figsize=(20,20))
-    #     if i == 0:
-    #         yub = np.max(sol.y[-(nParams):,:])
-    #         lub = np.min(sol.y[-(nParams):,:])
-    #         for j in range(nParams):
-    #             axes[j//2,j % 2].plot(sol.t,sol.y[-(nParams-j),:].T)
-    #             axes[j//2,j % 2].set_xlabel('time')
-    #             axes[j // 2, j % 2].set_ylabel(r'$\partial ' + namesExt[i]+'/\partial ' + sens_vars_names[j][1:])
-    #             axes[j // 2, j % 2].set_title(sens_vars_names[j])
-    #             axes[j // 2, j % 2].set_ylim([lub,yub])
-    #     else:
-    #         yub = np.max(sol.y[-(i+1)*nParams:-i*nParams,:])
-    #         lub = np.min(sol.y[-(i+1)*nParams:-i*nParams,:])
-    #         for j in range(nParams):
-    #             axes[j//2,j % 2].plot(sol.t,sol.y[-((i+1)*nParams-j),:].T)
-    #             axes[j//2,j % 2].set_xlabel('time')
-    #             axes[j // 2, j % 2].set_ylabel(r'$\partial ' + namesExt[i]+'/\partial ' + sens_vars_names[j][1:])
-    #             axes[j // 2, j % 2].set_title(sens_vars_names[j])
-    #             axes[j // 2, j % 2].set_ylim([1.1*lub,1.1*yub])
-    #
-    #     figure.suptitle(r'Sensitivity, $\partial ' + namesExt[i]+'/\partial p_i$, of the external concentration of '
-    #                     + namesExt[i] + ' wrt $p_i$')
-    #     plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesExt[i] + '_ngrid' + str(ngrid) +'.png')
-    #     plt.show()
-    #
-    # # plot sensitivity variable solutions for MCP variables
-    # namesMCP = ['N','D','G','H','P','A','I']
-    # for i in range(0,len(namesMCP)):
-    #     figure, axes = plt.subplots(nrows=4, ncols=2, figsize=(20,20))
-    #     yub = np.max(sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :])
-    #     lub = np.min(sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :])
-    #     for j in range(nParams):
-    #         axes[j // 2, j % 2].plot(sol.t, sol.y[nVars + i*nParams+j, :].T)
-    #         axes[j // 2, j % 2].set_xlabel('time')
-    #         axes[j // 2, j % 2].set_ylabel(r'$\partial ' + namesMCP[i] + '/\partial ' + sens_vars_names[j][1:])
-    #         axes[j // 2, j % 2].set_title(r'$p_i = ' + sens_vars_names[j][1:])
-    #         axes[j // 2, j % 2].set_ylim([1.1*lub, 1.1*yub])
-    #
-    #     figure.suptitle(r'Sensitivity, $\partial ' + namesMCP[i]+'/\partial p_i$, of the MCP concentration of '
-    #                     + namesMCP[i] + ' wrt $p_i$')
-    #     plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesMCP[i] + '_ngrid' + str(ngrid) +'.png')
-    #     plt.show()
+    sens_vars_names = [r'$V_f^{DhaT}$', r'$V_f^{DhaB}$', r'$V_f^{IcdE}$', r'$k_m$', r'$k_c$']#, r'$G_0$', r'$I_0$']
 
 
-    #check conservation of mass
-    scalings = list(dimscalings.values())
+    for i in range(len(namesExt)):
+        figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,15))
+        if i == 0:
+            soly = sol.y[-(nParams):,:]*scalings[-1]
+            yub = np.max(soly) +1
+            lub = np.min(soly)  - 1
+            for j in range(nParams):
+                axes[j//2,j % 2].plot(np.log10(timeorig),soly[j,:].T)
+                axes[j//2,j % 2].set_xlabel('log(time)')
+                axes[j // 2, j % 2].set_ylabel(r'$\log\partial ' + namesExt[i]+'/\partial ' + sens_vars_names[j][1:])
+                axes[j // 2, j % 2].set_title(sens_vars_names[j])
+                axes[j // 2, j % 2].set_ylim([lub, yub])
+                axes[j // 2, j % 2].set_xticks(xvalslogtimeticks, xtexlogtimeticks)
+        else:
+            soly = sol.y[-(i+1)*nParams:-i*nParams, :]*scalings[-i - 1]
+            yub = np.max(soly) + 1
+            lub = np.min(soly) - 1
+            for j in range(nParams):
+                axes[j//2,j % 2].plot(np.log10(timeorig),soly[j,:].T)
+                axes[j//2,j % 2].set_xlabel('log(time)')
+                axes[j // 2, j % 2].set_ylabel(r'$\log\partial ' + namesExt[i]+'/\partial ' + sens_vars_names[j][1:])
+                axes[j // 2, j % 2].set_title(sens_vars_names[j])
+                axes[j // 2, j % 2].set_ylim([lub, yub])
+                axes[j // 2, j % 2].set_xticks(xvalslogtimeticks, xtexlogtimeticks)
 
+        figure.suptitle(r'Sensitivity, $\partial ' + namesExt[i]+'/\partial p_i$, of the external concentration of '
+                        + namesExt[i] + ' wrt $p_i$', y = 0.92)
+        plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesExt[i] + '_ngrid' + str(ngrid) +'.png',
+                    bbox_inches='tight')
+        plt.show()
+
+    # plot sensitivity variable solutions for MCP variables
+    namesMCP = ['N','D','G','H','P','A','I']
+    for i in range(0,len(namesMCP)):
+        figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,15))
+        soly = sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :]*scalings[i]
+        yub = np.max(soly)  + 1
+        lub = np.min(soly) - 1
+        for j in range(nParams):
+            axes[j // 2, j % 2].plot(np.log(timeorig), soly[j,:].T)
+            axes[j // 2, j % 2].set_xlabel('log(time)')
+            axes[j // 2, j % 2].set_ylabel(r'$\log\partial ' + namesMCP[i] + '/\partial ' + sens_vars_names[j][1:])
+            axes[j // 2, j % 2].set_title(r'$p_i = ' + sens_vars_names[j][1:])
+            axes[j // 2, j % 2].set_ylim([lub, yub])
+            axes[j // 2, j % 2].set_xticks(xvalslogtimeticks, xtexlogtimeticks)
+
+        figure.suptitle(r'Sensitivity, $\partial ' + namesMCP[i]+'/\partial p_i$, of the MCP concentration of '
+                        + namesMCP[i] + ' wrt $p_i$', y = 0.92)
+        plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesMCP[i] + '_ngrid' + str(ngrid) +'.png',
+                    bbox_inches='tight')
+        plt.show()
+
+
+    #check mass balance
     volcell = 4*np.pi*(integration_params['Rc']**3)/3
     volmcp = 4 * np.pi * (integration_params['Rm'] ** 3) / 3
     volratio = integration_params['Vratio']
 
-    ext_masses_org = np.multiply(y0[-5:],scalings[2:]) * (volcell/volratio)
-    cell_masses_org = np.multiply(y0[13:18],scalings[2:]) * (volcell - volmcp)
-    mcp_masses_org = np.multiply(y0[:7],scalings) * volmcp
+    scalings = list(dimscalings.values())
+    ext_masses_org = y0[-5:]* (volcell/volratio)
+    cell_masses_org = y0[12:17] * (volcell - volmcp)
+    mcp_masses_org = y0[:7] * volmcp
 
-    ext_masses_fin = np.multiply(sol.y[(nVars-5):nVars, -1],scalings[2:]) * (volcell/volratio)
-    cell_masses_fin = np.multiply(sol.y[13:18,-1],scalings[2:]) * (volcell - volmcp)
-    mcp_masses_fin = np.multiply(sol.y[:7, -1],scalings) * volmcp
+
+    ext_masses_fin = sol.y[-5:, -1] * (volcell/volratio)
+    cell_masses_fin = sol.y[12:17,-1] * (volcell - volmcp)
+    mcp_masses_fin = sol.y[:7, -1] * volmcp
     print(ext_masses_org.sum() + cell_masses_org.sum() + mcp_masses_org.sum())
     print(ext_masses_fin.sum() + cell_masses_fin.sum() + mcp_masses_fin.sum())
+    print((sol.y[-5:, -1]).sum()*(volcell/volratio+volmcp+volcell))
 
 
 if __name__ == '__main__':

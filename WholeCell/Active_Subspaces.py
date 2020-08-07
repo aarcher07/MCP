@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-
+import matplotlib as mpl
+mpl.rc('text', usetex = True)
 import matplotlib.pyplot as plt
 import warnings
 import sympy as sp
@@ -9,42 +10,104 @@ from Whole_Cell_Engineered_System_IcdE import *
 from Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis import *
 
 
-def cost_fun_unif(jac,M,names,bounds,maxN=10):
+def cost_fun_unif(jac,M,names,bounds,maxN=10,output_level=1,nsamples = 100,maxValError=100,tol=1e-5):
     """
     Monte Carlo integration estimate of the cost function
     :param jac: jacobian of the function
     :param M: number of parameters that the function depends on
     :param bounds: bounds on parameter space
     :param maxN: maximum number iterations for Monte Carlo integration
+    :param output_level: 1 - No output, 2 - end result, 3 - iteration output
     :return (1/N)*C: Monte Carlo estimate of the cost function
     """
     N = 0
-    C = np.zeros((M,M))
+    C = np.zeros((nsamples,M,M))
     bound_diff = bounds[:,1] - bounds[:,0]
+    countValError = 0
+    param_samples = []
+    output_header = '%12s %16s %30s' % (' iteration ',  ' max ||Delta C||_F ', ' max ||Delta C||_F/||C_{i}||_F ')
+    print(output_header)
+    status = -99
+    fro_ratio = np.Inf
     while 1:
         # updates
         x = bound_diff*np.random.uniform(0,1,size=M) + bounds[:,0]
         dict_vals = {name:val for name,val in zip(names,x)}
-        j = jac(dict_vals)
-        outer_prod = np.prod(bound_diff)*np.outer(j,j)  # TODO: Check if needed to multiply by some probability function
-        C +=outer_prod
-        N +=1
-        # break statements
-        if N > maxN:
-            warnings.warn("The cost matrix may not converged. The maximum N needs to be increased.")
+        j = jac(dict_vals, nsamples)
+        outer_prod = np.array([np.prod(bound_diff)*np.outer(j[i, :],j[i, :]) for i in range(j.shape[0])])
+
+        try:
+            C += outer_prod
+            N += 1
+
+            # break statements
+            fro_outer = np.array([np.linalg.norm(outer_prod[i, :, :], ord='fro') for i in range(nsamples)])
+            fro_C = np.array([np.linalg.norm(C[i, :, :], ord='fro') for i in range(nsamples)])
+            max_fro_outer = np.max(fro_outer)
+            fro_ratio = np.max(fro_outer / fro_C)
+            param_samples.append(dict_vals)
+
+            # print statement
+            if (N > 0) and (N % 5 == 0) and (output_level == 3):
+                output = '%10i %18.4e %22.4e' % (N, max_fro_outer, fro_ratio)
+                print(output)
+
+            if (N > 0) and (N % 100 == 0) and (output_level == 3):
+                print(output_header)
+
+        except ValueError:
+            countValError += 1
+
+
+        if (N > 0) and (fro_ratio < tol):
+            status = 0
             break
 
-        fro_outer = np.linalg.norm(outer_prod, ord='fro')
-        fro_C = np.linalg.norm(C, ord='fro')
-        print(fro_outer/fro_C)
-        if (N > 0) and (fro_outer / fro_C < 1.e-4):
+        if N >= maxN:
+            status = -1
             break
 
-    return (1/N)*C
 
+        if countValError >= maxValError:
+            status = -2
+            break
+
+
+
+    # Final output message
+    if output_level >= 1:
+        print('')
+        print('max ||Delta C||_F/||C_{i}||_F ......................: %20.4e' % fro_ratio)
+        print('total number of iterations .........................: %d' % N)
+        print('total number of solutions with ValuerError .........: %d' % countValError)
+        print('')
+        if status == 0:
+            print('Exit: Converged within tolerance.')
+        elif status == -1:
+            print('Exit: Maximum number of iterations, (%d), exceeded.' %
+                  maxN)
+        elif status == -2:
+            print('Exit: Maximum number of solutions with ValueError, (%d), exceeded. '
+                  'You may need to increase atol and rtol.' %
+                  maxValError)
+        else:
+            print('ERROR: Unknown status value: %d\n' % status)
+
+    return [param_samples,(1/N)*C]
 def jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
         SDerivSymbolicJacConcLambFun, dSensSymJacSparseMatLamFun,
-        tol, fintime = 3.e6):
+        integrationtol=1e-3, fintime = 3.e6, mintime = 1,nsamples = 100):
+    """
+
+    :param dict_vals:
+    :param integration_params:
+    :param SDerivSymbolicJacParamsLambFun:
+    :param SDerivSymbolicJacConcLambFun:
+    :param dSensSymJacSparseMatLamFun:
+    :param integrationtol:
+    :param fintime:
+    :return:
+    """
 
     # get integration parameters
     params_sens_dict = integration_params['Sensitivity Params']
@@ -73,18 +136,21 @@ def jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
             sens0[i:nSensitivityEqs:nParams] = 1/diffeq_params[param]
     xs0 = np.concatenate([y0,sens0])
 
-    # solve differential equation
+    # TODO: this can be computed outside to speed up code
     dSensParams = lambda t,xs: dSens(t, xs, diffeq_params, integration_params,
                                      SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun) #senstivity equation
 
     dSensSymJacSparseMatLamFunTXS = lambda t,xs: dSensSymJacSparseMatLamFun(t,xs,list(dict_vals.values())) #jacobian
 
 
-    event = lambda t,xs: np.absolute(dSensParams(t,xs)[nVars-1]) - tol #terminal event
-    event.terminal = True
+    #timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
+    timeorig1 = np.logspace(np.log10(mintime), np.log10(5e3), int(0.15*nsamples), endpoint=False)
+    timeorig2 = np.logspace(np.log10(5e3), np.log10(1e5), int(0.8*nsamples), endpoint=False)
+    timeorig3 = np.logspace(np.log10(1e5), np.log10(fintime), int(0.05*nsamples))
+    timeorig = np.concatenate([timeorig1,timeorig2,timeorig3])
+    sol = solve_ivp(dSensParams,[0, fintime+1], xs0, method="BDF", jac = dSensSymJacSparseMatLamFunTXS,t_eval=timeorig,
+                    atol=integrationtol, rtol=integrationtol)
 
-    sol = solve_ivp(dSensParams,[0, fintime], xs0, method="BDF", jac = dSensSymJacSparseMatLamFunTXS,
-                    atol=1.0e-2, rtol=1.0e-2)
 
     # scalings = list(dimscalings.values())
     #
@@ -100,7 +166,7 @@ def jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
     # plt.title('Plot of External concentrations')
     # plt.show()
 
-    return sol.y[nVars:,-1].T
+    return sol.y[nVars:,:].T
 
 def create_jac_sens_param(x_sp,sensitivity_sp,param_sp, integration_params,
                     SDerivSymbolicJacParamsLambFun,SDerivSymbolicJacConcLambFun):
@@ -141,28 +207,29 @@ def main():
               'KiDhaTD': 0.23,
               'KiDhaTP': 7.4,
               'VfDhaT' : 86.2,
-              'VfDhaB' : 10.,
+              'VfDhaB' : 100.,
               'KmDhaBG' : 0.01,
               'KiDhaBH' : 5.,
-              'VfIcdE' : 1.,
-              'KmIcdED' : 1.,
-              'KmIcdEI' : 1.,
-              'KiIcdEN' : 1.,
-              'KiIcdEA' : 1.,
+              'VfIcdE' : 30.,
+              'KmIcdED' : 0.1,
+              'KmIcdEI' : 0.02,
+              'KiIcdEN' : 3.,
+              'KiIcdEA' : 10.,
+              'GInit':10.,
+              'IInit': 10,
               'NInit':20,
               'DInit':20}
+
 
     # compute non-dimensional scaling
     dimscalings = initialize_dim_scaling(**params)
 
-    param_sp = create_param_symbols('km','kc','GInit','IInit')
-
-
-
+    #param_sp = create_param_symbols('VfDhaB','km','kc')
+    param_sp = create_param_symbols('km','kc')
 
 
     # create a dictionary of integration parameters
-    ngrid = 2
+    ngrid = 10
     nParams = len(param_sp)
     integration_params = initialize_integration_params(ngrid=ngrid)
     nVars = 5 * (2 + (integration_params['ngrid'])) + 2
@@ -190,25 +257,131 @@ def main():
     dSensSymJacSparseMatLamFunTXSParam = create_jac_sens_param(x_sp, sensitivity_sp, param_sp, integration_params,
                                                                SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun)
 
-    tol = 1e-5
-    jac_F = lambda dict_vals: jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
-                             SDerivSymbolicJacConcLambFun, dSensSymJacSparseMatLamFunTXSParam, tol)
+    mintime = 1
+    fintime = 1e7
+    integrationtol = 1e-3
+    tol  = 1e-5
+    nsamples = 500
+    maxN = int(1e4)
+    maxValError = int(2e2)
+    jac_F = lambda dict_vals,nsamples: jac(dict_vals,integration_params, SDerivSymbolicJacParamsLambFun,
+                                           SDerivSymbolicJacConcLambFun, dSensSymJacSparseMatLamFunTXSParam,
+                                           integrationtol=integrationtol,fintime=fintime,nsamples=nsamples,mintime=mintime)
 
     # compute jacobian of P
     ind_P_ext = 3 # index of P_ext at steady state
-    jac_f = lambda vars: jac_F(vars)[-ind_P_ext*nParams:-(ind_P_ext-1)*nParams]
+    jac_f = lambda vars, nsamples: jac_F(vars,nsamples)[:,-ind_P_ext*nParams:-(ind_P_ext-1)*nParams]
 
     # set bounds
+    #bounds = np.array([[1,40],[0.01,20],[0.01,20]])
+    bounds = np.array([[0.01,20],[0.01,20]])
+    param_samples, cost_mat = cost_fun_unif(jac_f,nParams,list(param_sp.keys()),bounds,
+                                            maxN=maxN,output_level=3,nsamples=nsamples,
+                                            maxValError=maxValError, tol=tol)
+    w,v = np.linalg.eigh(cost_mat)
 
-    bounds = np.array([[0.01,10],[0.01,10],[1,10],[1,10]])
-    cost_mat = cost_fun_unif(jac_f,nParams,list(param_sp.keys()),bounds,maxN=200)
-    w,v = np.linalg.eig(cost_mat)
-    print('eigenvalues: ' )
-    print(w)
 
-    print('\n')
-    print('eigenvectors: ')
-    print(v)
+    ########################### Solving with parameter set sample #######################
+
+    param_dict = params.copy()
+    param_subset = param_samples[0]
+
+    for key in param_sp.keys():
+        param_dict[key] = param_subset[key]
+
+    dimscalings = integration_params['dimscalings']
+
+
+    # initial conditions
+    y0 = np.zeros(nVars)     # initial conditions -- state variable
+    y0[-5] = param_dict['GInit'] / dimscalings['G0']  # y0[-5] gives the initial state of the external substrate.
+    y0[-1] = param_dict['IInit'] / dimscalings['I0']  # y0[-1] gives the initial state of the external substrate.
+    y0[0] = param_dict['NInit'] / dimscalings['N0']  # y0[5] gives the initial state of the external substrate.
+    y0[1] = param_dict['DInit'] / dimscalings['D0']  # y0[6] gives the initial state of the external substrate.
+
+    # TODO: this can be computed outside of loop to speed up code
+    SDerivParameterized = lambda t, x: SDeriv(t, x, integration_params, param_dict)
+    SDerivSymbolicJacConcLambFunParamterized = lambda t,x: SDerivSymbolicJacConcLambFun(t,x,param_subset.values())
+
+    #timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
+    timeorig1 = np.logspace(np.log10(mintime), np.log10(5e3), int(0.15*nsamples), endpoint=False)
+    timeorig2 = np.logspace(np.log10(5e3), np.log10(1e5), int(0.80*nsamples), endpoint=False)
+    timeorig3 = np.logspace(np.log10(1e5), np.log10(fintime), int(0.05*nsamples))
+    timeorig = np.concatenate([timeorig1,timeorig2,timeorig3])
+
+    sol = solve_ivp(SDerivParameterized,[0, fintime+1], y0, method="BDF", jac = SDerivSymbolicJacConcLambFunParamterized
+                    ,t_eval=timeorig, atol=1e-5, rtol=1e-5)
+
+    xvalslogtimeticks = list(range(int(np.log10(fintime))+1))
+
+    mineig = int(np.log10(np.min(w)) - 2)
+    maxeig = int(np.log10(np.max(w)) + 2)
+    yvalslogtimeticks = list(range(mineig,maxeig))
+
+    xtexlogtimeticks = [r'$10^{' + str(i) + '}$' for i in range(int(np.log10(fintime))+1)]
+    ytexlogtimeticks = [r'$10^{' + str(i) + '}$' for i in range(mineig,maxeig)]
+    print(sol.message)
+    print(sol.y.shape)
+
+
+    # TODO: overlay total mass in cell
+    # TODO: overlay total concentration in external and internal
+    # plot sample ODE
+    # plt.plot(np.log10(timeorig),np.log10(sol.y[-ind_P_ext,:].T),alpha=0.2)
+    # plot eigenvalues
+    plt.scatter(np.log10(timeorig), np.log10(w[:,0]))
+    plt.scatter(np.log10(timeorig), np.log10(w[:,1]))
+    plt.xticks(xvalslogtimeticks, xtexlogtimeticks)
+    plt.yticks(yvalslogtimeticks, ytexlogtimeticks)
+    plt.xlabel('time')
+    plt.ylabel('eigenvalue')
+    plt.legend([r'$\lambda_1$',r'$\lambda_2$'])
+    plt.show()
+
+
+    logtimeorig = np.log10(timeorig)
+    timeseries_eigfirst = v[:, :, 0]
+    # plt.imshow(timeseries_eigfirst.T, extent= [min(logtimeorig), max(logtimeorig), 0, nParams], origin='lower',
+    #           vmin=np.min(timeseries_eigfirst), vmax=np.max(timeseries_eigfirst), cmap='jet')
+    # plt.title('First Eigenvector')
+    # plt.colorbar()
+    # plt.xticks(xvalslogtimeticks, xtexlogtimeticks)
+    # plt.xlabel('time')
+    # plt.ylabel(r'$v_{\cdot,1}$')
+    # plt.show()
+    #
+    timeseries_eigsecond = v[:, :, 1]
+    # plt.imshow(timeseries_eigsecond.T, extent= [min(logtimeorig), max(logtimeorig), 0, nParams],
+    #            origin='lower', vmin=np.min(timeseries_eigsecond), vmax=np.max(timeseries_eigsecond), cmap='jet')
+    # plt.title('Second Eigenvector')
+    # plt.colorbar()
+    # plt.xticks(xvalslogtimeticks, xtexlogtimeticks)
+    # plt.xlabel('time')
+    # plt.ylabel(r'$v_{\cdot,2}$')
+    # plt.show()
+
+
+    plt.scatter(logtimeorig,timeseries_eigfirst[:,0])
+    plt.scatter(logtimeorig,timeseries_eigfirst[:,1])
+    plt.title('Scatter plot of first eigenvector')
+    plt.xticks(xvalslogtimeticks, xtexlogtimeticks)
+ #   plt.legend([r'$v_{1}$',r'$v_{2}$'])
+    plt.legend(['MCP Permeability','Cell Permeability'])
+
+    plt.ylabel(r'$v_{\cdot,\cdot}$')
+    plt.xlabel('time')
+    plt.show()
+
+    plt.scatter(logtimeorig,timeseries_eigsecond[:,0])
+    plt.scatter(logtimeorig,timeseries_eigsecond[:,1])
+#    plt.legend([r'$v_{1}$',r'$v_{2}$'])
+    plt.legend(['MCP Permeability','Cell Permeability'])
+    plt.title('Scatter plot of second eigenvector')
+    plt.xticks(xvalslogtimeticks, xtexlogtimeticks)
+    plt.xlabel('time')
+    plt.ylabel(r'$v_{\cdot,\cdot}$')
+    plt.show()
+
 
 
 
