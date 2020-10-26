@@ -1,3 +1,13 @@
+'''
+Parallelization of the DhaB-DhaT-IcdE Model.
+The DhaB-DhaT-IcdE model contains DhaB-DhaT-IcdE reaction
+in the MCP; diffusion in the cell; diffusion from the cell 
+in the external volume.
+
+Programme written by aarcher07
+Editing History:
+- 26/10/20
+'''
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp
@@ -262,6 +272,14 @@ def SDerivParallelized(*args):
 
 
 def plot_specific_parameter_set_parallel(params=None,ngrid=25,fintime=10**6):
+	'''
+	Plots the dynamics of the model with an internal grid points, ngrid, with in
+	the cell. The dynamics produced using params. The model solved until time = fintime. 
+
+    :param params: differential equation parameters
+    :param ngrid: grid size
+	:param fintime: final integration time
+	'''
     # get parameters
     notstop = 1
     integration_params = initialize_integration_params(ngrid=ngrid)
