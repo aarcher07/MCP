@@ -199,7 +199,6 @@ if __name__ == '__main__':
     time_1 = time.time()
     sol = solve_ivp(SDerivParameterized,[0, fintime+1], y0, method="BDF",jac=SDerivGradFunSparse, t_eval=timeorig,
                     atol=tol,rtol=tol, events=[event_Gmin,event_Pmax])
-
     time_2 = time.time()
     print('time: ' + str(time_2 - time_1))
 
@@ -225,6 +224,7 @@ if __name__ == '__main__':
     plt.xlabel('time (hr)')
     plt.ylabel('concentration (mM)')
     plt.show()
+
 
     # external solution
     for i in range(0,3):

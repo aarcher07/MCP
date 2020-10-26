@@ -1,7 +1,9 @@
-This directory contains the notebook required to run the code I created to analyze the path manifold for the PdU system
+This code contains models of PdU engineered system.
 
-The actual "data" files which contain the time series for 51x51 parameter sets is too  large to attach here. I am including the link to my box folder that contains the data files
+DhaB_DhaT_model contains an updated model with the DhaB and DhaT reaction in the MCP. This model is currently in use.
 
-https://northwestern.box.com/s/rp8ggeo0j9h9a76fmsvrtfox7na4ufls
+Do not use code or plots in the folders with Deprecated_* or Trash_*.
 
-These files should be placed in a directory called "WildType" which is below the main directory in which the jupyter notebook is run.
+Deprecated_DhaB_DhaT_IcdE contains an old model with the DhaB, DhaT and IcdE reaction in the MCP. This model is no longer in use.
+
+
