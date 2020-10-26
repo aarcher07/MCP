@@ -7,7 +7,7 @@ from mpi4py import MPI
 import time
 import matplotlib.pyplot as plt
 
-def initialize_integration_params(Vratio = 0.46 * 10**(-12), Rc = 1.e-6, Rm = 3.95e-7,Diff = 1.e-4, Ncells =9*10**9,
+def initialize_integration_params(Vratio = 0.46 * 10**(-12), Rc =  0.68e-6, Rm = 3.95e-7,Diff = 1.e-8, Ncells =9*10**9,
                                   ngrid = 25):
     """
 
@@ -15,7 +15,7 @@ def initialize_integration_params(Vratio = 0.46 * 10**(-12), Rc = 1.e-6, Rm = 3.
 
     :param Vratio: Ratio of cell volume to external volume
     :param Rm: Radius of compartment (cm)
-    :param Diff: Diffusion coefficient
+    :param Diff: Diffusion coefficient m^2s-1
     :param Rc: Effective Radius of cell (cm)
     :param N: number of cells
     :param ngrid: number of spatial grid points

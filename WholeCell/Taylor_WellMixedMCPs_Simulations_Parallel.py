@@ -2,6 +2,7 @@ import pandas as pd
 from Whole_Cell_Engineered_System_WellMixed_MCPs_DhaB_DhaT_Taylor import *
 from mpi4py import MPI
 import numpy as np
+from sklearn.metrics import auc
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -22,16 +23,18 @@ if rank == 0:
         'kcatfDhaT': 59.4, # (/s)
         'kcatfDhaB': None, # Input (/s)
         'KmDhaBG': None, # Input (mM)
-        'km': 10**-4, 
-        'kc': 10.**-4,
+        'km': 10**-7, #metres per second
+        'kc': 10.**-5, #metres per second
         'SigmaDhaB': None, # Input (mM)
         'SigmaDhaT': None, # Input (mM)
-        'GInit': 200, #  2 * 10^(-4) mol/cm3 = 200 mM. 
-        'NInit': 0.5, # mM
-        'DInit': 0.5} # mM
-  tolG = 0.01*params['GInit']
-  filenum = 1
-  cellular_geometry = "sphere"
+        'GInit': 200, #  2 * 10^(-4) mol/cm3 = 200 mM 
+        'NInit': 1, # mM
+        'DInit': 1} # mM
+
+  filenum = 0
+  cellular_geometry = "rod"
+  additional_name = "_constant_NADH_1mM_"
+  #additional_name = "_"
   if cellular_geometry == "rod":
     Rc = 0.375e-6
     Lc = 2.47e-6
@@ -50,7 +53,6 @@ if rank == 0:
   integration_params = initialize_integration_params(external_volume = external_volume, Rc = Rc, Lc = Lc,
                                                        Ncells =Ncells, cellular_geometry=cellular_geometry)
   integration_params['volmcp'] = 4*np.pi*(integration_params['Rm']**3)/3 # In metres^3
-  integration_params['tolG'] = tolG
   integration_params['fintime'] = fintime
   integration_params['mintime'] = mintime  
 else:
@@ -65,8 +67,9 @@ num_samples = len(params_ET_DhaB_df_div.index)
 
 # stop condition
 def event_Gmin(t,y):
-    return y[-3] - integration_params['tolG']
-
+    return y[-3] - 0.01*params['GInit']
+def event_Pmax(t,y):
+    return y[-1] - 0.99*params['GInit']
 
 for i in params_ET_DhaB_df_div.index:
   #################################################
@@ -117,31 +120,35 @@ for i in params_ET_DhaB_df_div.index:
 
   try:
     sol = solve_ivp(SDerivParameterized,[0, fintime+1], y0, method="BDF",jac=SDerivGradFunSparse, t_eval=timeorig,
-                    atol=tol,rtol=tol, events=event_Gmin)
+                    atol=tol,rtol=tol, events=[event_Gmin,event_Pmax])
     #################################################
     ## Store Results
     #################################################
 
-    #create grid
-    volmcp = integration_params['volmcp']
-    volcell = 4 * np.pi * (integration_params['Rc'] ** 3) / 3
     if sol.t_events[0].size != 0:
       params_ET_DhaB_df_div.loc[i,'Time to consume 99% of Glycerol (hrs)'] = sol.t_events[0][0]/secstohrs 
-      params_ET_DhaB_df_div.loc[i,'Average Cytosolic Concentration of 3-HPO (mM)'] = sol.y[6, -1]
-      params_ET_DhaB_df_div.loc[i,'External Concentration of 1,3-PDO (mM)'] = sol.y[-1,-1]
     else:
-      params_ET_DhaB_df_div.loc[i,'Time to consume  99% o Glycerol (hrs)'] = np.nan
-      params_ET_DhaB_df_div.loc[i,'Average Cytosolic Concentration of 3-HPO (mM)'] = np.nan
-      params_ET_DhaB_df_div.loc[i,'External Concentration of 1,3-PDO (mM)'] = np.nan
+      params_ET_DhaB_df_div.loc[i,'Time to consume  99% of Glycerol (hrs)'] = np.nan
+
+    if sol.t_events[1].size != 0:
+      params_ET_DhaB_df_div.loc[i,'Time to produce 99% of 1,3-PDO (hrs)'] = sol.t_events[1][0]/secstohrs 
+    else:
+      params_ET_DhaB_df_div.loc[i,'Time to produce 99% of 1,3-PDO (hrs)'] = np.nan
+
+    params_ET_DhaB_df_div.loc[i,'Exposure to 3-HPA (mM hrs)'] = auc(timeorig/secstohrs,sol.y[6, :])
+    params_ET_DhaB_df_div.loc[i,'Maximum concentration of 3-HPA (mM)'] = np.max(sol.y[6, :])
+    params_ET_DhaB_df_div.loc[i,'External Concentration of 1,3-PDO at steady state (mM)'] = sol.y[-1,-1]
 
   except RuntimeError:
-    params_ET_DhaB_df_div.loc[i,'Time to consume Glycerol (s)'] = np.nan
-    params_ET_DhaB_df_div.loc[i,'Average Cytosolic Concentration of 3-HPO (mM)'] = np.nan
-    params_ET_DhaB_df_div.loc[i,'External Concentration of 1,3-PDO (mM)'] = np.nan
+    params_ET_DhaB_df_div.loc[i,'Time to consume  99% of Glycerol (hrs)'] = np.nan
+    params_ET_DhaB_df_div.loc[i,'Time to consume  99% of 1,3-PDO (hrs)'] = np.nan
+    params_ET_DhaB_df_div.loc[i,'Exposure to 3-HPA (mM hrs)'] = np.nan
+    params_ET_DhaB_df_div.loc[i,'External Concentration of 1,3-PDO at steady state  (mM)'] = np.nan
+    params_ET_DhaB_df_div.loc[i,'Maximum concentration of 3-HPA (mM)'] = np.nan
 
 
 params_ET_DhaB_df = comm.gather(params_ET_DhaB_df_div, root=0)
 if rank == 0:
   params_ET_DhaB_df = pd.concat(params_ET_DhaB_df)
-  params_ET_DhaB_df.to_excel(cellular_geometry + "_" + filename[filenum])
+  params_ET_DhaB_df.to_excel(cellular_geometry +additional_name + filename[filenum])
 

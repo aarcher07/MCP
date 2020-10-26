@@ -1,14 +1,17 @@
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.optimize import fsolve
+import scipy.constants as constants
 import sympy as sp
 import scipy.sparse as sparse
 import pdb
 from mpi4py import MPI
 import time
 import matplotlib.pyplot as plt
+from sklearn.metrics import auc
 
 def initialize_integration_params(external_volume = 9e-6, Rc = 0.68e-6, Lc = None, Rm = 7.e-8, 
-                                  Ncells =9*10**9, Nmcps=10, cellular_geometry = "sphere"):
+                                  Ncells =9*10**9, cellular_geometry = "sphere"):
     """
 
     Initializes parameters to be used numerial scheme
@@ -30,8 +33,9 @@ def initialize_integration_params(external_volume = 9e-6, Rc = 0.68e-6, Lc = Non
     integration_params['Rc'] = Rc
     integration_params['Lc'] = Lc
     integration_params['Rm'] = Rm
+    integration_params['MCP surface area'] =  4*np.pi*(integration_params['Rm']**2)
+
     integration_params['Ncells'] = Ncells
-    integration_params['Nmcps'] = Nmcps
     integration_params['cellular_geometry'] = cellular_geometry
     integration_params['nVars'] = 3*3 + 2
 
@@ -47,7 +51,6 @@ def initialize_integration_params(external_volume = 9e-6, Rc = 0.68e-6, Lc = Non
         integration_params['Vratio'] = integration_params['cell surface area']/external_volume 
 
     return integration_params
-
 
 def SDeriv(*args):
     """
@@ -67,13 +70,24 @@ def SDeriv(*args):
     integration_params = args[2]
     param_vals =  args[3]
 
+    # compute concentration of enzymes if concentrations not available
+    if not ('SigmaDhaB' in param_vals.keys()) or not ('SigmaDhaT' in param_vals.keys()):
+        if 'enz_ratio' in param_vals.keys():
+            enz_ratio = param_vals['enz_ratio']
+            if not 'dPacking' in param_vals.keys():
+                param_vals['dPacking'] = 0.64
+            dPacking = param_vals['dPacking']
+            param_vals['SigmaDhaB'],  param_vals['SigmaDhaT'] = ComputeEnzymeConcentrations(enz_ratio, dPacking)
+            #TODO: error
+ 
+
     # Integration Parameters
     n_compounds_cell = 3
     # differential equation parameters
     param_vals = param_vals.copy()
     param_vals['Rm'] = integration_params['Rm']
     Ncells = integration_params['Ncells'] 
-    Nmcps = integration_params['Nmcps'] 
+    Nmcps = param_vals['Nmcps'] 
     assert len(x) == n_compounds_cell* 3 + 2
     d = np.zeros((len(x))).tolist()  # convert to list to allow use of symbolic derivatives
 
@@ -84,8 +98,8 @@ def SDeriv(*args):
     R_DhaB = param_vals['SigmaDhaB']*param_vals['kcatfDhaB']*x[2]/ (param_vals['KmDhaBG'] + x[2])
     R_DhaT = param_vals['SigmaDhaT']*param_vals['kcatfDhaT']*x[3] * x[0]  / (param_vals['KmDhaTH']*param_vals['KmDhaTN'] + x[3] * x[0])
 
-    d[0] = - R_DhaT  # microcompartment equation for N
-    d[1] =  R_DhaT  # microcompartment equation for D
+    d[0] = 0  # microcompartment equation for N
+    d[1] =  0  # microcompartment equation for D
     d[2] = -R_DhaB + (3*param_vals['km']/integration_params['Rm'])*(x[2 + n_compounds_cell] - x[2])  # microcompartment equation for G
     d[3] =  R_DhaB -  R_DhaT + (3*param_vals['km']/integration_params['Rm'])*(x[3 + n_compounds_cell] - x[3])  # microcompartment equation for H
     d[4] = R_DhaT + (3*param_vals['km']/integration_params['Rm'])*(x[4 + n_compounds_cell] - x[4])  # microcompartment equation for P
@@ -98,7 +112,7 @@ def SDeriv(*args):
 
     for i in range(index, index + n_compounds_cell):
         # cell equations for ith compound in the cell
-        d[i] = -param_vals['kc']*(integration_params['cell surface area']/integration_params['cell volume']) * (x[i] - x[i + n_compounds_cell]) - Nmcps*(3*param_vals['km']/integration_params['Rm'])*(x[i] - x[i- n_compounds_cell]) 
+        d[i] = -param_vals['kc']*(integration_params['cell surface area']/integration_params['cell volume']) * (x[i] - x[i + n_compounds_cell]) - Nmcps*param_vals['km']*(integration_params['MCP surface area']/integration_params['cell volume'])*(x[i] - x[i- n_compounds_cell]) 
 
     #####################################################################################
     ######################### external volume equations #################################
@@ -108,37 +122,51 @@ def SDeriv(*args):
     return d
 
 
-
+def ComputeEnzymeConcentrations(ratio, dPacking):
+    '''
+    Computes the enzyme concentrations from the relative enzyme expressions and
+    the packing efficiency
+    '''
+    rDhaB = 8/2.
+    rDhaT = 5/2.
+    AvogadroConstant = constants.Avogadro
+    rMCP =140/2.
+    Vol = lambda r: 4*np.pi*(r**3)/3;  
+    SigmaDhaTExpression = lambda NDhaT: (NDhaT*Vol(rDhaT) + ratio*NDhaT*Vol(rDhaB))/Vol(rMCP) - dPacking
+    SigmaDhaT = fsolve(SigmaDhaTExpression,1)[0]/(AvogadroConstant*Vol(rMCP*(1e-9)))
+    SigmaDhaB = ratio*SigmaDhaT
+    return [SigmaDhaB, SigmaDhaT]
 
 if __name__ == '__main__':
     external_volume =  9e-6
-    NcellsPerMCubed = 8e14
+    NcellsPerMCubed = 8e14 # 7e13-8e14 cells per m^3
     Ncells = external_volume*NcellsPerMCubed   
-    print(Ncells)
     mintime = 10**(-15)
-    secstohrs = 40*60
-    fintime = 40*60*60
+    secstohrs = 60*60
+    fintime = 20*60*60
     integration_params = initialize_integration_params(external_volume = external_volume, 
-                                                       Ncells =Ncells,Nmcps=10,cellular_geometry="rod",
+                                                       Ncells =Ncells,cellular_geometry="rod",
                                                        Rc = 0.375e-6, Lc = 2.47e-6)
-    Nmcps = integration_params['Nmcps']
     params = {'KmDhaTH': 0.77, # mM
           'KmDhaTN': 0.03, # mM
-          'kcatfDhaT': 59.4, # seconds
-          'kcatfDhaB': 0.6, # Input
-          'KmDhaBG': 400, # Input
-          'km': 10**-4, 
-          'kc': 10.**-4,
-          'SigmaDhaB': 4., # Input
-          'SigmaDhaT': 3., # Input
+          'kcatfDhaT': 59.4, # /seconds
+          'kcatfDhaB':400, # /seconds Input
+          'KmDhaBG': 0.6, # mM Input
+          'km': 10**-7, 
+          'kc': 10.**-5,
+          'dPacking': 0.64,
+          'enz_ratio': 1/1.33,
+          'Nmcps': 10.,
           'GInit': 200, #  2 * 10^(-4) mol/cm3 = 200 mM. 
-          'NInit': 0.5, # mM
-          'DInit': 0.5} # mM
+          'NInit': 1., # mM
+          'DInit': 1.} # mM
+    Nmcps = params['Nmcps']
 
-    tolG = 0.01*params['GInit']
+    tolG = 0.5*params['GInit']
     def event_Gmin(t,y):
         return y[-3] - tolG
-
+    def event_Pmax(t,y):
+        return y[-1] - tolG
     # spatial derivative
     SDerivParameterized = lambda t,x: SDeriv(t,x,integration_params,params)
     nVars = integration_params['nVars']
@@ -170,13 +198,10 @@ if __name__ == '__main__':
 
     time_1 = time.time()
     sol = solve_ivp(SDerivParameterized,[0, fintime+1], y0, method="BDF",jac=SDerivGradFunSparse, t_eval=timeorig,
-                    atol=tol,rtol=tol, events=event_Gmin)
+                    atol=tol,rtol=tol, events=[event_Gmin,event_Pmax])
 
     time_2 = time.time()
     print('time: ' + str(time_2 - time_1))
-
-    print(sol.message)
-    print(sol.t_events)
 
     #################################################
     # Plot solution
@@ -184,7 +209,7 @@ if __name__ == '__main__':
     volcell = integration_params['cell volume']
     volmcp = 4 * np.pi * (integration_params['Rm'] ** 3) / 3
     external_volume = integration_params['external_volume']
-
+    colour = ['b','r','y','c','m']
 
     # rescale the solutions
     ncompounds = 3
@@ -194,22 +219,20 @@ if __name__ == '__main__':
     # cellular solutions
     for i in range(0,ncompounds):
         ycell = sol.y[5+i, :]
-        plt.plot(timeorighours,ycell)
-
-
-    plt.title('Plot of cellular masses')
-    plt.legend(['G', 'H', 'P'], loc='upper right')
+        plt.plot(timeorighours,ycell, colour[i])
+    plt.title('Plot of cellular concentration')
+    plt.legend(['Glycerol', '3-HPA', '1,3-PDO'], loc='upper right')
     plt.xlabel('time (hr)')
     plt.ylabel('concentration (mM)')
     plt.show()
 
     # external solution
-    for i in reversed(range(0,3)):
-        yext = sol.y[-i-1,:].T
-        plt.plot(timeorighours,yext)
+    for i in range(0,3):
+        yext = sol.y[-3+i,:].T
+        plt.plot(timeorighours,yext, colour[i])
 
-    plt.legend(['G','H','P'],loc='upper right')
-    plt.title('Plot of external masses')
+    plt.legend(['Glycerol','3-HPA','1,3-PDO'],loc='upper right')
+    plt.title('Plot of external concentration')
     plt.xlabel('time (hr)')
     plt.ylabel('concentration (mM)')
     plt.show()
@@ -217,13 +240,13 @@ if __name__ == '__main__':
     #MCP solutions
     minval = np.inf
     maxval = -np.inf
-    for i in range(5):
-        ymcp = sol.y[i,:].T
-        plt.plot(timeorighours,ymcp)
+    for i in range(3):
+        ymcp = sol.y[2+i,:].T
+        plt.plot(timeorighours,ymcp, colour[i])
 
 
-    plt.legend(['N','D','G','H','P'],loc='upper right')
-    plt.title('Plot of MCP masses')
+    plt.legend(['Glycerol','3-HPA','1,3-PDO'],loc='upper right')
+    plt.title('Plot of MCP concentration')
     plt.xlabel('time (hr)')
     plt.ylabel('concentration (mM)')
     plt.show()
