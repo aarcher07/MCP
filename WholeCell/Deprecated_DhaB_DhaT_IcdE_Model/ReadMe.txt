@@ -8,7 +8,7 @@ This model is no longer in use as:
 * Of three NADH/NAD+ reactions, IcdE reaction most favours the substrates than the products at steady state. IcdE cycling reaction is not recommended for use. 
 * Assumptions used to constrain the DhaB and DhaT reaction so that they are forward reactions.
 * kcat are erroneous labelled as V_max.
-
+* The model is non-dimensionalized which makes the output cumbersome to work with.
 
 
 Model and Model Analysis functions:
