@@ -1,3 +1,15 @@
+'''
+This script generates plots comparing the solutions as the grid 
+is varied. This was done to find an optimal grid solutions. This isn't
+a good idea as behaviours can vary drastically as parameters vary.
+
+The code is parallelized using mpi4py.
+
+Programme written by aarcher07
+Editing History:
+- 26/10/20
+'''
+
 from Whole_Cell_Engineered_System_IcdE import *
 from mpi4py import MPI 
 import numpy as np
@@ -7,7 +19,6 @@ import matplotlib.pyplot as plt
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
-
 
 
 if rank == 0:

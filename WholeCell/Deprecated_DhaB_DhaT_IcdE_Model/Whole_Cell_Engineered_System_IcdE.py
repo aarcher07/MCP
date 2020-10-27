@@ -1,3 +1,22 @@
+'''
+The DhaB12-DhaT-IcdE model contains DhaB-DhaT-IcdE reaction
+in the MCP; diffusion in the cell; diffusion from the cell 
+in the external volume.
+
+NOTE: 
+- DhaB12 reaction contains an activation step. This activation
+setup has not been well studied and is now excluded from current models.
+- Assumptions used to constrain the DhaB and DhaT reaction so that they are
+forward reactions.
+- This model is deprecated and now longer maintained. Only the DhaB
+and DhaT reaction is currently being modelled. The IcdE reaction
+will be added later to the newer model located in DhaB_DhaT_Model.
+
+Programme written by aarcher07
+Editing History:
+- 26/10/20
+'''
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp

@@ -1,8 +1,15 @@
+"""
+Given DhaB-DhaT-IcdE model, this computes dx/dt = 0 of the
+reaction system in the microcompartment.
+
+Programme written by aarcher07
+Editing History:
+- 26/10/20
+"""
+
 import numpy as np
 from scipy.integrate import solve_ivp
-
 import matplotlib.pyplot as plt
-
 import sympy as sp
 import scipy.sparse as sparse
 import unittest as unittest
@@ -10,7 +17,13 @@ from scipy.optimize import root
 from Whole_Cell_Engineered_System_IcdE import *
 
 def steady_state_formula(x,integration_params,**kwargs):
-
+    """
+    Computes dx/dt = Sv of the reaction system in the microcompartment.
+    :param x: state variables
+    :param integration_params: integration parameters
+    :param kwargs: differential equation parameters
+    :return: Sv of the reaction system
+    """
     param_vals = kwargs
     param_vals['Rm'] = integration_params['Rm']
     param_vals['Diff'] = integration_params['Diff']
@@ -47,8 +60,12 @@ def steady_state_formula(x,integration_params,**kwargs):
 
 
 def main(params=None):
-
-
+    """
+    Solves for dx/dt = 0 of reaction system in the microcompartment given
+    params.
+    :param params: differential equation parameters
+    :return: Sv of the reaction system
+    """
     x_list_sp = np.array(sp.symbols('x0:7'))
     if params is None:
         params = {'KmDhaTH': 0.77,

@@ -1,3 +1,12 @@
+'''
+This script generates plots for DoE report submitted in June/July.
+
+Programme written by aarcher07
+Editing History:
+- 26/10/20
+'''
+
+
 from Whole_Cell_Engineered_System_IcdE import *
 from mpi4py import MPI 
 import numpy as np

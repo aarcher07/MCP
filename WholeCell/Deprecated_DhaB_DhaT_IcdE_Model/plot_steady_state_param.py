@@ -1,3 +1,11 @@
+"""
+Generates plots of the steady state of the DhaB12-DhaT-IcdE model
+as at most 2 parameters are varied.
+
+Editing History:
+- 26/10/20
+"""
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp
@@ -11,7 +19,17 @@ from Whole_Cell_Engineered_System_IcdE.py import *
 def plot_steady_state_param(param_sens = ['km'], param_sens_bounds = np.array([[1.,10.]]), nparamsvals=10,
                             inds=[-3], params=None):
     """
-    plots of steady state concentration
+    Plots of steady state concentration with index, inds, as function of parameters,
+    param_sens. param_sens has bounds, param_sens_bounds. The non-varying parameters 
+    are params.  
+
+    :param param_sens: list of strings denoting varying parameters
+    :param param_sens_bound: 2D numpy array of bounds for varying parameters
+    :param nparamsvals: number of logarithmic spaced points with param_sens_bound bounds
+	:param inds: index of concentration which is being studied
+	:param params: values of non-varying parameters 
+	
+	Note: only pairs of parameters can be visualized at a time. 
     """
     #################################################
     # Define spatial derivative and jacobian
