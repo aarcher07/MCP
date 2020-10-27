@@ -1,3 +1,12 @@
+"""
+This code generates the average parameter directions that most affects 
+the model in a bounded region of parameter space.
+
+Programme written by aarcher07
+Editing History:
+- 27/10/20
+"""
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib as mpl

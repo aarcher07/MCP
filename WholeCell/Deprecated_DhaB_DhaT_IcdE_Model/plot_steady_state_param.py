@@ -2,6 +2,7 @@
 Generates plots of the steady state of the DhaB12-DhaT-IcdE model
 as at most 2 parameters are varied.
 
+Programme written by aarcher07
 Editing History:
 - 26/10/20
 """

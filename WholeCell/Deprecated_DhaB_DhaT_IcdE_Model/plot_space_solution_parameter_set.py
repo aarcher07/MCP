@@ -1,3 +1,16 @@
+"""
+Generates plots of the time varying state of concentrations
+in the DhaB12-DhaT-IcdE model. External, cellular and MCP concentrations
+are combined on the same plot. This is done by extending the domain of cellular 
+solution to include a point in front of the cellular boundary representing the external
+cencentration and a point behind the MCP shell representing the MCP concentration.
+
+Programme written by aarcher07
+Editing History:
+- 27/10/20
+"""
+
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp

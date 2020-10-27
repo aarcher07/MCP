@@ -1,3 +1,13 @@
+"""
+Generates plots of the time varying state of concentrations
+in the DhaB12-DhaT-IcdE model. Separate plots are generated
+for external, cellular and MCP concentrations.
+
+Programme written by aarcher07
+Editing History:
+- 27/10/20
+"""
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp
@@ -11,8 +21,14 @@ from Whole_Cell_Engineered_System_IcdE.py import *
 
 def plot_specific_parameter_set(params=None,ngrid=25,fintime=10**6):
     """
-    plots of internal and external concentration
+    plots of internal and external concentration of the DhaB12-DhaT-IcdE model
+    with params, params, cellular grid size, ngrid. The differential equation
+    is solved until fintime.
 
+    :param params: dictionary of parameter values, see the default parameters
+                   for a list of parameter keys.
+    :param ngrid: grid size of the cell
+    :param fintime: the final integration time
     """
     #################################################
     # Define spatial derivative and jacobian
