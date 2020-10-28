@@ -13,29 +13,29 @@ This model is no longer in use as:
 
 Model and Model Analysis module:
 * Whole_Cell_Engineered_System_IcdE.py
- - The DhaB12-DhaT-IcdE model contains DhaB-DhaT-IcdE reaction in the MCP; diffusion in the cell; diffusion from the cell  in the external volume.
+	- The DhaB12-DhaT-IcdE model contains DhaB-DhaT-IcdE reaction in the MCP; diffusion in the cell; diffusion from the cell  in the external volume.
 * Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py
- - Local Sensitivity Analysis of IcdE Model with functions.
+	- Local Sensitivity Analysis of IcdE Model with functions.
 * Active_Subspaces.py
- - This code generates the average parameter directions that most affects the model in a bounded region of parameter space.
+	- This code generates the average parameter directions that most affects the model in a bounded region of parameter space.
 * Active_Subspaces_Parallel.py
- - Parallelizes the Active_Subspaces.py code. This code generates the average parameter directions that most affects the model in a bounded region of parameter space.
+	- Parallelizes the Active_Subspaces.py code. This code generates the average parameter directions that most affects the model in a bounded region of parameter space.
 
 Model plotting modules:
 * steady_state_analysis.py
- - Given DhaB-DhaT-IcdE model, this computes dx/dt = 0 of the reaction system in the microcompartment.
+	- Given DhaB-DhaT-IcdE model, this computes dx/dt = 0 of the reaction system in the microcompartment.
 * plot_steady_state_param.py
- - Generates plots of the steady state of the DhaB12-DhaT-IcdE model as at most 2 parameters are varied.
+	- Generates plots of the steady state of the DhaB12-DhaT-IcdE model as at most 2 parameters are varied.
 * plot_specific_parameter_set.py 
- - Generates plots of the time varying state of concentrations in the DhaB12-DhaT-IcdE model. Separate plots are generated for external, cellular and MCP concentrations.
+	- Generates plots of the time varying state of concentrations in the DhaB12-DhaT-IcdE model. Separate plots are generated for external, cellular and MCP concentrations.
 * plot_space_solution_parameter_set.py
- - Generates plots of the time varying state of concentrations in the DhaB12-DhaT-IcdE model. 
+	- Generates plots of the time varying state of concentrations in the DhaB12-DhaT-IcdE model. 
 
 Scripts: 
 * script_plot_doe.py
- - This script generates plots for DoE report submitted in June/July.
+	- This script generates plots for DoE report submitted in June/July.
 * script_comparing_grid.py
- - This script generates plots comparing the solutions as the grid is varied.
+	- This script generates plots comparing the solutions as the grid is varied.
 		
 Old functions/scripts:
 * Whole_Cell_Engineered_System_IcdE_Parallelized.py
