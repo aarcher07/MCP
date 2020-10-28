@@ -1,3 +1,18 @@
+'''
+The DhaB-DhaT model contains DhaB-DhaT reaction pathway
+in the MCP; diffusion in the cell; diffusion from the cell 
+in the external volume.
+
+This model is currently in use. The DhaB-DhaT model assumes that there 
+are M identical MCPs within the cytosol and N identical cells within the 
+external volume. From time scsle analysis, gradients in cell are removed.
+
+Programme written by aarcher07
+Editing History:
+- 28/10/20
+'''
+
+
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve

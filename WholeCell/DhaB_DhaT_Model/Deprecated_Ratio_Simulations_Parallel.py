@@ -1,3 +1,25 @@
+'''
+This scipts generates a dataset of toxicity, production and consumption time
+for DhaB to DhaT enzyme concentration ratios within the MCP. These metrics
+are obtained from the model of the DhaB-DhaT pathway in the MCP of salmonella. 
+
+
+The DhaB-DhaT model assumes that there are M identical MCPs within the cytosol and 
+N identical cells within the external volume. From time scsle analysis, gradients in 
+cell are removed.
+
+The model is parametrized using entries in
+- EncapsulationAndExpressionTableResults(Surface Area).xls
+- EncapsulationAndExpressionResultsWellMixedMCP.xls.
+
+This code is no longer in use as it is inconvienent to update the dataframes above 
+and then have to rerun the model and the code. The dataframes and the results plots
+can be now generated in a single code. The dataframes referenced above are now located in
+/Whole\ Cell/Trash
+'''
+
+
+
 import pandas as pd
 from Whole_Cell_Engineered_System_WellMixed_MCPs_DhaB_DhaT_Taylor import *
 from mpi4py import MPI

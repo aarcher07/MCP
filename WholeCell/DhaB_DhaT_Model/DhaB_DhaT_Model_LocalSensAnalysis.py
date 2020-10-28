@@ -1,3 +1,14 @@
+'''
+Local Sensitivity Analysis of DhaB-DhaT Model with functions.
+This module gives the user control over the parameters for 
+which they would like to do sensitivity analysis.
+
+Programme written by aarcher07
+
+Editing History:
+- 26/10/20
+'''
+
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.constants import *

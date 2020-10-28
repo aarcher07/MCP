@@ -1,3 +1,13 @@
+'''
+This scripts generates the local sensitivity analysis plots associated
+with DhaB_DhaT_Model_LocalSensAnalysis.py.
+
+Programme written by aarcher07
+
+Editing History:
+- 26/10/20
+'''
+
 import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.constants import *

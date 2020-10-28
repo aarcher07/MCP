@@ -1,3 +1,19 @@
+'''
+This is the non-dimensionalized model of the DhaB_DhaT_Model_SingleMCP.py
+code.
+
+NOTE: 
+This model is deprecated as 
+- the non-dimensionalization muddles the output without much, if any,
+added benefit
+- it assumes that a community of MCPs act as a single MCP
+- it assumes that a community of cells act as a single cell
+
+Programme written by aarcher07
+Editing History:
+- 28/10/20
+'''
+
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp

@@ -1,5 +1,16 @@
+'''
+This generates plot of the cellular, MCP and external concentrations
+using a model of the DhaB-DhaT pathway in the MCP of salmonella. 
+
+The DhaB-DhaT model assumes that gradients are possible within the cytosol and that MCPs act as
+large MCP within the cell.
+
+The model is parametrized using the last entry of EncapsulationAndExpressionTableResults(Surface Area).xls.
+'''
+
+
 import pandas as pd
-from Whole_Cell_Engineered_System_DhaB_DhaT_Taylor import *
+from DhaB_DhaT_Model_SingleMCP import *
 
 
 ###################################

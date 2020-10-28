@@ -1,3 +1,17 @@
+'''
+The DhaB-DhaT model contains DhaB-DhaT reaction pathway
+in the MCP; diffusion in the cell; diffusion from the cell 
+in the external volume.
+
+NOTE: 
+This model is deprecated as 
+- it assumes that a community of MCPs act as a single MCP
+- it assumes that a community of cells act as a single cell
+
+Programme written by aarcher07
+Editing History:
+- 28/10/20
+'''
 import numpy as np
 from scipy.integrate import solve_ivp
 import sympy as sp
