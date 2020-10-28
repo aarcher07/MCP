@@ -1,6 +1,4 @@
-This code contains a deprecated DhaB-DhaT reaction model of PdU engineered system. This model is deprecated and no longer maintained.  Only the DhaB and DhaT reaction are currently being modelled within M well-mixed, identical cells within the cyostol. 
-
-This model is currently in use. The DhaB-DhaT model assumes that there  are M identical MCPs within the cytosol and N identical cells within the external volume. From time scsle analysis, gradients in cell are removed.
+This folder contains a DhaB-DhaT reaction model of PdU engineered system. This model is currently in use. The DhaB-DhaT model assumes that there  are M identical MCPs within the cytosol and N identical cells within the external volume. From time scsle analysis, gradients in cell are removed.
 
 Model and Model Analysis modules:
 DhaB_DhaT_Model.py

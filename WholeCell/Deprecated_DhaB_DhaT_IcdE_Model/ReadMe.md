@@ -11,7 +11,7 @@ This model is no longer in use as:
 * The model is non-dimensionalized which makes the output cumbersome to work with.
 
 
-Model and Model Analysis functions:
+Model and Model Analysis module:
 Whole_Cell_Engineered_System_IcdE.py
 	* The DhaB12-DhaT-IcdE model contains DhaB-DhaT-IcdE reaction
 	in the MCP; diffusion in the cell; diffusion from the cell 
@@ -26,7 +26,7 @@ Active_Subspaces_Parallel.py
 	average parameter directions that most affects the model in a bounded region
 	of parameter space.
 	
-Model plotting functions:
+Model plotting modules:
 steady_state_analysis.py
 	* Given DhaB-DhaT-IcdE model, this computes dx/dt = 0 of the
 	reaction system in the microcompartment.

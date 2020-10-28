@@ -1,4 +1,4 @@
-This code contains models of PdU engineered system.
+This folder contains models of PdU engineered system.
 
 DhaB_DhaT_model contains an updated model with the DhaB and DhaT reaction in the MCP. This model is currently in use.
 
