@@ -158,7 +158,7 @@ if __name__ == '__main__':
     Ncells = external_volume*NcellsPerMCubed   
     mintime = 10**(-15)
     secstohrs = 60*60
-    fintime = 20*60*60
+    fintime = 72*60*60
     integration_params = initialize_integration_params(external_volume = external_volume, 
                                                        Ncells =Ncells,cellular_geometry="rod",
                                                        Rc = 0.375e-6, Lc = 2.47e-6)
@@ -182,10 +182,17 @@ if __name__ == '__main__':
         return y[-3] - tolG
     def event_Pmax(t,y):
         return y[-1] - tolG
+
     # spatial derivative
     SDerivParameterized = lambda t,x: SDeriv(t,x,integration_params,params)
     nVars = integration_params['nVars']
     x_list_sp = np.array(sp.symbols('x:' + str(nVars)))
+    
+    tolsolve = 10**-4
+    def event_stop(t,x):
+        dSsample = sum(np.abs(SDerivParameterized(t,x)))
+        return dSsample - tolsolve 
+    event_stop.terminal = True
 
     #jacobian
     SDerivSymbolic = SDerivParameterized(0,x_list_sp)
@@ -212,8 +219,9 @@ if __name__ == '__main__':
 
 
     time_1 = time.time()
+
     sol = solve_ivp(SDerivParameterized,[0, fintime+1], y0, method="BDF",jac=SDerivGradFunSparse, t_eval=timeorig,
-                    atol=tol,rtol=tol, events=[event_Gmin,event_Pmax])
+                    atol=tol,rtol=tol, events=event_stop)
     time_2 = time.time()
     print('time: ' + str(time_2 - time_1))
 
@@ -227,7 +235,7 @@ if __name__ == '__main__':
 
     # rescale the solutions
     ncompounds = 3
-    timeorighours = timeorig/secstohrs
+    timeorighours = sol.t/secstohrs
 
 
     # cellular solutions

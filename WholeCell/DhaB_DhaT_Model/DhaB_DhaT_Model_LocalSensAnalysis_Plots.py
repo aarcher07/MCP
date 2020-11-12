@@ -21,7 +21,7 @@ import scipy.sparse as sparse
 import time
 import math
 from numpy.linalg import LinAlgError
-from Whole_Cell_Engineered_System_WellMixed_MCPs_DhaBDhaT_LocalSensitivity_Analysis import *
+from DhaB_DhaT_Model_LocalSensAnalysis import *
 
 nsamples = 500
 external_volume =  9e-6
@@ -100,6 +100,7 @@ dSensParams = lambda t,xs: dSens(t, xs, params, integration_params, SDerivSymbol
 #create jacobian of dSensParams
 dSensSymJacSparseMatLamFun = create_jac_sens(x_sp, sensitivity_sp, params, integration_params,
                                              SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun, dS = dS)
+print(dSensParams(0,xs0))
 
 # solution params
 tol = 1e-7
@@ -161,24 +162,27 @@ lub = 0.85*miny if miny > 0 else 1.15*miny
 for j in range(nParams):
     axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
     axes[j // 2, j % 2].axvline(x=timeorighours[index_max_3HPA],ls='--',color='k')
-    axes[j // 2, j % 2].legend([r'$\partial (' + namesvars[i-2-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:],'time of max 3-HPA'], loc='upper right')
-    axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-2-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:])
+    axes[j // 2, j % 2].legend([r'$\partial (' + namesvars[i-2-len(namesvars)] + ')/\partial \log_2(' + sens_vars_names[j][1:]+ ')','time of max 3-HPA'], loc='upper right')
+    axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-2-len(namesvars)] + ')/\partial  \log_2(' + sens_vars_names[j][1:] + ')')
     axes[j // 2, j % 2].set_title(sens_vars_names[j])
     axes[j // 2, j % 2].grid()
     axes[j // 2, j % 2].set_ylim([lub, yub])
-    print('Senstivity of 3-HPA to '+sens_vars_names[j][1:-1] + ': ' + str(soly[j,index_max_3HPA]))
+    print('Senstivity of maximum 3-HPA concentration to log_2('+sens_vars_names[j][1:-1] + '): ' + str(soly[j,index_max_3HPA]) + ')$')
     if j >= (nParams-2):
         axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
 
 
-figure.suptitle(r'Sensitivity, $\partial (' + namesvars[index_3HPA_cell-2-len(namesvars)]+')/\partial p_i$, of the cellular concentration of '
-                + namesvars[index_3HPA_cell-2-len(namesvars)] + ' wrt $p_i$', y = 0.92)
+figure.suptitle(r'Sensitivity, $\partial (' + namesvars[index_3HPA_cell-2-len(namesvars)]+')/\partial \log_2(p_i)$, of the cellular concentration of '
+                + namesvars[index_3HPA_cell-2-len(namesvars)] + ' wrt $\log_2(p_i)$', y = 0.92)
 # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
 #             bbox_inches='tight')
 plt.show()
 
 
 # sensitivity variables external
+timecheck = 5.
+ind_first_close_enough =  np.argmin(np.abs(timeorighours-timecheck))
+
 for i in range(-len(namesvars),0):
     figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True,sharey=True)
     if i == -3:
@@ -191,15 +195,23 @@ for i in range(-len(namesvars),0):
     lub = 0.85*miny if miny > 0 else 1.15*miny
     for j in range(nParams):
         axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
-        axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial ' + sens_vars_names[j][1:])
+        axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial \log_2(' + sens_vars_names[j][1:] + ')')
         axes[j // 2, j % 2].set_ylim([lub, yub])
         axes[j // 2, j % 2].set_title(sens_vars_names[j])
         axes[j // 2, j % 2].grid()
+
+
+        if i == -3:
+          axes[j // 2, j % 2].axvline(x=timeorighours[index_max_3HPA],ls='--',ymin=-0.05,color='k')
+          print('Senstivity of Glycerol at 5 hrs to log_2('+sens_vars_names[j][1:-1] + '): ' + str(soly[j,ind_first_close_enough]))
+        if i == -1:
+          axes[j // 2, j % 2].axvline(x=timeorighours[index_max_3HPA],ls='--',ymin=-0.05,color='k')
+          print('Senstivity of 1,3-PDO at 5 hrs to log_2('+sens_vars_names[j][1:-1] + '): ' + str(soly[j,ind_first_close_enough]))
         if j >= (nParams-2):
             axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
 
-    figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial p_i$, of the external concentration of '
-                    + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
+    figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial \log_2(p_i)$, of the external concentration of '
+                    + namesvars[i + 3] + ' wrt $\log_2(p_i)$', y = 0.92)
     # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesvars[i+3]  +'.png',
     #             bbox_inches='tight')
     plt.show()

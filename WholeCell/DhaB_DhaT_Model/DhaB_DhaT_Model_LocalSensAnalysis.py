@@ -22,7 +22,7 @@ import scipy.sparse as sparse
 import time
 import math
 from numpy.linalg import LinAlgError
-import Whole_Cell_Engineered_System_WellMixed_MCPs_DhaB_DhaT_Taylor
+import DhaB_DhaT_Model
 eps = 10**(-5)
 
 # override ComputeEnzymeConcentrations in the original documentation
@@ -42,9 +42,9 @@ def _new_ComputeEnzymeConcentrations(ratio, dPacking):
     SigmaDhaB = ratio*SigmaDhaT
     return [SigmaDhaB, SigmaDhaT]
 
-Whole_Cell_Engineered_System_WellMixed_MCPs_DhaB_DhaT_Taylor.ComputeEnzymeConcentrations = _new_ComputeEnzymeConcentrations
+DhaB_DhaT_Model.ComputeEnzymeConcentrations = _new_ComputeEnzymeConcentrations
 
-from Whole_Cell_Engineered_System_WellMixed_MCPs_DhaB_DhaT_Taylor import *
+from DhaB_DhaT_Model import *
 
 def create_param_symbols(*args):
     """
@@ -120,7 +120,8 @@ def compute_jacs(x_sp,params_sens_dict,integration_params,dS = SDeriv, **kwargs)
 
 
 def dSens(t,xs,diffeq_params, integration_params,
-          SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun,dS = SDeriv):
+          SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun,
+          dS = SDeriv):
     """
     Compute RHS of the sensitivity equation
 
@@ -166,6 +167,7 @@ def SDerivLog10Param(*args):
     return SDeriv(args[0],args[1],args[2],diffeq_params_log10)
 
 def SDerivLog2Param(*args):
+    
     diffeq_params = args[3]
     diffeq_params_log2 = {key: 2**value for key,value in diffeq_params.items()}
     return SDeriv(args[0],args[1],args[2],diffeq_params_log2)
@@ -261,24 +263,15 @@ def main(nsamples = 500):
 
     # initial conditions
     n_compounds_cell = 3
-    nVars = integration_params['nVars']
-    y0 = np.zeros(nVars) 
-    y0[-3] = init_conditions['GInit']  # y0[-5] gives the initial state of the external substrate.
-    y0[0] = init_conditions['NInit']  # y0[5] gives the initial state of the external substrate.
-    y0[1] = init_conditions['DInit']  # y0[6] gives the initial state of the external substrate.
-    # time samples
-    # initial conditions -- sensitivity equation
-    sens0 = np.zeros(nSensitivityEqs)
-    for i,param in enumerate(params_sens_dict):
-        if param in ['GInit', 'IInit', 'NInit', 'DInit']:
-            sens0[i:nSensitivityEqs:nParams] = 1
-    xs0 = np.concatenate([y0,sens0])
+
     # setup differential eq
     x_sp, sensitivity_sp = create_state_symbols(integration_params['nVars'], integration_params['nParams'])
     SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun = compute_jacs(x_sp, params_sens_dict,integration_params, diffeq_params=params, dS=dS)
     dSensParams = lambda t,xs: dSens(t, xs, params, integration_params, SDerivSymbolicJacParamsLambFun,
                                      SDerivSymbolicJacConcLambFun, dS=dS)
     #create jacobian of dSensParams
+    print(dSensParams(0,xs0))
+
     dSensSymJacSparseMatLamFun = create_jac_sens(x_sp, sensitivity_sp, params, integration_params,
                                                  SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun, dS = dS)
 
