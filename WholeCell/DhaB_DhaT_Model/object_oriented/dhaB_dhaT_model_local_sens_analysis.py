@@ -25,13 +25,16 @@ from numpy.linalg import LinAlgError
 from dhaB_dhaT_model import DhaBDhaTModel
 
 PARAMETER_LIST = ['KmDhaTH', 'KmDhaTN','kcatfDhaT', 
-                  'kcatfDhaB', 'KmDhaBG', 'km', 
-                  'kc', 'dPacking', 'nmcps', 'enz_ratio',
+                  'kcatfDhaB', 'KmDhaBG', 
+                  'km', 'kc', 
+                  'dPacking', 
+                  'nmcps',
+                  'enz_ratio',
                   'NADH_MCP_INIT','NAD_MCP_INIT']
 
-VARIABLE_INIT_NAMES = ['G_MCP_INIT','H_MCP_INIT','P_MCP_INIT','G_CYTO_INIT',
-                      'H_CYTO_INIT','P_CYTO,INIT','G_EXT_INIT',
-                      'H_EXT_INIT','P_EXT_INIT']
+VARIABLE_INIT_NAMES = ['G_MCP_INIT','H_MCP_INIT','P_MCP_INIT',
+                       'G_CYTO_INIT', 'H_CYTO_INIT','P_CYTO,INIT',
+                       'G_EXT_INIT', 'H_EXT_INIT','P_EXT_INIT']
 
 # override ComputeEnzymeConcentrations in the original documentation
 class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
