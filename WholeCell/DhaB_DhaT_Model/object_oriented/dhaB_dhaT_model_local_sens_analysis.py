@@ -229,8 +229,8 @@ def main(nsamples = 500):
                           'KmDhaTN': 0.03, # mM
                           'kcatfDhaT': 59.4, # /seconds
                           'enz_ratio': 1/1.33,
-                          'NADH_MCP_INIT': 1,
-                          'NAD_MCP_INIT': 1,
+                          'NADH_MCP_INIT': 0.1,
+                          'NAD_MCP_INIT': 0.1,
                           'G_MCP_INIT': 0,
                           'H_MCP_INIT': 0,
                           'P_MCP_INIT': 0,

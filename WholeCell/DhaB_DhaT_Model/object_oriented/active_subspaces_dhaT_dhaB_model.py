@@ -63,12 +63,12 @@ class Active_Subspaces_DhaT_DhaB_Model(Active_Subspaces):
                          max_exceptions, dist = dist, tol=1e-5)
 
     def _transform_variables_log10(self,runif):
-    """
-    Transforms uniform random numbers on [0,1] to the corresponding 
-    log10 parameter distribution 
-    :params runif: vector of random numbers
-    :params param_estimates: dictionary of random parameter samples
-    """
+        """
+        Transforms uniform random numbers on [0,1] to the corresponding 
+        log10 parameter distribution 
+        :params runif: vector of random numbers
+        :return param_estimates: dictionary of random parameter samples
+        """
         param_estimates = {}
         for runif_single_val, (param,(bound_a,bound_b)) in zip(runif,self.param_bounds.items()):
             if param in ['km','kc']:
@@ -109,7 +109,7 @@ class Active_Subspaces_DhaT_DhaB_Model(Active_Subspaces):
         parameter distribution 
 
         :params runif: vector of random numbers
-        :returns param_estimates: dictionary of random parameter samples
+        :return param_estimates: dictionary of random parameter samples
         """
         param_estimates = {}
         for runif_single_val, (param,(bound_a,bound_b)) in zip(runif,self.param_bounds.items()):
