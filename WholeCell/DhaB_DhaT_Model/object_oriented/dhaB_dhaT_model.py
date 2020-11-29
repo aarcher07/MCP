@@ -85,7 +85,7 @@ class DhaBDhaTModel:
         rdhaT = 5/2.
         AVOGADRO_CONSTANT = constants.Avogadro
         rmcp =140/2.
-        vol = lambda r: 4*np.pi*(r**3)/3;  
+        vol = lambda r: 4*np.pi*(r**3)/3
         nDhaT =  vol(rmcp)*params['dPacking']/(vol(rdhaT) + params['enz_ratio']*vol(rdhaB))
         dhaT_conc = nDhaT/(AVOGADRO_CONSTANT*vol(rmcp*(1e-9)))
         dhaB_conc = params['enz_ratio']*dhaT_conc

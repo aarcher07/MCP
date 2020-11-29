@@ -123,7 +123,8 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         if params is None:
             print("Please set the parameter values")
 
-        params_log10 = {param: 10**param_val for param,param_val in params.items()}
+        params_log10 = {param: (10**param_val if param in PARAMETER_LIST else param_val) for param,param_val in params.items() }
+
         return super().sderiv(t,x,params = params_log10)
 
 
@@ -138,7 +139,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         if params is None:
             print("Please set the parameter values")
 
-        params_log2 = {param: 2**param_val for param,param_val in params.items()}
+        params_log2 = {param: (2**param_val if param in PARAMETER_LIST else param_val) for param,param_val in params.items() }
         return super().sderiv(t,x,params = params_log2)
 
     def set_jacs_fun(self):
@@ -409,7 +410,7 @@ def main(nsamples = 500):
         if i == -3:
             soly = sol.y[-(model_local_sens.nparams_sens):,:]
         else:
-            soly = sol.y[-(i+1)*model_local_sens.nparams_sens:-i*model_local_sens.nparams_sens, :]
+            soly = sol.y[-(i+4)*model_local_sens.nparams_sens:-(i+3)*model_local_sens.nparams_sens, :]
         maxy = np.max(soly)
         miny = np.min(soly)
         yub = 1.15*maxy if maxy > 0 else 0.85*maxy

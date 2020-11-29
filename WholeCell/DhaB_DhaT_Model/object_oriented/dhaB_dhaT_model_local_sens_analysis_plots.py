@@ -40,7 +40,7 @@ tol = 10**-4
 params_values_fixed = {'KmDhaTH': 0.77, # mM
       'KmDhaTN': 0.03, # mM
       'kcatfDhaT': 59.4, # /seconds
-      'enz_ratio': 1/1.33,
+      'enz_ratio': 1/18,
       'NADH_MCP_INIT': 0.1,
       'NAD_MCP_INIT': 0.1,
       'G_MCP_INIT': 0,
@@ -127,13 +127,11 @@ def event_stop(t,y):
 event_stop.terminal = True
 
 timeorig = np.logspace(np.log10(mintime),np.log10(fintime),nsamples)
-
 starttime = time.time()
 sol = solve_ivp(dsens_param,[0, fintime+10], xs0, method="BDF", 
                 jac = dsens_jac_sparse_mat_fun_param, events=event_stop,
                 t_eval=timeorig, atol=tol,rtol=tol)
 endtime = time.time()
-
 #################################################
 # Plot solution
 #################################################
@@ -203,13 +201,15 @@ plt.show()
 # sensitivity variables external
 timecheck = 5.
 ind_first_close_enough =  np.argmin(np.abs(timeorighours-timecheck))
+print("Glycerol at 5 hrs: " + str(sol.y[8,ind_first_close_enough]))
 
 for i in range(-len(namesvars),0):
     figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True,sharey=True)
     if i == -3:
         soly = sol.y[-(nparams_sens):,:]
     else:
-        soly = sol.y[-(i+1)*nparams_sens:-i*nparams_sens, :]
+        test = list(range(-18,0))
+        soly = sol.y[-(i+4)*nparams_sens:-(i+3)*nparams_sens, :]
     maxy = np.max(soly)
     miny = np.min(soly)
     yub = 1.15*maxy if maxy > 0 else 0.85*maxy
@@ -223,10 +223,10 @@ for i in range(-len(namesvars),0):
 
 
         if i == -3:
-          axes[j // 2, j % 2].axvline(x=timeorighours[index_max_3HPA],ls='--',ymin=-0.05,color='k')
+          axes[j // 2, j % 2].axvline(x=timeorighours[ind_first_close_enough],ls='--',ymin=-0.05,color='k')
           print('Senstivity of Glycerol at 5 hrs to log_10('+sens_vars_names[j][1:-1] + '): ' + str(soly[j,ind_first_close_enough]))
         if i == -1:
-          axes[j // 2, j % 2].axvline(x=timeorighours[index_max_3HPA],ls='--',ymin=-0.05,color='k')
+          axes[j // 2, j % 2].axvline(x=timeorighours[ind_first_close_enough],ls='--',ymin=-0.05,color='k')
           print('Senstivity of 1,3-PDO at 5 hrs to log_10('+sens_vars_names[j][1:-1] + '): ' + str(soly[j,ind_first_close_enough]))
         if j >= (nparams_sens-2):
             axes[(nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
