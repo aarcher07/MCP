@@ -20,7 +20,6 @@ import scipy.constants as constants
 import sympy as sp
 import scipy.sparse as sparse
 import pdb
-from mpi4py import MPI
 import time
 import matplotlib.pyplot as plt
 from sklearn.metrics import auc
@@ -65,9 +64,12 @@ class DhaBDhaTModel:
 
         # differential equation parameters
         self.params = params
-        self.set_symbolic_state_vars()
+        self._set_symbolic_state_vars()
+        if params:
+            self._set_fun_sderiv_jac_statevars()
 
-    def sderiv(self,t,x,params=None):
+
+    def _sderiv(self,t,x,params=None):
         """
         Computes the spatial derivative of the system at time point, t
         :param t: time
@@ -132,35 +134,35 @@ class DhaBDhaTModel:
         return d
 
 
-    def set_symbolic_state_vars(self):
+    def _set_symbolic_state_vars(self):
         """
         Generates the symbol state variables for the model
         """
         self.x_sp = np.array(sp.symbols('x:' + str(self.nvars)))
 
 
-    def set_symbolic_sderiv(self):
+    def _set_symbolic_sderiv(self):
         """
         Generates the symbol differential equation
         """
         x_sp = getattr(self, 'x_sp', None)
         if x_sp is None:
-            self.set_symbolic_state_vars()
-        self.sderiv_symbolic = self.sderiv(0,self.x_sp)
+            self._set_symbolic_state_vars()
+        self.sderiv_symbolic = self._sderiv(0,self.x_sp)
 
 
-    def set_symbolic_sderiv_jac_statevars(self):
+    def _set_symbolic_sderiv_jac_statevars(self):
         """
         Generates the symbol jacobian of the differential equation 
         wrt state variables
         """
         sderiv_symbolic = getattr(self, 'sderiv_symbolic', None)
         if sderiv_symbolic is None:
-            self.set_symbolic_sderiv()
+            self._set_symbolic_sderiv()
             sderiv_symbolic = self.sderiv_symbolic
         self.sderiv_jac_state_vars_sp = sp.Matrix(sderiv_symbolic).jacobian(self.x_sp)
         
-    def set_fun_sderiv_jac_statevars(self):
+    def _set_fun_sderiv_jac_statevars(self):
         """
         Generates the jacobian function of the differential equation 
         wrt state variables
@@ -168,7 +170,7 @@ class DhaBDhaTModel:
 
         sderiv_jac_state_vars_sp = getattr(self, 'sderiv_jac_state_vars_sp', None)
         if sderiv_jac_state_vars_sp is None:
-            self.set_symbolic_sderiv_jac_statevars()
+            self._set_symbolic_sderiv_jac_statevars()
             sderiv_jac_state_vars_sp = self.sderiv_jac_state_vars_sp
         sderiv_jac_state_vars_sp_fun = sp.lambdify(self.x_sp, sderiv_jac_state_vars_sp, 'numpy')
         self.sderiv_jac_state_vars_sp_fun = lambda t,x: sparse.csr_matrix(sderiv_jac_state_vars_sp_fun(*x))
@@ -203,7 +205,7 @@ if __name__ == '__main__':
     dhaB_dhaT_model = DhaBDhaTModel(params, external_volume = external_volume, 
                                     ncells_per_metrecubed =ncells_per_metrecubed,cellular_geometry="rod",
                                     rc = 0.375e-6, lc = 2.47e-6)
-    dhaB_dhaT_model.set_fun_sderiv_jac_statevars()
+    
 
     # event functions
     tolG = 0.5*init_conditions['G_EXT_INIT']
@@ -214,7 +216,7 @@ if __name__ == '__main__':
     def event_Pmax(t,y):
         return y[-1] - tolG
     def event_stop(t,x):
-        dSsample = sum(np.abs(dhaB_dhaT_model.sderiv(t,x)))
+        dSsample = sum(np.abs(dhaB_dhaT_model._sderiv(t,x)))
         return dSsample - tolsolve 
     event_stop.terminal = True
 
@@ -241,7 +243,7 @@ if __name__ == '__main__':
     timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
 
     time_1 = time.time()
-    sol = solve_ivp(dhaB_dhaT_model.sderiv,[0, fintime+1], y0, method="BDF",jac=dhaB_dhaT_model.sderiv_jac_state_vars_sp_fun, t_eval=timeorig,
+    sol = solve_ivp(dhaB_dhaT_model._sderiv,[0, fintime+1], y0, method="BDF",jac=dhaB_dhaT_model.sderiv_jac_state_vars_sp_fun, t_eval=timeorig,
                     atol=tol,rtol=tol, events=event_stop)
     time_2 = time.time()
 

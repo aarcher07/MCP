@@ -115,9 +115,6 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         self.indices_Glycerol_ext_params_sens = np.array([(self.first_index_close_enough,i) for i in range_Glycerol_ext_param_sens])
         self.indices_sens_Glycerol_ext_after_timecheck = np.array([(-1,i) for i in range_1_3PDO_ext_param_sens])
 
-        # save local senstivities analysis
-        self.set_jacs_fun()
-        self.create_jac_sens()
 
     def _set_initial_conditions(self):
         """
@@ -157,7 +154,7 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         """
         # intergration functions
         dsens_param = lambda t, xs: self.dsens(t,xs,params_sens_dict)
-        dsens_jac_sparse_mat_fun_param = lambda t, xs: self.dsens_jac_sparse_mat_fun(t,xs,params_sens_dict)
+        dsens_param_jac = lambda t, xs: self.dsens_jac(t,xs,params_sens_dict)
         
         xs0 = self.xs0(params_sens_dict)
 
@@ -165,14 +162,13 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         #stop event
         tolsolve = 10**-4
         def event_stop(t,y):
-            params = {**self.params_values_fixed, **params_sens_dict}
-            dSsample = np.array(self.ds(t,y[:self.nvars],params))
+            dSsample = np.array(self._sderiv(t,y[:self.nvars],params_sens_dict))
             dSsample_dot = np.abs(dSsample).sum()
             return dSsample_dot - tolsolve 
         event_stop.terminal = True
         #integrate
         sol = solve_ivp(dsens_param,[0, self.final_time+1], xs0, method="BDF",
-                        jac = dsens_jac_sparse_mat_fun_param,t_eval=self.time_orig,
+                        jac = dsens_param_jac,t_eval=self.time_orig,
                         atol=self.integration_tol, rtol=self.integration_tol,
                         events=event_stop)
 
@@ -196,11 +192,18 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         
         # get sensitivities of max 3-HPA
         index_3HPA_max = np.argmax(jac_sample[:,self.index_3HPA_cytosol]) 
-        
+        plt.plot(time,jac_sample[:,:3])
+        plt.show()
+
+        plt.plot(time,jac_sample[:,3:6])
+        plt.scatter(time[index_3HPA_max],jac_sample[index_3HPA_max,self.index_3HPA_cytosol])
+        plt.show()
+
+        plt.plot(time,jac_sample[:,6:self.nvars])
+        plt.show()
         # check if derivative is 0 of 3-HPA 
         statevars_maxabs = jac_sample[index_3HPA_max,:self.nvars]
-        params = {**self.params_values_fixed, **params_sens_dict}
-        dev_3HPA = self.ds(time[index_3HPA_max],statevars_maxabs,params)[self.index_3HPA_cytosol]
+        dev_3HPA = self._sderiv(time[index_3HPA_max],statevars_maxabs,params_sens_dict)[self.index_3HPA_cytosol]
         if abs(dev_3HPA) < 1e-2:
             indices_3HPA_max_cytosol_params_sens =  np.array([[index_3HPA_max,i] for i in self.range_3HPA_cytosol_params_sens])
             jac_HPA_max = jac_sample[tuple(indices_3HPA_max_cytosol_params_sens.T)]
@@ -231,10 +234,10 @@ def main(argv, arc):
     # initialize variables
     ds = 'log10'
     start_time = (10**(-15))
-    final_time = 72*HRS_TO_SECS
-    integration_tol = 1e-3
+    final_time = 100*HRS_TO_SECS
+    integration_tol = 1e-6
     nsamples = 500
-    enz_ratio_name_split =  enz_ratio_name.split("/")
+    enz_ratio_name_split =  enz_ratio_name.split(":")
     enz_ratio = float(enz_ratio_name_split[0])/float(enz_ratio_name_split[1])
     params_values_fixed = {'NAD_MCP_INIT': 0.1,
                           'enz_ratio': enz_ratio,
@@ -248,13 +251,6 @@ def main(argv, arc):
                           'H_EXT_INIT': 0,
                           'P_EXT_INIT': 0}
 
-    for key in params_values_fixed.keys():
-        if ds == "log2":
-            if key in PARAMETER_LIST:
-                params_values_fixed[key] = np.log2(params_values_fixed[key])
-        if ds == "log10":
-            if key in PARAMETER_LIST:
-                params_values_fixed[key] = np.log10(params_values_fixed[key])
 
     params_sens_list = ['kcatfDhaB','KmDhaBG',
                         'kcatfDhaT','KmDhaTH','KmDhaTN',

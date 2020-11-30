@@ -71,17 +71,20 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         self.params_sens_list = params_sens_list
         self.params_values_fixed = params_values_fixed
         self.nparams_sens = len(params_sens_list)
-        self.set_param_sp_symbols()
-        self.set_sens_vars()
+        self._set_param_sp_symbols()
+        self._set_sens_vars()
 
         if ds == "log2":
-            self.ds = self.sderiv_log2_param
+            self._sderiv = self._sderiv_log2_param
         elif ds == "log10":
-            self.ds = self.sderiv_log10_param
+            self._sderiv = self._sderiv_log10_param
         else:
-            self.ds = self.sderiv
+            self._sderiv = self._sderiv_id
 
-    def set_param_sp_symbols(self):
+        self._set_jacs_fun()
+        self._create_jac_sens()
+
+    def _set_param_sp_symbols(self):
         """
         sets dictionary of parameters to be analyzed using sensitivity analysis
         """
@@ -89,7 +92,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         self.params_sens_sp = list((self.params_sens_sp_dict).values())
 
 
-    def set_sens_vars(self):
+    def _set_sens_vars(self):
         """
         creates a list of sympy symbols for the derivative of each state vector
         wrt to parameters
@@ -99,7 +102,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         #sensitivity variables
         self.sensitivity_sp = np.array(list(sp.symbols('s0:' + str(self.n_sensitivity_eqs))))
 
-    def sderiv(self,t,x,params):
+    def _sderiv_id(self,t,x,params_sens = None):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         log10 transformed
@@ -107,12 +110,20 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         :param x: state variables
         :param params: dictionary of parameter values
         """
-        if params is None:
+        if params_sens is None:
             print("Please set the parameter values")
 
-        return super().sderiv(t,x,params)
+        params_sens_keys = set(params_sens.keys())
 
-    def sderiv_log10_param(self,t,x,params):
+        # transform and set parameters
+        if params_sens_keys == set(self.params_sens_list):
+            params = {**self.params_values_fixed, **params_sens}
+            return super()._sderiv(t,x,params = params)
+        else:
+            print("Internal list of parameter senstivities and given dictionary do not correspond.")
+
+
+    def _sderiv_log10_param(self,t,x,params_sens = None):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         log10 transformed
@@ -120,42 +131,52 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         :param x: state variables
         :param params: log2 transformed parameter list
         """
-        if params is None:
+        if params_sens is None:
             print("Please set the parameter values")
 
-        params_log10 = {param: (10**param_val if param in PARAMETER_LIST else param_val) for param,param_val in params.items() }
+        params_sens_keys = set(params_sens.keys())
 
-        return super().sderiv(t,x,params = params_log10)
+        #transform and set parameters
+        if params_sens_keys == set(self.params_sens_list):
+            params_sens_log10 = {param: (10**param_val if param in PARAMETER_LIST else param_val) for param,param_val in params_sens.items() }
+            params_log10 = {**self.params_values_fixed, **params_sens_log10}
+            return super()._sderiv(t,x,params = params_log10)
+        else:
+            print("Internal list of parameter senstivities and given dictionary do not correspond.")
 
 
-    def sderiv_log2_param(self,t,x,params):
+
+    def _sderiv_log2_param(self,t,x,params_sens = None):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         log2 transformed
         :param t: time
         :param x: state variables
-        :param params: log2 transformed parameter list
+        :param params_sens: log2 transformed parameter dictionary
         """
-        if params is None:
+        if params_sens is None:
             print("Please set the parameter values")
 
-        params_log2 = {param: (2**param_val if param in PARAMETER_LIST else param_val) for param,param_val in params.items() }
-        return super().sderiv(t,x,params = params_log2)
+        params_sens_keys = set(params_sens.keys())
+ 
+        # transform and set parameter
+        if params_sens_keys == set(self.params_sens_list):
+            params_sens_log2 = {param: (2**param_val if param in PARAMETER_LIST else param_val) for param,param_val in params_sens.items() }
+            params_log2 = {**self.params_values_fixed, **params_sens_log2}
+            return super()._sderiv(t,x,params = params_log2)
+        else:
+            print("Internal list of parameter senstivities and given dictionary do not correspond.")
 
-    def set_jacs_fun(self):
+
+    def _set_jacs_fun(self):
         """
         Computes the jacobian of the spatial derivative wrt concentrations (state variables)
         and parameters from create_param_symbols
         """
 
-
-        # set parameter values with sensitivity symbols
-        params_vals_syms = (self.params_values_fixed).copy()
-        for param_name,param_sym in self.params_sens_sp_dict.items():
-            params_vals_syms[param_name] = param_sym
-
         # SDeriv with param vals and symbols
-        sderiv_sym_param_sens = sp.Matrix(self.ds(0,self.x_sp,params = params_vals_syms))
+        sderiv_sym_param_sens = sp.Matrix(self._sderiv(0,self.x_sp,params_sens = self.params_sens_sp_dict))
+        
         # derivative of rhs wrt params
         sderiv_jac_params = sderiv_sym_param_sens.jacobian(self.params_sens_sp)
         sderiv_jac_params_fun = sp.lambdify((self.x_sp,self.params_sens_sp), sderiv_jac_params,'numpy')
@@ -180,15 +201,17 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
         assert set(self.params_sens_list) == set(list(params_sens_dict.keys()))
 
-        # set parameter values 
-        params = (self.params_values_fixed).copy()
-        for param_sens_name,params_vals in params_sens_dict.items():
-            params[param_sens_name] = params_vals
+        # reorder params_sens_dict if necessary
+        if self.params_sens_list != list(params_sens_dict.keys()):
+            params_sens_dict_sorted = {params_sens_dict[param_name] for param_name in params_sens_list}
+            params_sens_dict = params_sens_dict_sorted
 
+        # get state varible and sensitivities
         x = xs[:self.nvars]
         s = xs[self.nvars:]
         dxs = []
-        dxs.extend(self.ds(t, x, params))
+        dxs.extend(self._sderiv(t, x, params_sens=params_sens_dict))
+
         # compute rhs of sensitivity equations
         sderiv_jac_params_fun_mat = self.sderiv_jac_params_fun(t,x,params_sens_dict.values())
         sderiv_jac_conc_mat = self.sderiv_jac_conc_fun(t,x,params_sens_dict.values())
@@ -199,7 +222,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         return dxs
 
 
-    def create_jac_sens(self):
+    def _create_jac_sens(self):
         """
         set compute jacobian of the sensitivity equation
         """
@@ -212,8 +235,28 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         # generate jacobian
         dsens_jac_dense_mat_fun = sp.lambdify((xs_sp,self.params_sens_sp),dsens_sym_jac)
         dsens_jac_sparse_mat_fun = lambda t,xs,params_sens_dict: sparse.csr_matrix(dsens_jac_dense_mat_fun(xs,params_sens_dict.values()))
-        self.dsens_jac_sparse_mat_fun = dsens_jac_sparse_mat_fun
+        self._dsens_jac_sparse_mat_fun = dsens_jac_sparse_mat_fun
 
+    def dsens_jac(self,t,xs,params_sens_dict=None):
+        """
+        Computes the jacobian of the RHS of the sensitivity equation
+
+        :param t: time
+        :param xs: state variables and sensitivity variables
+        :param params_sens_dict: dictionary of param values whose sensitivities are being studied
+        """
+
+        if params_sens_dict is None:
+            print("Please set the parameter values")
+
+        assert set(self.params_sens_list) == set(list(params_sens_dict.keys()))
+
+        # reorder params_sens_dict if necessary
+        if self.params_sens_list != list(params_sens_dict.keys()):
+            params_sens_dict_sorted = {params_sens_dict[param_name] for param_name in params_sens_list}
+            params_sens_dict = params_sens_dict_sorted
+
+        return self._dsens_jac_sparse_mat_fun(t,xs,params_sens_dict)
 
 def main(nsamples = 500):
 
@@ -245,14 +288,6 @@ def main(nsamples = 500):
 
     params_sens_list = ['kcatfDhaB', 'KmDhaBG', 'km', 'kc', 'dPacking', 'nmcps']
 
-    for key in params_values_fixed.keys():
-        if ds == "log2":
-            if key in PARAMETER_LIST:
-                params_values_fixed[key] = np.log2(params_values_fixed[key])
-        if ds == "log10":
-            if key in PARAMETER_LIST:
-                params_values_fixed[key] = np.log10(params_values_fixed[key])
-
     # parameter to check senstivity
     params_sens_dict = {'kcatfDhaB':400, # /seconds Input
               'KmDhaBG': 0.6, # mM Input
@@ -273,12 +308,10 @@ def main(nsamples = 500):
     # setup differential eq
     model_local_sens = DhaBDhaTModelLocalSensAnalysis(params_values_fixed, params_sens_list, external_volume = external_volume, rc = 0.375e-6,
                                                 lc =  2.47e-6, rm = 7.e-8, ncells_per_metrecubed = ncells_per_metrecubed, cellular_geometry = "rod", ds = ds)
-    model_local_sens.set_jacs_fun()
-    model_local_sens.create_jac_sens()
 
     #parameterize sensitivity functions
     dsens_param = lambda t, xs: model_local_sens.dsens(t,xs,params_sens_dict)
-    dsens_jac_sparse_mat_fun_param = lambda t, xs: model_local_sens.dsens_jac_sparse_mat_fun(t,xs,params_sens_dict)
+    dsens_param_jac = lambda t, xs: model_local_sens.dsens_jac(t,xs,params_sens_dict)
 
     # initial conditions
     y0 = np.zeros(model_local_sens.nvars) 
@@ -300,8 +333,7 @@ def main(nsamples = 500):
     # terminal event
     tol_solve = 10**-8
     def event_stop(t,y):
-        params = {**params_values_fixed, **params_sens_dict}
-        dSsample = np.array(model_local_sens.ds(t,y[:model_local_sens.nvars],params))
+        dSsample = np.array(model_local_sens._sderiv(t,y[:model_local_sens.nvars],params_sens = params_sens_dict))
         dSsample_dot = np.abs(dSsample).sum()
         return dSsample_dot - tol_solve 
     event_stop.terminal = True
@@ -310,7 +342,7 @@ def main(nsamples = 500):
     start_time = time.time()
 
     sol = solve_ivp(dsens_param,[0, fintime+10], ys0, method="BDF", 
-                    jac = dsens_jac_sparse_mat_fun_param, events=event_stop,
+                    jac = dsens_param_jac, events=event_stop,
                     t_eval=time_orig, atol=tol,rtol=tol)
     end_time = time.time()
 
