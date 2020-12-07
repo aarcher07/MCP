@@ -75,9 +75,9 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         self._set_sens_vars()
 
         if ds == "log2":
-            self._sderiv = self._sderiv_log2_param
+            self._sderiv = self._sderiv_log2
         elif ds == "log10":
-            self._sderiv = self._sderiv_log10_param
+            self._sderiv = self._sderiv_log10
         else:
             self._sderiv = self._sderiv_id
 
@@ -123,7 +123,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
             print("Internal list of parameter senstivities and given dictionary do not correspond.")
 
 
-    def _sderiv_log10_param(self,t,x,params_sens = None):
+    def _sderiv_log10(self,t,x,params_sens = None):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         log10 transformed
@@ -146,7 +146,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
 
 
-    def _sderiv_log2_param(self,t,x,params_sens = None):
+    def _sderiv_log2(self,t,x,params_sens = None):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         log2 transformed
@@ -203,8 +203,9 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
         # reorder params_sens_dict if necessary
         if self.params_sens_list != list(params_sens_dict.keys()):
-            params_sens_dict_sorted = {params_sens_dict[param_name] for param_name in params_sens_list}
+            params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
             params_sens_dict = params_sens_dict_sorted
+
 
         # get state varible and sensitivities
         x = xs[:self.nvars]
@@ -253,7 +254,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
         # reorder params_sens_dict if necessary
         if self.params_sens_list != list(params_sens_dict.keys()):
-            params_sens_dict_sorted = {params_sens_dict[param_name] for param_name in params_sens_list}
+            params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
             params_sens_dict = params_sens_dict_sorted
 
         return self._dsens_jac_sparse_mat_fun(t,xs,params_sens_dict)
@@ -266,15 +267,15 @@ def main(nsamples = 500):
     mintime = 10**(-15)
     secstohrs = 60*60
     fintime = 72*60*60
-    ds = "log2"
+    ds = "log10"
     # parameter to check senstivity
 
     params_values_fixed = {'KmDhaTH': 0.77, # mM
                           'KmDhaTN': 0.03, # mM
                           'kcatfDhaT': 59.4, # /seconds
                           'enz_ratio': 1/1.33,
-                          'NADH_MCP_INIT': 0.1,
-                          'NAD_MCP_INIT': 0.1,
+                          'NADH_MCP_INIT': 0.36,
+                          'NAD_MCP_INIT': 1.,
                           'G_MCP_INIT': 0,
                           'H_MCP_INIT': 0,
                           'P_MCP_INIT': 0,
@@ -333,7 +334,8 @@ def main(nsamples = 500):
     # terminal event
     tol_solve = 10**-8
     def event_stop(t,y):
-        dSsample = np.array(model_local_sens._sderiv(t,y[:model_local_sens.nvars],params_sens = params_sens_dict))
+        dSsample = np.array(model_local_sens._sderiv(t,y[:model_local_sens.nvars],
+                                                       params_sens = params_sens_dict))
         dSsample_dot = np.abs(dSsample).sum()
         return dSsample_dot - tol_solve 
     event_stop.terminal = True
@@ -345,7 +347,7 @@ def main(nsamples = 500):
                     jac = dsens_param_jac, events=event_stop,
                     t_eval=time_orig, atol=tol,rtol=tol)
     end_time = time.time()
-
+    index_max_3HPA = np.argmax(sol.y[4,:])
 
     #################################################
     # Plot solutions
@@ -376,11 +378,17 @@ def main(nsamples = 500):
     colour = ['b','r','y','c','m']
 
     # cellular solutions
-    for i in range(0,ncompounds):
-        ycell = sol.y[5+i, :]
-        plt.plot(sol.t/secstohrs, ycell, colour[i])
-    plt.title('Plot of cellular concentration')
-    plt.legend(['Glycerol', '3-HPA', '1,3-PDO'], loc='upper right')
+    # for i in range(0,ncompounds):
+    #     ycell = sol.y[5+i, :]
+    #     plt.plot(sol.t/secstohrs, ycell, colour[i])
+    index_max_3HPA = np.argmax(sol.y[4,:])
+    i = 1
+    ycell = sol.y[3+i, :]
+    plt.axvline(x=time_orig_hours[index_max_3HPA],ls='--',ymin=0.05,color='k')
+
+    plt.plot(sol.t/secstohrs, ycell, colour[i])
+    plt.title('Plot of cellular 3-HPA concentration')
+    plt.legend(['3-HPA'], loc='upper right')
     plt.xlabel('time (hr)')
     plt.ylabel('concentration (mM)')
     plt.grid() 
@@ -397,15 +405,19 @@ def main(nsamples = 500):
         lub = 0.85*miny if miny > 0 else 1.15*miny
         for j in range(model_local_sens.nparams_sens):
             axes[j // 2, j % 2].plot(time_orig_hours, soly[j,:].T)
-            axes[j // 2, j % 2].set_ylabel(r'$\log\partial (' + namesvars[i] + ')/\partial ' + sens_vars_names[j][1:])
+            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i] + ')/\partial \log_{10}' + sens_vars_names[j][1:])
+            # axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i] + ')/\partial ' + sens_vars_names[j][1:])
+
             axes[j // 2, j % 2].set_title(sens_vars_names[j])
             axes[j // 2, j % 2].set_ylim([lub, yub])
             axes[j // 2, j % 2].grid()
             if j >= (model_local_sens.nparams_sens-2):
                 axes[(model_local_sens.nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
 
-        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i]+')/\partial p_i$, of the MCP concentration of '
-                        + namesvars[i] + ' wrt $p_i$', y = 0.92)
+        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i]+')/\partial\log_{10} p_i$, of the MCP concentration of '
+                       + namesvars[i] + ' wrt $p_i$', y = 0.92)
+        # figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i]+')/\partial p_i$, of the MCP concentration of '
+        #                 + namesvars[i] + ' wrt $p_i$', y = 0.92)
         # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
         #             bbox_inches='tight')
         plt.show()
@@ -421,16 +433,21 @@ def main(nsamples = 500):
         lub = 0.85*miny if miny > 0 else 1.15*miny
         for j in range(model_local_sens.nparams_sens):
             axes[j // 2, j % 2].plot(time_orig_hours, soly[j,:].T)
-            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:])
+            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-len(namesvars)] + ')/\partial \log_{10}' + sens_vars_names[j][1:])
+            #axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:])
             axes[j // 2, j % 2].set_title(sens_vars_names[j])
             axes[j // 2, j % 2].grid()
             axes[j // 2, j % 2].set_ylim([lub, yub])
+            axes[j // 2, j % 2].axvline(x=time_orig_hours[index_max_3HPA],ls='--',ymin=0.05,color='k')
+
             if j >= (model_local_sens.nparams_sens-2):
                 axes[(model_local_sens.nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
 
 
-        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-len(namesvars)]+')/\partial p_i$, of the cellular concentration of '
+        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-len(namesvars)]+')/\partial \log_{10} p_i$, of the cellular concentration of '
                         + namesvars[i-len(namesvars)] + ' wrt $p_i$', y = 0.92)
+        # figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-len(namesvars)]+')/\partial p_i$, of the cellular concentration of '
+        #                 + namesvars[i-len(namesvars)] + ' wrt $p_i$', y = 0.92)
         # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
         #             bbox_inches='tight')
         plt.show()
@@ -449,15 +466,18 @@ def main(nsamples = 500):
         lub = 0.85*miny if miny > 0 else 1.15*miny
         for j in range(model_local_sens.nparams_sens):
             axes[j // 2, j % 2].plot(time_orig_hours, soly[j,:].T)
-            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial ' + sens_vars_names[j][1:])
+            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial \log_{10}' + sens_vars_names[j][1:])
+            # axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial ' + sens_vars_names[j][1:])
             axes[j // 2, j % 2].set_ylim([lub, yub])
             axes[j // 2, j % 2].set_title(sens_vars_names[j])
             axes[j // 2, j % 2].grid()
             if j >= (model_local_sens.nparams_sens-2):
                 axes[(model_local_sens.nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
 
-        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial p_i$, of the external concentration of '
+        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial \log_{10} p_i$, of the external concentration of '
                         + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
+        # figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial \log_{10} p_i$, of the external concentration of '
+        #                 + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
         # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesvars[i+3]  +'.png',
         #             bbox_inches='tight')
         plt.show()

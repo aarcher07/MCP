@@ -192,7 +192,7 @@ if __name__ == '__main__':
           'dPacking': 0.64,
           'enz_ratio': 1/1.33,
           'nmcps': 10.,
-          'NADH_MCP_INIT': 1., # mM
+          'NADH_MCP_INIT': .36, # mM
           'NAD_MCP_INIT': 1.} # mM
 
     init_conditions = {'G_EXT_INIT': 200, #  2 * 10^(-4) mol/cm3 = 200 mM. 

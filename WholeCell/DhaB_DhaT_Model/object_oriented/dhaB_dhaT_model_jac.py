@@ -10,10 +10,12 @@ Editing History:
 import numpy as np
 from numpy.linalg import LinAlgError
 from scipy.integrate import solve_ivp
-from mpi4py import MPI
-import matplotlib as mpl
-mpl.rc('text', usetex = True)
+
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rcParams['text.usetex'] = True
+mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
+
 import warnings
 import sympy as sp
 import scipy.sparse as sparse
@@ -25,15 +27,15 @@ from dhaB_dhaT_model_local_sens_analysis import *
 from dhaB_dhaT_model import HRS_TO_SECS
 
 
-VARS_TO_TEX = {'kcatfDhaB': '$k_{\text{cat}}^{f,\text{dhaB}}$',
-                'KmDhaBG': '$K_{\text{M}}^{\text{Glycerol},\text{dhaB}}$',
-                'kcatfDhaT': '$k_{\text{cat}}^{f,\text{dhaT}}$',
-                'KmDhaTH': '$K_{\text{M}}^{\text{3-HPA},\text{dhaT}}$',
-                'KmDhaTN': '$K_{\text{M}}^{\text{NADH},\text{dhaT}}$',
-                'NADH_MCP_INIT': '$[\text{NADH}]$ ',
-                'NAD_MCP_INIT': '$[\text{NAD+}]$ ',
-                'km':'$k_{m}$',
-                'kc': '$k_{c}$',
+VARS_TO_TEX = {'kcatfDhaB': r'$k_{\text{cat}}^{f,\text{dhaB}}$',
+                'KmDhaBG': r'$K_{\text{M}}^{\text{Glycerol},\text{dhaB}}$',
+                'kcatfDhaT': r'$k_{\text{cat}}^{f,\text{dhaT}}$',
+                'KmDhaTH': r'$K_{\text{M}}^{\text{3-HPA},\text{dhaT}}$',
+                'KmDhaTN': r'$K_{\text{M}}^{\text{NADH},\text{dhaT}}$',
+                'NADH_MCP_INIT': r'$[\text{NADH}]$ ',
+                'NAD_MCP_INIT': r'$[\text{NAD+}]$ ',
+                'km':r'$k_{m}$',
+                'kc': r'$k_{c}$',
                 'dPacking': 'dPacking', 
                 'nmcps': 'Number of MCPs'}
 
@@ -189,18 +191,9 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
 
         """
         status, time, jac_sample = self.jac(params_sens_dict)
-        
+
         # get sensitivities of max 3-HPA
         index_3HPA_max = np.argmax(jac_sample[:,self.index_3HPA_cytosol]) 
-        plt.plot(time,jac_sample[:,:3])
-        plt.show()
-
-        plt.plot(time,jac_sample[:,3:6])
-        plt.scatter(time[index_3HPA_max],jac_sample[index_3HPA_max,self.index_3HPA_cytosol])
-        plt.show()
-
-        plt.plot(time,jac_sample[:,6:self.nvars])
-        plt.show()
         # check if derivative is 0 of 3-HPA 
         statevars_maxabs = jac_sample[index_3HPA_max,:self.nvars]
         dev_3HPA = self._sderiv(time[index_3HPA_max],statevars_maxabs,params_sens_dict)[self.index_3HPA_cytosol]
@@ -216,7 +209,7 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
             jac_P_ext = jac_sample[tuple(self.indices_1_3PDO_ext_params_sens.T)]
             jac_G_ext = jac_sample[tuple(self.indices_Glycerol_ext_params_sens.T)]
         elif status == 1:
-            jac_P_ext = jac_sample[tuple(self.indices_sens_1_PDO_ext_after_timecheck.T)]
+            jac_P_ext = jac_sample[tuple(self.indices_sens_1_3PDO_ext_after_timecheck.T)]
             jac_G_ext = jac_sample[tuple(self.indices_sens_Glycerol_ext_after_timecheck.T)]
         else:
             jac_P_ext = []
@@ -233,12 +226,16 @@ def main(argv, arc):
     
     # initialize variables
     ds = 'log10'
+
     start_time = (10**(-15))
     final_time = 100*HRS_TO_SECS
+
     integration_tol = 1e-6
     nsamples = 500
+
     enz_ratio_name_split =  enz_ratio_name.split(":")
     enz_ratio = float(enz_ratio_name_split[0])/float(enz_ratio_name_split[1])
+
     params_values_fixed = {'NAD_MCP_INIT': 0.1,
                           'enz_ratio': enz_ratio,
                           'G_MCP_INIT': 0,
@@ -263,7 +260,7 @@ def main(argv, arc):
                         'kcatfDhaT': 59.4, # /seconds
                         'KmDhaTH': 0.77, # mM
                         'KmDhaTN': 0.03, # mM
-                        'NADH_MCP_INIT': 0.1,
+                        'NADH_MCP_INIT': 0.36,
                         'km': 10**-7, 
                         'kc': 10.**-5,
                         'dPacking': 0.64,
@@ -280,15 +277,30 @@ def main(argv, arc):
     jacobian_est = np.array(dhaB_dhaT_model_jacobian.jac_subset(params_sens_dict))
     
     # format output
+    _, _, jac_sample = dhaB_dhaT_model_jacobian.jac(params_sens_dict)
+    max_3_HPA = np.max(jac_sample[:,dhaB_dhaT_model_jacobian.index_3HPA_cytosol])
+
+    min_max_3_HPA = max_3_HPA
+    max_max_3_HPA = max_3_HPA
     for i in range(len(jacobian_est)):
         param_names_tex = [ VARS_TO_TEX[params] for params in params_sens_dict.keys()]
         param_values_tex = [ "$" + "{:.3f}".format(10**params_sens_dict[params]) + '$ ' + VARS_TO_UNITS[params] 
                               for params in params_sens_dict.keys()]
         param_senstivities = [ "$" + ("{:.3f}".format(ja) if abs(ja) > 0.001  else "<0.001") + "$" for ja in jacobian_est[i,:]]
 
-        DeltaQoI = [("($" + "{:.3f}".format(ja*np.log10(0.5)) + "$, $" + "{:.3f}".format(ja*np.log10(1.5)) + "$)"  
+        DeltaQoI = [("($" + "{:.3f}".format(ja*np.log10(0.8)) + "$, $" + "{:.3f}".format(ja*np.log10(1.2)) + "$)"  
                      if abs(ja) > 0.001 else "--") for ja in jacobian_est[i,:] ]
-
+        percentage_change = 20/100
+        if i == 0:
+            for ja in jacobian_est[i,:]:
+                if ja > 0:
+                    min_max_3_HPA += ja*np.log10(1 - percentage_change) 
+                    max_max_3_HPA += ja*np.log10(1 + percentage_change)
+                else:   
+                    min_max_3_HPA += ja*np.log10(1 + percentage_change) 
+                    max_max_3_HPA += ja*np.log10(1- percentage_change)
+            print(min_max_3_HPA)
+            print(max_max_3_HPA)
         param_results = pd.DataFrame({'Parameter': param_names_tex,
                                       'Value': param_values_tex,
                                       'Sensitivity': param_senstivities,
