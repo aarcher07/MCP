@@ -77,8 +77,9 @@ class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
 
     def _sderiv_log10(self,t,x,params_sens = None):
         """
-        Computes the spatial derivative of the system at time point, t, with the parameters
-        [-1,1] transformed by transforming parameters into their original log10 values
+        Computes the spatial derivative of the system at time point, t, with the
+        log10 centered parameters, [-1,1], by transforming parameters into their 
+        original log10 values
         :param t: time
         :param x: state variables
         :param params_sens: [-1,1] transformed parameter list

@@ -275,13 +275,14 @@ def main(argv, arc):
     dhaB_dhaT_model_jacobian = DhaBDhaTModelJac(start_time, final_time, integration_tol, nsamples,
                                                    params_values_fixed,params_sens_list, ds = ds)
     jacobian_est = np.array(dhaB_dhaT_model_jacobian.jac_subset(params_sens_dict))
-    
+
     # format output
     _, _, jac_sample = dhaB_dhaT_model_jacobian.jac(params_sens_dict)
     max_3_HPA = np.max(jac_sample[:,dhaB_dhaT_model_jacobian.index_3HPA_cytosol])
 
     min_max_3_HPA = max_3_HPA
     max_max_3_HPA = max_3_HPA
+
     for i in range(len(jacobian_est)):
         param_names_tex = [ VARS_TO_TEX[params] for params in params_sens_dict.keys()]
         param_values_tex = [ "$" + "{:.3f}".format(10**params_sens_dict[params]) + '$ ' + VARS_TO_UNITS[params] 

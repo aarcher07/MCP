@@ -203,8 +203,9 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
         # reorder params_sens_dict if necessary
         if self.params_sens_list != list(params_sens_dict.keys()):
-            params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
-            params_sens_dict = params_sens_dict_sorted
+            sys.exit("The internal parameter sensitivity list and the given parameter list do not correspond")
+            # params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
+            # params_sens_dict = params_sens_dict_sorted
 
 
         # get state varible and sensitivities
@@ -254,8 +255,9 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
         # reorder params_sens_dict if necessary
         if self.params_sens_list != list(params_sens_dict.keys()):
-            params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
-            params_sens_dict = params_sens_dict_sorted
+            sys.exit("The internal parameter sensitivity list and the given parameter list do not correspond")
+            # params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
+            # params_sens_dict = params_sens_dict_sorted
 
         return self._dsens_jac_sparse_mat_fun(t,xs,params_sens_dict)
 
