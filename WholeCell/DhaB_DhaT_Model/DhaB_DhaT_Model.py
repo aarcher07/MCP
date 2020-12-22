@@ -147,8 +147,23 @@ def ComputeEnzymeConcentrations(ratio, dPacking):
     AvogadroConstant = constants.Avogadro
     rMCP =140/2.
     Vol = lambda r: 4*np.pi*(r**3)/3;  
-    SigmaDhaTExpression = lambda NDhaT: (NDhaT*Vol(rDhaT) + ratio*NDhaT*Vol(rDhaB))/Vol(rMCP) - dPacking
-    SigmaDhaT = fsolve(SigmaDhaTExpression,1)[0]/(AvogadroConstant*Vol(rMCP*(1e-9)))
+    NDhaT =  Vol(rMCP)*dPacking/(Vol(rDhaT) + ratio*Vol(rDhaB))
+    SigmaDhaT = NDhaT/(AvogadroConstant*Vol(rMCP*(1e-9)))
+    SigmaDhaB = ratio*SigmaDhaT
+    return [SigmaDhaB, SigmaDhaT]
+
+def ComputeEnzymeConcentrations(ratio, dPacking):
+    '''
+    Computes the enzyme concentrations from the relative enzyme expressions and
+    the packing efficiency
+    '''
+    rDhaB = 8/2.
+    rDhaT = 5/2.
+    AvogadroConstant = constants.Avogadro
+    rMCP =140/2.
+    Vol = lambda r: 4*np.pi*(r**3)/3;  
+    NDhaT =  Vol(rMCP)*dPacking/(Vol(rDhaT) + ratio*Vol(rDhaB))
+    SigmaDhaT = NDhaT/(AvogadroConstant*Vol(rMCP*(1e-9)))
     SigmaDhaB = ratio*SigmaDhaT
     return [SigmaDhaB, SigmaDhaT]
 
@@ -187,7 +202,6 @@ if __name__ == '__main__':
     SDerivParameterized = lambda t,x: SDeriv(t,x,integration_params,params)
     nVars = integration_params['nVars']
     x_list_sp = np.array(sp.symbols('x:' + str(nVars)))
-    
     tolsolve = 10**-4
     def event_stop(t,x):
         dSsample = sum(np.abs(SDerivParameterized(t,x)))

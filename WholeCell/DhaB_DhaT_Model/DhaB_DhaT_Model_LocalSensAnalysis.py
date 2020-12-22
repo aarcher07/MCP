@@ -106,7 +106,8 @@ def compute_jacs(x_sp,params_sens_dict,integration_params,dS = SDeriv, **kwargs)
 
 
     SDerivSymbolic = sp.Matrix(dS(0,x_sp,integration_params,diffeq_params))
-
+    print(x_sp)
+    print(SDerivSymbolic)
     # derivative of rhs wrt params
     SDerivSymbolicJacParams = SDerivSymbolic.jacobian(params_sensitivity_sp)
     SDerivSymbolicJacParamsLamb = sp.lambdify((x_sp,params_sensitivity_sp), SDerivSymbolicJacParams,'numpy')
@@ -246,10 +247,12 @@ def main(nsamples = 500):
                                             'dPacking',
                                             'Nmcps')
 
+
     # log transform parameters in params_sens_dict
-    for key in params.keys():
-        params[key] = np.log10(params[key])
-    dS = SDerivLog10Param
+    # for key in params.keys():
+    #     params[key] = np.log10(params[key])
+    # dS = SDerivLog10Param
+    dS = SDeriv
     # store info about parameters
     nParams = len(params_sens_dict)
     integration_params['nParams'] = nParams
@@ -263,6 +266,16 @@ def main(nsamples = 500):
 
     # initial conditions
     n_compounds_cell = 3
+    nVars =3*3 + 2
+    x0 = np.zeros(nVars) 
+    x0[-3] = init_conditions['GInit']  # y0[-5] gives the initial state of the external substrate.
+    x0[0] = init_conditions['NInit']  # y0[5] gives the initial state of the external substrate.
+    x0[1] = init_conditions['DInit']  # y0[6] gives the initial state of the external substrate.
+    sens0 = np.zeros(nSensitivityEqs)
+    for i,param in enumerate(params_sens_dict):
+        if param in ['GInit', 'IInit', 'NInit', 'DInit']:
+            sens0[i:nSensitivityEqs:nParams] = 1
+    xs0 = np.concatenate([x0,sens0])
 
     # setup differential eq
     x_sp, sensitivity_sp = create_state_symbols(integration_params['nVars'], integration_params['nParams'])
@@ -270,143 +283,144 @@ def main(nsamples = 500):
     dSensParams = lambda t,xs: dSens(t, xs, params, integration_params, SDerivSymbolicJacParamsLambFun,
                                      SDerivSymbolicJacConcLambFun, dS=dS)
     #create jacobian of dSensParams
+    print(xs0)
     print(dSensParams(0,xs0))
 
-    dSensSymJacSparseMatLamFun = create_jac_sens(x_sp, sensitivity_sp, params, integration_params,
-                                                 SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun, dS = dS)
+   #  dSensSymJacSparseMatLamFun = create_jac_sens(x_sp, sensitivity_sp, params, integration_params,
+   #                                               SDerivSymbolicJacParamsLambFun, SDerivSymbolicJacConcLambFun, dS = dS)
 
-    # solution params
-    tol = 1e-7
-    timeorig = np.logspace(np.log10(mintime),np.log10(fintime),nsamples)
+   #  # solution params
+   #  tol = 1e-7
+   #  timeorig = np.logspace(np.log10(mintime),np.log10(fintime),nsamples)
 
-    # terminal event
-    starttime = time.time()
-    sol = solve_ivp(dSensParams,[0, fintime+10], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun, t_eval=timeorig,
-                     atol=tol,rtol=tol, events=[event_Gmin,event_Pmax])
-    endtime = time.time()
-
-
-    #################################################
-    # Plot solution
-    #################################################
-    volcell = integration_params['cell volume']
-    volmcp = 4 * np.pi * (integration_params['Rm'] ** 3) / 3
-    external_volume = integration_params['external_volume']
-    colour = ['b','r','y','c','m']
+   #  # terminal event
+   #  starttime = time.time()
+   #  sol = solve_ivp(dSensParams,[0, fintime+10], xs0, method="BDF", jac = dSensSymJacSparseMatLamFun, t_eval=timeorig,
+   #                   atol=tol,rtol=tol, events=[event_Gmin,event_Pmax])
+   #  endtime = time.time()
 
 
-    print('code time: ' + str(endtime-starttime))
-    # plot state variables solution
-    print(sol.message)
+   #  #################################################
+   #  # Plot solution
+   #  #################################################
+   #  volcell = integration_params['cell volume']
+   #  volmcp = 4 * np.pi * (integration_params['Rm'] ** 3) / 3
+   #  external_volume = integration_params['external_volume']
+   #  colour = ['b','r','y','c','m']
 
 
-    # rescale the solutions
-    ncompounds = 3
-    timeorighours = timeorig/secstohrs
+   #  print('code time: ' + str(endtime-starttime))
+   #  # plot state variables solution
+   #  print(sol.message)
 
 
-    #plot parameters
-    namesvars = ['Glycerol', '3-HPA', '1,3-PDO']
-    sens_vars_names = [r'$kcat_f^{DhaB}$', r'$K_M^{DhaB}$', r'$k_{m}$', r'$k_{c}$', r'$dPacking$', r'$MCP$']#, r'$G_0$', r'$I_0$']
-    colour = ['b','r','y','c','m']
-
-    # cellular solutions
-    for i in range(0,ncompounds):
-        ycell = sol.y[5+i, :]
-        plt.plot(sol.t/secstohrs,ycell, colour[i])
-    plt.title('Plot of cellular concentration')
-    plt.legend(['Glycerol', '3-HPA', '1,3-PDO'], loc='upper right')
-    plt.xlabel('time (hr)')
-    plt.ylabel('concentration (mM)')
-    plt.grid() 
-    plt.show()
+   #  # rescale the solutions
+   #  ncompounds = 3
+   #  timeorighours = timeorig/secstohrs
 
 
-    # plot sensitivity variable solutions for MCP variables
-    for i in range(2,2+len(namesvars)):
-        figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True, sharey=True)
-        soly = sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :]
-        maxy = np.max(soly)
-        miny =np.min(soly)
-        yub = 1.15*maxy if maxy > 0 else 0.85*maxy
-        lub = 0.85*miny if miny > 0 else 1.15*miny
-        for j in range(nParams):
-            axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
-            axes[j // 2, j % 2].set_ylabel(r'$\log\partial (' + namesvars[i-2] + ')/\partial ' + sens_vars_names[j][1:])
-            axes[j // 2, j % 2].set_title(sens_vars_names[j])
-            axes[j // 2, j % 2].set_ylim([lub, yub])
-            axes[j // 2, j % 2].grid()
-            if j >= (nParams-2):
-                axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
+   #  #plot parameters
+   #  namesvars = ['Glycerol', '3-HPA', '1,3-PDO']
+   #  sens_vars_names = [r'$kcat_f^{DhaB}$', r'$K_M^{DhaB}$', r'$k_{m}$', r'$k_{c}$', r'$dPacking$', r'$MCP$']#, r'$G_0$', r'$I_0$']
+   #  colour = ['b','r','y','c','m']
 
-        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-2]+')/\partial p_i$, of the MCP concentration of '
-                        + namesvars[i-2] + ' wrt $p_i$', y = 0.92)
-        # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
-        #             bbox_inches='tight')
-        plt.show()
+   #  # cellular solutions
+   #  for i in range(0,ncompounds):
+   #      ycell = sol.y[5+i, :]
+   #      plt.plot(sol.t/secstohrs,ycell, colour[i])
+   #  plt.title('Plot of cellular concentration')
+   #  plt.legend(['Glycerol', '3-HPA', '1,3-PDO'], loc='upper right')
+   #  plt.xlabel('time (hr)')
+   #  plt.ylabel('concentration (mM)')
+   #  plt.grid() 
+   #  plt.show()
 
 
-   # plot sensitivity variable solutions for cellular variables
-    for i in range(2+len(namesvars),2+2*len(namesvars)):
-        figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True, sharey=True)
-        soly = sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :]
-        maxy = np.max(soly)
-        miny = np.min(soly)
-        yub = 1.15*maxy if maxy > 0 else 0.85*maxy
-        lub = 0.85*miny if miny > 0 else 1.15*miny
-        for j in range(nParams):
-            axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
-            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-2-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:])
-            axes[j // 2, j % 2].set_title(sens_vars_names[j])
-            axes[j // 2, j % 2].grid()
-            axes[j // 2, j % 2].set_ylim([lub, yub])
-            if j >= (nParams-2):
-                axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
+   #  # plot sensitivity variable solutions for MCP variables
+   #  for i in range(2,2+len(namesvars)):
+   #      figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True, sharey=True)
+   #      soly = sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :]
+   #      maxy = np.max(soly)
+   #      miny =np.min(soly)
+   #      yub = 1.15*maxy if maxy > 0 else 0.85*maxy
+   #      lub = 0.85*miny if miny > 0 else 1.15*miny
+   #      for j in range(nParams):
+   #          axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
+   #          axes[j // 2, j % 2].set_ylabel(r'$\log\partial (' + namesvars[i-2] + ')/\partial ' + sens_vars_names[j][1:])
+   #          axes[j // 2, j % 2].set_title(sens_vars_names[j])
+   #          axes[j // 2, j % 2].set_ylim([lub, yub])
+   #          axes[j // 2, j % 2].grid()
+   #          if j >= (nParams-2):
+   #              axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
+
+   #      figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-2]+')/\partial p_i$, of the MCP concentration of '
+   #                      + namesvars[i-2] + ' wrt $p_i$', y = 0.92)
+   #      # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
+   #      #             bbox_inches='tight')
+   #      plt.show()
 
 
-        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-2-len(namesvars)]+')/\partial p_i$, of the cellular concentration of '
-                        + namesvars[i-2-len(namesvars)] + ' wrt $p_i$', y = 0.92)
-        # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
-        #             bbox_inches='tight')
-        plt.show()
+   # # plot sensitivity variable solutions for cellular variables
+   #  for i in range(2+len(namesvars),2+2*len(namesvars)):
+   #      figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True, sharey=True)
+   #      soly = sol.y[(nVars + i*nParams):(nVars + (i+1)*nParams), :]
+   #      maxy = np.max(soly)
+   #      miny = np.min(soly)
+   #      yub = 1.15*maxy if maxy > 0 else 0.85*maxy
+   #      lub = 0.85*miny if miny > 0 else 1.15*miny
+   #      for j in range(nParams):
+   #          axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
+   #          axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-2-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:])
+   #          axes[j // 2, j % 2].set_title(sens_vars_names[j])
+   #          axes[j // 2, j % 2].grid()
+   #          axes[j // 2, j % 2].set_ylim([lub, yub])
+   #          if j >= (nParams-2):
+   #              axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
 
 
-    # sensitivity variables
-    for i in range(-len(namesvars),0):
-        figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True,sharey=True)
-        if i == -3:
-            soly = sol.y[-(nParams):,:]
-        else:
-            soly = sol.y[-(i+1)*nParams:-i*nParams, :]
-        maxy = np.max(soly)
-        miny = np.min(soly)
-        yub = 1.15*maxy if maxy > 0 else 0.85*maxy
-        lub = 0.85*miny if miny > 0 else 1.15*miny
-        for j in range(nParams):
-            axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
-            axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial ' + sens_vars_names[j][1:])
-            axes[j // 2, j % 2].set_ylim([lub, yub])
-            axes[j // 2, j % 2].set_title(sens_vars_names[j])
-            axes[j // 2, j % 2].grid()
-            if j >= (nParams-2):
-                axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
-
-        figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial p_i$, of the external concentration of '
-                        + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
-        # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesvars[i+3]  +'.png',
-        #             bbox_inches='tight')
-        plt.show()
+   #      figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-2-len(namesvars)]+')/\partial p_i$, of the cellular concentration of '
+   #                      + namesvars[i-2-len(namesvars)] + ' wrt $p_i$', y = 0.92)
+   #      # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
+   #      #             bbox_inches='tight')
+   #      plt.show()
 
 
-    #check mass balance
-    ext_masses_org = y0[(nVars-3):nVars]* external_volume
-    cell_masses_org = y0[5:8] * volcell 
-    mcp_masses_org = y0[:5] * volmcp
-    ext_masses_fin = sol.y[(nVars-3):nVars, -1] * external_volume
-    cell_masses_fin = sol.y[5:8,-1] * volcell
-    mcp_masses_fin = sol.y[:5, -1] * volmcp
-    print(ext_masses_org.sum() + Ncells*cell_masses_org.sum() + Ncells*Nmcps*mcp_masses_org.sum())
-    print(ext_masses_fin.sum() + Ncells*cell_masses_fin.sum() + Ncells*Nmcps*mcp_masses_fin.sum())
+   #  # sensitivity variables
+   #  for i in range(-len(namesvars),0):
+   #      figure, axes = plt.subplots(nrows=int(math.ceil(len(params_sens_dict)/2)), ncols=2, figsize=(10,10), sharex=True,sharey=True)
+   #      if i == -3:
+   #          soly = sol.y[-(nParams):,:]
+   #      else:
+   #          soly = sol.y[-(i+1)*nParams:-i*nParams, :]
+   #      maxy = np.max(soly)
+   #      miny = np.min(soly)
+   #      yub = 1.15*maxy if maxy > 0 else 0.85*maxy
+   #      lub = 0.85*miny if miny > 0 else 1.15*miny
+   #      for j in range(nParams):
+   #          axes[j // 2, j % 2].plot(timeorighours, soly[j,:].T)
+   #          axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial ' + sens_vars_names[j][1:])
+   #          axes[j // 2, j % 2].set_ylim([lub, yub])
+   #          axes[j // 2, j % 2].set_title(sens_vars_names[j])
+   #          axes[j // 2, j % 2].grid()
+   #          if j >= (nParams-2):
+   #              axes[(nParams-1) // 2, j % 2].set_xlabel('time/hrs')
+
+   #      figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial p_i$, of the external concentration of '
+   #                      + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
+   #      # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesvars[i+3]  +'.png',
+   #      #             bbox_inches='tight')
+   #      plt.show()
+
+
+   #  #check mass balance
+   #  ext_masses_org = y0[(nVars-3):nVars]* external_volume
+   #  cell_masses_org = y0[5:8] * volcell 
+   #  mcp_masses_org = y0[:5] * volmcp
+   #  ext_masses_fin = sol.y[(nVars-3):nVars, -1] * external_volume
+   #  cell_masses_fin = sol.y[5:8,-1] * volcell
+   #  mcp_masses_fin = sol.y[:5, -1] * volmcp
+   #  print(ext_masses_org.sum() + Ncells*cell_masses_org.sum() + Ncells*Nmcps*mcp_masses_org.sum())
+   #  print(ext_masses_fin.sum() + Ncells*cell_masses_fin.sum() + Ncells*Nmcps*mcp_masses_fin.sum())
 
 
 if __name__ == '__main__':
