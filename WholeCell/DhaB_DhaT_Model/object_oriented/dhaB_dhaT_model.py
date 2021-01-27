@@ -175,9 +175,8 @@ class DhaBDhaTModel:
         sderiv_jac_state_vars_sp_fun = sp.lambdify(self.x_sp, sderiv_jac_state_vars_sp, 'numpy')
         self.sderiv_jac_state_vars_sp_fun = lambda t,x: sparse.csr_matrix(sderiv_jac_state_vars_sp_fun(*x))
 
-if __name__ == '__main__':
 
-
+def main():
     external_volume =  9e-6
     ncells_per_metrecubed = 8e14 # 7e13-8e14 cells per m^3
     ncells = ncells_per_metrecubed*external_volume
@@ -187,8 +186,8 @@ if __name__ == '__main__':
           'kcatfDhaT': 59.4, # /seconds
           'kcatfDhaB':400, # /seconds Input
           'KmDhaBG': 0.6, # mM Input
-          'km': 10**-7, 
-          'kc': 10.**-5,
+          'km': 10**2, 
+          'kc': 10.**-7,
           'dPacking': 0.64,
           'enz_ratio': 1/1.33,
           'nmcps': 10.,
@@ -209,7 +208,7 @@ if __name__ == '__main__':
 
     # event functions
     tolG = 0.5*init_conditions['G_EXT_INIT']
-    tolsolve = 10**-4
+    tolsolve = 10**-5
 
     def event_Gmin(t,y):
         return y[-3] - tolG
@@ -238,17 +237,20 @@ if __name__ == '__main__':
 
     # time samples
 
-    tol = 1e-10
+    tol = 1e-3
     nsamples = 500
     timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
 
     time_1 = time.time()
-    sol = solve_ivp(dhaB_dhaT_model._sderiv,[0, fintime+1], y0, method="BDF",jac=dhaB_dhaT_model.sderiv_jac_state_vars_sp_fun, t_eval=timeorig,
-                    atol=tol,rtol=tol, events=event_stop)
+    try:
+        sol = solve_ivp(dhaB_dhaT_model._sderiv,[0, fintime+1], y0, method="BDF",jac=dhaB_dhaT_model.sderiv_jac_state_vars_sp_fun, t_eval=timeorig,
+                        atol=tol,rtol=tol, events=event_stop)
+    except ValueError:
+        return
     time_2 = time.time()
 
     print('time to integrate: ' + str(time_2 - time_1))
-
+    print(sol.message)
     #################################################
     # Plot solution
     #################################################
@@ -260,7 +262,7 @@ if __name__ == '__main__':
     # rescale the solutions
     ncompounds = 3
     timeorighours = sol.t/HRS_TO_SECS
-
+    print(sol.message)
 
     # cellular solutions
     for i in range(0,ncompounds):
@@ -309,3 +311,5 @@ if __name__ == '__main__':
     print(ext_masses_fin.sum() + ncells*cell_masses_fin.sum() + ncells*nmcps*mcp_masses_fin.sum())
     print((sol.y[-3:, -1]).sum()*(external_volume+ncells*nmcps*volmcp+ncells*volcell))
 
+if __name__ == '__main__':
+    main()

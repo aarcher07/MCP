@@ -71,22 +71,29 @@ class ActiveSubspaces:
             niters_rank = self.niters//size
         # generate data
         param_samples_rank = []
+        param_samples_diff_int_rank = []
         jac_list_rank = []
         for _ in range(niters_rank):  
             sample = self.dist(self.nparams) # sample transformed unit form distribution
-            param_samples_rank.append(sample)
-            jac_list_rank.append(self.jac(sample))
+            try:
+                param_samples_rank.append(sample)
+                jac_list_rank.append(self.jac(sample))
+            except ValueError:
+                param_samples_diff_int_rank.append(sample)
 
         # gather data
         jac_list = None
         param_samples = None
+        param_samples_diff_int = None
         jac_list = comm.gather(jac_list_rank, root=0)
         param_samples = comm.gather(param_samples_rank, root=0)
+        param_samples_diff_int = comm.gather(param_samples_diff_int_rank, root=0)
 
         if rank == 0:
             #flatten data
             jac_list_flattened = [item for sublist in jac_list for item in sublist]
             param_samples_flattened = [item for sublist in param_samples for item in sublist]
+            param_samples_diff_int_flattened = [item for sublist in param_samples_diff_int for item in sublist]
 
             # remove unsuccessful integrations 
             jac_list_cleaned_reordered = [[] for _ in range(self.nfuncs)]
@@ -111,9 +118,11 @@ class ActiveSubspaces:
             for i in range(self.nfuncs):
                 for jac_est in jac_list_cleaned_reordered[i]:
                     variance_matrix[i] += (np.outer(jac_est,jac_est)-cost_matrix[i])**2/(nfuncs_successes[i]-1)            
-            results = [nfuncs_successes, jac_list_cleaned_reordered, variance_matrix, cost_matrix]
+            
+            param_results = [param_samples_flattened,param_samples_diff_int_flattened]
+            fun_results = [nfuncs_successes, jac_list_cleaned_reordered, variance_matrix, cost_matrix]
 
-            return results
+            return {'parameter results': param_results, 'function results': fun_results}
 
 def eig_plots(eigenvalues,eigenvectors,param_sens_bounds,func_name,enz_ratio_name,niters,date_string):
     #create folder name
@@ -176,8 +185,9 @@ def dhaB_dhaT_model(argv, arc):
     ds = ''
     start_time = (10**(-15))
     final_time = 100*HRS_TO_SECS
-    integration_tol = 1e-5
+    integration_tol = 1e-3
     nsamples = 500
+    tolsolve = 10**-10
     enz_ratio_name_split =  enz_ratio_name.split(":")
     enz_ratio = float(enz_ratio_name_split[0])/float(enz_ratio_name_split[1])
     params_values_fixed = {'NAD_MCP_INIT': 0.1,
@@ -198,12 +208,12 @@ def dhaB_dhaT_model(argv, arc):
                         'KmDhaTH': [0.1,1.], # mM
                         'KmDhaTN': [0.0116,0.48], # mM
                         'NADH_MCP_INIT': [0.12,0.60],
-                        'km': np.log10([10**-8,10**-6]), 
-                        'kc': np.log10([10**-8,10**-4]),
+                        'km': np.log10([10**-3,10**2]), 
+                        'kc': np.log10([10**-7,10**-2]),
                         'dPacking': [0.3,0.64],
                         'nmcps': [3.,30.]}
 
-    dhaB_dhaT_model_jacobian_as = DhaBDhaTModelJacAS(start_time, final_time, integration_tol, nsamples,
+    dhaB_dhaT_model_jacobian_as = DhaBDhaTModelJacAS(start_time, final_time, integration_tol, nsamples, tolsolve,
                                                 params_values_fixed,param_sens_bounds, ds = ds)
     def dhaB_dhaT_jac(runif):
         param_sens_dict = {param_name: val for param_name,val in zip(param_sens_bounds.keys(),runif)}
@@ -216,6 +226,9 @@ def dhaB_dhaT_model(argv, arc):
     end_time = time.time()
 
     if rank == 0:
+        param_results = results["parameter results"]
+        fun_results = results["function results"]
+
         date_string = time.strftime("%Y_%m_%d_%H:%M")
 
         # create folder
@@ -240,22 +253,30 @@ def dhaB_dhaT_model(argv, arc):
         with open(file_name_txt, 'w') as f:
             sys.stdout = f
             print('solve time: ' + str(end_time-start_time))
+            print('\n number of processors: ' + str(size))
 
             print('\n number of functions evaluations')
-            print(results[0])
+            print(fun_results[0])
 
             print('\n variance')
-            print(results[-2])
+            print(fun_results[-2])
 
             print('\n max variance')
-            print([np_arr.max() for np_arr in results[-2]])
+            print([np_arr.max() for np_arr in fun_results[-2]])
 
             print('\n cost matrix')
-            print(results[-1])
+            print(fun_results[-1])
+
+            print('\n number of difficult parameters')
+            print(len(param_results[-1]))
+
+            print('\n difficult parameters')
+            print(param_results[-1])
+            
             sys.stdout = original_stdout
 
         for i,func_name in enumerate(QOI_NAMES):
-            eigs, eigvals = np.linalg.eigh(results[-1][i])
+            eigs, eigvals = np.linalg.eigh(fun_results[-1][i])
             eigs = np.flip(eigs)
             eigsvals = np.flip(eigvals, axis=1)
             eig_plots(eigs, eigvals,param_sens_bounds,func_name,enz_ratio_name,niters,date_string)

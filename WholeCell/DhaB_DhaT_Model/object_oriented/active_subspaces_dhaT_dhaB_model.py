@@ -25,7 +25,7 @@ from dhaB_dhaT_model_jac import *
 
 class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
     def __init__(self,start_time,final_time,
-                integration_tol, nsamples, params_values_fixed,
+                integration_tol, nsamples, tolsolve, params_values_fixed,
                 param_sens_bounds, external_volume = 9e-6, 
                 rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
                 ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
@@ -50,7 +50,7 @@ class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
 
         self.param_sens_bounds = param_sens_bounds
 
-        super().__init__(start_time,final_time,integration_tol, nsamples, params_values_fixed,
+        super().__init__(start_time,final_time,integration_tol, nsamples, tolsolve, params_values_fixed,
                         list(param_sens_bounds.keys()), external_volume, rc, lc, rm, 
                         ncells_per_metrecubed, cellular_geometry, ds)
 

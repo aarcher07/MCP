@@ -57,8 +57,8 @@ QOI_NAMES = ["maximum concentration of 3-HPA",
 
 class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
 
-    def __init__(self,start_time,final_time,
-                integration_tol, nsamples, params_values_fixed,
+    def __init__(self,start_time,final_time, 
+                integration_tol, nsamples, tolsolve, params_values_fixed,
                 params_sens_list, external_volume = 9e-6, 
                 rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
                 ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
@@ -93,6 +93,7 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         self.final_time = final_time
         self.integration_tol = integration_tol
         self.nsamples = nsamples
+        self.tolsolve = tolsolve
         self.time_orig = np.logspace(np.log10(self.start_time),np.log10(self.final_time),self.nsamples)
         self.time_orig_hours = self.time_orig/HRS_TO_SECS
 
@@ -162,7 +163,7 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
 
         
         #stop event
-        tolsolve = 10**-4
+        tolsolve = self.tolsolve
         def event_stop(t,y):
             dSsample = np.array(self._sderiv(t,y[:self.nvars],params_sens_dict))
             dSsample_dot = np.abs(dSsample).sum()
@@ -232,7 +233,7 @@ def main(argv, arc):
 
     integration_tol = 1e-6
     nsamples = 500
-
+    tolsolve = 10**-10
     enz_ratio_name_split =  enz_ratio_name.split(":")
     enz_ratio = float(enz_ratio_name_split[0])/float(enz_ratio_name_split[1])
 
@@ -272,7 +273,7 @@ def main(argv, arc):
         if ds == "log10":
             params_sens_dict[key] = np.log10(params_sens_dict[key])
 
-    dhaB_dhaT_model_jacobian = DhaBDhaTModelJac(start_time, final_time, integration_tol, nsamples,
+    dhaB_dhaT_model_jacobian = DhaBDhaTModelJac(start_time, final_time, integration_tol, nsamples,tolsolve,
                                                    params_values_fixed,params_sens_list, ds = ds)
     jacobian_est = np.array(dhaB_dhaT_model_jacobian.jac_subset(params_sens_dict))
 
