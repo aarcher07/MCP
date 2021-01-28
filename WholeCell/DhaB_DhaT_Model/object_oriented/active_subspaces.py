@@ -21,9 +21,11 @@ import scipy.sparse as sparse
 import os
 import sys
 import pickle
-
+from skopt.space import Space
 from dhaB_dhaT_model_jac import *
 from active_subspaces_dhaT_dhaB_model import *
+from skopt.sampler import Lhs
+from skopt.space import Space
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -36,7 +38,7 @@ FUNCS_TO_FILENAMES = {'maximum concentration of 3-HPA': 'max3HPA',
                      'Glycerol concentration after 5 hours': 'G5hrs',
                      '1,3-PDO concentration after 5 hours': 'P5hrs'}
 class ActiveSubspaces:
-    def __init__(self,jac, nfuncs, nparams, niters=10**3, rdist = 'unif'):
+    def __init__(self,jac, nfuncs, nparams, niters=10**3, sampling = 'rsampling'):
         """
         Initializes a class that computes and ranks the average sensitivity matrix  
         of each function used to compute jac, the sensitivity matrix of the functions. 
@@ -55,9 +57,8 @@ class ActiveSubspaces:
         self.nfuncs = nfuncs
         self.nparams = nparams
         self.niters = niters
-        if rdist == 'unif':
-            dist = lambda M: 2*np.random.uniform(0,1,size=M)-1
-        self.dist = dist
+        self.sampling = sampling
+        self.sample_space = Space([(-1,1) for _ in range(self.nparams)])
         self.param_samples = []
 
     def compute_cost_matrix(self):
@@ -73,8 +74,17 @@ class ActiveSubspaces:
         param_samples_rank = []
         param_samples_diff_int_rank = []
         jac_list_rank = []
-        for _ in range(niters_rank):  
-            sample = self.dist(self.nparams) # sample transformed unit form distribution
+        
+        if self.sampling == "LHS":
+            lhs = Lhs(lhs_type="classic", criterion=None)
+            param_samples_unorganized = lhs.generate(self.sample_space, niters_rank)
+        elif self.sampling == "rsampling":
+            param_samples_unorganized = self.sample_space.rvs(niters_rank)
+        elif self.sampling == "Sobol":
+            sobol = Sobol()
+            x = sobol.generate(self.sample_space.dimensions, niters_rank)
+
+        for sample in param_samples_unorganized:  
             try:
                 param_samples_rank.append(sample)
                 jac_list_rank.append(self.jac(sample))
@@ -124,7 +134,7 @@ class ActiveSubspaces:
 
             return {'parameter results': param_results, 'function results': fun_results}
 
-def eig_plots(eigenvalues,eigenvectors,param_sens_bounds,func_name,enz_ratio_name,niters,date_string):
+def eig_plots(eigenvalues,eigenvectors,param_sens_bounds,sampling,func_name,enz_ratio_name,niters,date_string):
     #create folder name
     params_names = param_sens_bounds.keys()
     folder = "".join([key + '_' +str(val) + '_' for key,val in param_sens_bounds.items()])[:-1]
@@ -139,7 +149,7 @@ def eig_plots(eigenvalues,eigenvectors,param_sens_bounds,func_name,enz_ratio_nam
 
 
     # file name
-    file_name = FUNCS_TO_FILENAMES[func_name] + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.png'
+    file_name = "sampling_"+ sampling + "_" + FUNCS_TO_FILENAMES[func_name] + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.png'
 
     # eigenvalue plot
     grad_name = r'$E[\nabla_{\vec{\widetilde{p}}}$'+ FUNCS_TO_NAMES[func_name] +r'$(\nabla_{\vec{\widetilde{p}}}$' + FUNCS_TO_NAMES[func_name] +r'$^{\top}]$'
@@ -188,6 +198,7 @@ def dhaB_dhaT_model(argv, arc):
     integration_tol = 1e-3
     nsamples = 500
     tolsolve = 10**-10
+    sampling = 'rsampling'
     enz_ratio_name_split =  enz_ratio_name.split(":")
     enz_ratio = float(enz_ratio_name_split[0])/float(enz_ratio_name_split[1])
     params_values_fixed = {'NAD_MCP_INIT': 0.1,
@@ -219,7 +230,7 @@ def dhaB_dhaT_model(argv, arc):
         param_sens_dict = {param_name: val for param_name,val in zip(param_sens_bounds.keys(),runif)}
         return dhaB_dhaT_model_jacobian_as.jac_subset(param_sens_dict) 
 
-    as_dhaB_dhaT_mod = ActiveSubspaces(dhaB_dhaT_jac, 3, len(param_sens_bounds),niters=niters)
+    as_dhaB_dhaT_mod = ActiveSubspaces(dhaB_dhaT_jac, 3, len(param_sens_bounds),niters=niters, sampling = sampling)
 
     start_time = time.time()
     results = as_dhaB_dhaT_mod.compute_cost_matrix()
@@ -244,11 +255,11 @@ def dhaB_dhaT_model(argv, arc):
             os.makedirs(folder_name)
 
         # store results
-        file_name_pickle = folder_name + '/N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.pkl'
+        file_name_pickle = folder_name + '/sampling_' + sampling + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.pkl'
         with open(file_name_pickle, 'wb') as f:
             pickle.dump(results, f)
  
-        file_name_txt = folder_name + '/N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.txt'
+        file_name_txt = folder_name + '/sampling_' + sampling + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.txt'
         original_stdout = sys.stdout
         with open(file_name_txt, 'w') as f:
             sys.stdout = f
@@ -279,7 +290,7 @@ def dhaB_dhaT_model(argv, arc):
             eigs, eigvals = np.linalg.eigh(fun_results[-1][i])
             eigs = np.flip(eigs)
             eigsvals = np.flip(eigvals, axis=1)
-            eig_plots(eigs, eigvals,param_sens_bounds,func_name,enz_ratio_name,niters,date_string)
+            eig_plots(eigs, eigvals,param_sens_bounds,sampling,func_name,enz_ratio_name,niters,date_string)
 if __name__ == '__main__':
     dhaB_dhaT_model(sys.argv, len(sys.argv))
 
