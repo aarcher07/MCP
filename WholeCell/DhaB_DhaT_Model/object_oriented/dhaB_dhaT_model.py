@@ -46,6 +46,7 @@ class DhaBDhaTModel:
         self.lc = lc
         self.rm = rm
         self.mcp_surface_area =  4*np.pi*(self.rm**2)
+        self.mcp_volume =  (4./3.)*np.pi*(self.rm**3)
 
         self.ncells = ncells_per_metrecubed*external_volume
         self.cellular_geometry = cellular_geometry
@@ -112,9 +113,9 @@ class DhaBDhaTModel:
         R_DhaB = dhaB_conc*params['kcatfDhaB']*x[0]/ (params['KmDhaBG'] + x[0])
         R_DhaT = dhaT_conc*params['kcatfDhaT']*x[1] * params['NADH_MCP_INIT']  / (params['KmDhaTH']*params['KmDhaTN'] + x[1] * params['NADH_MCP_INIT'])
 
-        d[0] = -R_DhaB + (3*params['km']/self.rm)*(x[0 + n_compounds_cell] - x[0])  # microcompartment equation for G
-        d[1] =  R_DhaB -  R_DhaT + (3*params['km']/self.rm)*(x[1 + n_compounds_cell] - x[1])  # microcompartment equation for H
-        d[2] = R_DhaT + (3*params['km']/self.rm)*(x[2 + n_compounds_cell] - x[2])  # microcompartment equation for P
+        d[0] = -R_DhaB + (3*params['PermMCPPolar']/self.rm)*(x[0 + n_compounds_cell] - x[0])  # microcompartment equation for G
+        d[1] =  R_DhaB -  R_DhaT + (3*params['NonPolarBias']*params['PermMCPPolar']/self.rm)*(x[1 + n_compounds_cell] - x[1])  # microcompartment equation for H
+        d[2] = R_DhaT + (3*params['PermMCPPolar']/self.rm)*(x[2 + n_compounds_cell] - x[2])  # microcompartment equation for P
 
         ####################################################################################
         ##################################### cytosol of cell ##############################
@@ -124,13 +125,18 @@ class DhaBDhaTModel:
 
         for i in range(index, index + n_compounds_cell):
             # cell equations for ith compound in the cell
-            d[i] = -params['kc']*(self.cell_surface_area/self.cell_volume) * (x[i] - x[i + n_compounds_cell]) - nmcps*params['km']*(self.mcp_surface_area/self.cell_volume)*(x[i] - x[i- n_compounds_cell]) 
+            if i % 3 == 1:
+                Pm = params['NonPolarBias']*params['PermMCPPolar']
+            else:
+                Pm = params['PermMCPPolar']
+
+            d[i] = -params['PermCell']*(self.cell_surface_area/self.cell_volume) * (x[i] - x[i + n_compounds_cell]) - nmcps*Pm*(self.mcp_surface_area/self.cell_volume)*(x[i] - x[i- n_compounds_cell]) 
 
         #####################################################################################
         ######################### external volume equations #################################
         #####################################################################################
         for i in reversed(range(-1, -1-n_compounds_cell, -1)):
-            d[i] = self.vratio*params['kc'] * ncells * (x[i - n_compounds_cell] - x[i])  # external equation for concentration
+            d[i] = self.vratio*params['PermCell'] * ncells * (x[i - n_compounds_cell] - x[i])  # external equation for concentration
         return d
 
 
@@ -179,18 +185,18 @@ class DhaBDhaTModel:
 def main():
     external_volume =  9e-6
     ncells_per_metrecubed = 8e14 # 7e13-8e14 cells per m^3
-    ncells = ncells_per_metrecubed*external_volume
     
-    params = {'KmDhaTH': 0.77, # mM
-          'KmDhaTN': 0.03, # mM
-          'kcatfDhaT': 59.4, # /seconds
-          'kcatfDhaB':400, # /seconds Input
-          'KmDhaBG': 0.6, # mM Input
-          'km': 10**2, 
-          'kc': 10.**-7,
+    params = {'kcatfDhaB': 630, # /seconds Input
+          'KmDhaBG': 0.85, # mM Input
+          'kcatfDhaT': 70., # /seconds
+          'KmDhaTH': 0.55, # mM
+          'KmDhaTN': 0.245, # mM
+          'PermMCPPolar': 10**-3, 
+          'NonPolarBias': 10**-2,
+          'PermCell': 10.**-7,
           'dPacking': 0.64,
-          'enz_ratio': 1/1.33,
-          'nmcps': 10.,
+          'enz_ratio': 1/18,
+          'nmcps': 15.,
           'NADH_MCP_INIT': .36, # mM
           'NAD_MCP_INIT': 1.} # mM
 
@@ -251,11 +257,13 @@ def main():
 
     print('time to integrate: ' + str(time_2 - time_1))
     print(sol.message)
+
     #################################################
     # Plot solution
     #################################################
+    ncells = dhaB_dhaT_model.ncells
     volcell = dhaB_dhaT_model.cell_volume
-    volmcp = 4 * np.pi * (dhaB_dhaT_model.rm ** 3) / 3
+    volmcp = dhaB_dhaT_model.mcp_volume
     external_volume = dhaB_dhaT_model.external_volume
     colour = ['b','r','y','c','m']
 
@@ -266,7 +274,7 @@ def main():
 
     # cellular solutions
     for i in range(0,ncompounds):
-        ycell = sol.y[5+i, :]
+        ycell = sol.y[3+i, :]
         plt.plot(timeorighours,ycell, colour[i])
     plt.title('Plot of cellular concentration')
     plt.legend(['Glycerol', '3-HPA', '1,3-PDO'], loc='upper right')

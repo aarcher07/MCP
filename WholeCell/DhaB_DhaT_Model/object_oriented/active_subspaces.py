@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpi4py import MPI
 mpl.rcParams['text.usetex'] = True
-mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
 import warnings
 import sympy as sp
 import scipy.sparse as sparse
@@ -24,7 +24,7 @@ import pickle
 from skopt.space import Space
 from dhaB_dhaT_model_jac import *
 from active_subspaces_dhaT_dhaB_model import *
-from skopt.sampler import Lhs
+from skopt.sampler import Lhs, Sobol
 from skopt.space import Space
 
 comm = MPI.COMM_WORLD
@@ -37,6 +37,7 @@ FUNCS_TO_NAMES = {'maximum concentration of 3-HPA': r'$\max_{t}\text{3-HPA}(t;\v
 FUNCS_TO_FILENAMES = {'maximum concentration of 3-HPA': 'max3HPA',
                      'Glycerol concentration after 5 hours': 'G5hrs',
                      '1,3-PDO concentration after 5 hours': 'P5hrs'}
+
 class ActiveSubspaces:
     def __init__(self,jac, nfuncs, nparams, niters=10**3, sampling = 'rsampling'):
         """
@@ -58,7 +59,7 @@ class ActiveSubspaces:
         self.nparams = nparams
         self.niters = niters
         self.sampling = sampling
-        self.sample_space = Space([(-1,1) for _ in range(self.nparams)])
+        self.sample_space = Space([(-1.,1.) for _ in range(self.nparams)])
         self.param_samples = []
 
     def compute_cost_matrix(self):
@@ -82,13 +83,13 @@ class ActiveSubspaces:
             param_samples_unorganized = self.sample_space.rvs(niters_rank)
         elif self.sampling == "Sobol":
             sobol = Sobol()
-            x = sobol.generate(self.sample_space.dimensions, niters_rank)
+            param_samples_unorganized = sobol.generate(self.sample_space.dimensions, niters_rank)
 
         for sample in param_samples_unorganized:  
-            try:
+            if sample == [[],[],[]]:
                 param_samples_rank.append(sample)
                 jac_list_rank.append(self.jac(sample))
-            except ValueError:
+            else:
                 param_samples_diff_int_rank.append(sample)
 
         # gather data
@@ -106,31 +107,39 @@ class ActiveSubspaces:
             param_samples_diff_int_flattened = [item for sublist in param_samples_diff_int for item in sublist]
 
             # remove unsuccessful integrations 
-            jac_list_cleaned_reordered = [[] for _ in range(self.nfuncs)]
+            jac_list_cleaned_reordered = [[] for _ in range(self.nfuncs)] # store list of outer product of jac for each QoI
+            nfuncs_successes = [0. for _ in range(self.nfuncs)] # count successful integration
+
             for jac_sample in jac_list_flattened:
                 for i in range(self.nfuncs):
                     if len(jac_sample[i]) != 0:
-                        jac_list_cleaned_reordered[i].append(jac_sample[i])
+                        jac_list_cleaned_reordered[i].append(np.outer(jac_sample[i],jac_sample[i]))
+                        nfuncs_successes[i] += 1.
 
-            # count successful integrations
-            nfuncs_successes = []
-            for i in range(self.nfuncs):
-                nfuncs_successes.append(len(jac_list_cleaned_reordered[i])*1.0)
+            # compute cost matrix and norm convergence
+            cost_matrix = []
+            cost_matrix_cumul = []
+            norm_convergence = []
 
-            # compute cost matrix
-            cost_matrix = [np.zeros((self.nparams,self.nparams)) for _ in range(self.nfuncs)]
             for i in range(self.nfuncs):
-                for jac_est in jac_list_cleaned_reordered[i]:
-                    cost_matrix[i] += np.outer(jac_est,jac_est)/nfuncs_successes[i]
+                cost_cumsum = np.cumsum(jac_list_cleaned_reordered[i],axis=0)/np.arange(1,nfuncs_successes[i]+1)[:,None,None]
+                cost_matrix_cumul.append(cost_cumsum)
+                cost_matrix.append(cost_cumsum[-1,:,:])
+                norm_convergence.append(np.linalg.norm(cost_cumsum,ord='fro',axis=(1,2))) 
 
-            # compute cost matrix
-            variance_matrix = [np.zeros((self.nparams,self.nparams)) for _ in range(self.nfuncs)]
+            # compute variance matrix
+            variance_matrix = []
             for i in range(self.nfuncs):
-                for jac_est in jac_list_cleaned_reordered[i]:
-                    variance_matrix[i] += (np.outer(jac_est,jac_est)-cost_matrix[i])**2/(nfuncs_successes[i]-1)            
-            
-            param_results = [param_samples_flattened,param_samples_diff_int_flattened]
-            fun_results = [nfuncs_successes, jac_list_cleaned_reordered, variance_matrix, cost_matrix]
+                variance_mat = np.sum((jac_list_cleaned_reordered[i]-cost_matrix[i])**2/(nfuncs_successes[i]-1),axis=0)            
+                variance_matrix.append(variance_mat)
+            param_results = [param_samples_flattened,
+                             param_samples_diff_int_flattened]
+
+            fun_results = [nfuncs_successes,
+                           norm_convergence,
+                           cost_matrix_cumul, 
+                           variance_matrix,
+                           cost_matrix]
 
             return {'parameter results': param_results, 'function results': fun_results}
 
@@ -190,6 +199,7 @@ def dhaB_dhaT_model(argv, arc):
     # get inputs
     enz_ratio_name = argv[1]
     niters = int(float(argv[2]))
+    sampling =  argv[3]
 
     # initialize variables
     ds = ''
@@ -198,7 +208,6 @@ def dhaB_dhaT_model(argv, arc):
     integration_tol = 1e-3
     nsamples = 500
     tolsolve = 10**-10
-    sampling = 'rsampling'
     enz_ratio_name_split =  enz_ratio_name.split(":")
     enz_ratio = float(enz_ratio_name_split[0])/float(enz_ratio_name_split[1])
     params_values_fixed = {'NAD_MCP_INIT': 0.1,
@@ -219,11 +228,12 @@ def dhaB_dhaT_model(argv, arc):
                         'KmDhaTH': [0.1,1.], # mM
                         'KmDhaTN': [0.0116,0.48], # mM
                         'NADH_MCP_INIT': [0.12,0.60],
-                        'km': np.log10([10**-3,10**2]), 
-                        'kc': np.log10([10**-7,10**-2]),
+                        'PermMCPPolar': np.log10([10**-4, 10**-2]),
+                        'NonPolarBias': np.log10([10**-2, 10**-1]),
+                        'PermCell': np.log10([10**-9,10**-4]),
                         'dPacking': [0.3,0.64],
                         'nmcps': [3.,30.]}
-
+                        
     dhaB_dhaT_model_jacobian_as = DhaBDhaTModelJacAS(start_time, final_time, integration_tol, nsamples, tolsolve,
                                                 params_values_fixed,param_sens_bounds, ds = ds)
     def dhaB_dhaT_jac(runif):
@@ -286,11 +296,14 @@ def dhaB_dhaT_model(argv, arc):
             
             sys.stdout = original_stdout
 
+        #quest doesnt like plotting cause it doesnt have the same font packages
         for i,func_name in enumerate(QOI_NAMES):
-            eigs, eigvals = np.linalg.eigh(fun_results[-1][i])
-            eigs = np.flip(eigs)
-            eigsvals = np.flip(eigvals, axis=1)
-            eig_plots(eigs, eigvals,param_sens_bounds,sampling,func_name,enz_ratio_name,niters,date_string)
+           eigs, eigvals = np.linalg.eigh(fun_results[-1][i])
+           print(eigs)
+           eigs = np.flip(eigs)
+           eigsvals = np.flip(eigvals, axis=1)
+           eig_plots(eigs, eigvals,param_sens_bounds,sampling,func_name,enz_ratio_name,niters,date_string)
+
 if __name__ == '__main__':
     dhaB_dhaT_model(sys.argv, len(sys.argv))
 

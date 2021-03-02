@@ -13,9 +13,14 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.constants import *
 import sys
+
+
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
-import matplotlib
+import matplotlib as mpl
+mpl.rcParams['text.usetex'] = True
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
+
 import math
 import sympy as sp
 import scipy.sparse as sparse
@@ -26,7 +31,7 @@ from dhaB_dhaT_model import DhaBDhaTModel
 
 PARAMETER_LIST = ['KmDhaTH', 'KmDhaTN','kcatfDhaT', 
                   'kcatfDhaB', 'KmDhaBG', 
-                  'km', 'kc', 
+                  'PermMCPPolar', 'NonPolarBias', 'PermCell', 
                   'dPacking', 
                   'nmcps',
                   'enz_ratio',
@@ -81,6 +86,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         else:
             self._sderiv = self._sderiv_id
 
+        self._set_fun_sderiv_jac_statevars()
         self._set_jacs_fun()
         self._create_jac_sens()
 
@@ -166,6 +172,27 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
             return super()._sderiv(t,x,params = params_log2)
         else:
             print("Internal list of parameter senstivities and given dictionary do not correspond.")
+
+    def _set_symbolic_sderiv(self):
+        """
+        Overrides the super and generates the symbol differential equation with symbolic parameters
+        """
+        x_sp = getattr(self, 'x_sp', None)
+        if x_sp is None:
+            self._set_symbolic_state_vars()
+        self.sderiv_symbolic = self._sderiv(0,self.x_sp,self.params_sens_sp_dict)
+
+    def _set_fun_sderiv_jac_statevars(self):
+        """
+        Overrides the supper and generates the jacobian function of the differential equation 
+        wrt state variables and as a function of state variables and parameters
+        """
+        sderiv_jac_state_vars_sp = getattr(self, 'sderiv_jac_state_vars_sp', None)
+        if sderiv_jac_state_vars_sp is None:
+            self._set_symbolic_sderiv_jac_statevars()
+            sderiv_jac_state_vars_sp = self.sderiv_jac_state_vars_sp
+        sderiv_jac_state_vars_sp_fun = sp.lambdify((self.x_sp,self.params_sens_sp), sderiv_jac_state_vars_sp, 'numpy')
+        self.sderiv_jac_state_vars_sp_fun = lambda t,x,params_sens_dict: sparse.csr_matrix(sderiv_jac_state_vars_sp_fun(x,params_sens_dict.values()))
 
 
     def _set_jacs_fun(self):
@@ -265,19 +292,18 @@ def main(nsamples = 500):
 
     external_volume =  9e-6
     ncells_per_metrecubed = 8e14 # 7e13-8e14 cells per m^3
-    ncells = ncells_per_metrecubed*external_volume
     mintime = 10**(-15)
     secstohrs = 60*60
     fintime = 72*60*60
-    ds = "log10"
-    # parameter to check senstivity
+    ds = ""    # parameter to check senstivity
 
-    params_values_fixed = {'KmDhaTH': 0.77, # mM
-                          'KmDhaTN': 0.03, # mM
-                          'kcatfDhaT': 59.4, # /seconds
+    params_values_fixed = {'KmDhaTH': 0.55, # mM
+                          'KmDhaTN': 0.245, # mM
+                          'kcatfDhaT': 70., # /seconds
                           'enz_ratio': 1/1.33,
                           'NADH_MCP_INIT': 0.36,
                           'NAD_MCP_INIT': 1.,
+                          'PermMCPPolar': 1e-3,
                           'G_MCP_INIT': 0,
                           'H_MCP_INIT': 0,
                           'P_MCP_INIT': 0,
@@ -289,15 +315,15 @@ def main(nsamples = 500):
                           'P_EXT_INIT': 0}
 
 
-    params_sens_list = ['kcatfDhaB', 'KmDhaBG', 'km', 'kc', 'dPacking', 'nmcps']
+    params_sens_list = ['kcatfDhaB', 'KmDhaBG', 'NonPolarBias', 'PermCell', 'dPacking', 'nmcps']
 
     # parameter to check senstivity
-    params_sens_dict = {'kcatfDhaB':400, # /seconds Input
-              'KmDhaBG': 0.6, # mM Input
-              'km': 10**-7, 
-              'kc': 10.**-5,
+    params_sens_dict = {'kcatfDhaB':630, # /seconds Input
+              'KmDhaBG': 0.85, # mM Input
+              'NonPolarBias': 10**-2, 
+              'PermCell': 10.**-7,
               'dPacking': 0.64,
-              'nmcps': 10}
+              'nmcps': 15}
     for key in params_sens_dict.keys():
         if ds == "log2":
             params_sens_dict[key] = np.log2(params_sens_dict[key])
@@ -334,7 +360,7 @@ def main(nsamples = 500):
     tol = 1e-3
     time_orig = np.logspace(np.log10(mintime),np.log10(fintime),nsamples)
     # terminal event
-    tol_solve = 10**-8
+    tol_solve = 10**-3
     def event_stop(t,y):
         dSsample = np.array(model_local_sens._sderiv(t,y[:model_local_sens.nvars],
                                                        params_sens = params_sens_dict))
@@ -355,12 +381,13 @@ def main(nsamples = 500):
     # Plot solutions
     #################################################
 
-    try:
+    if 'nmcps' in params_values_fixed.keys():
         nmcps = params_values_fixed['nmcps']
-    except KeyError:
+    else:
         nmcps = params_sens_dict['nmcps']
+    ncells = model_local_sens.ncells
     volcell = model_local_sens.cell_volume
-    volmcp = 4 * np.pi * (model_local_sens.rm ** 3) / 3
+    volmcp = model_local_sens.mcp_volume
     external_volume = model_local_sens.external_volume
     colour = ['b','r','y','c','m']
 
@@ -376,7 +403,7 @@ def main(nsamples = 500):
 
     #plot parameters
     namesvars = ['Glycerol', '3-HPA', '1,3-PDO']
-    sens_vars_names = [r'$kcat_f^{DhaB}$', r'$K_M^{DhaB}$', r'$k_{m}$', r'$k_{c}$', r'$dPacking$', r'$MCP$']
+    sens_vars_names = [r'$kcat_f^{DhaB}$', r'$K_M^{DhaB}$', r'$P_{\text{MCP},\text{Non-Polar}}$', r'$k_{c}$', r'$dPacking$', r'$MCP$']
     colour = ['b','r','y','c','m']
 
     # cellular solutions
@@ -492,8 +519,10 @@ def main(nsamples = 500):
     ext_masses_fin = sol.y[(model_local_sens.nvars-3):model_local_sens.nvars, -1] * model_local_sens.external_volume
     cell_masses_fin = sol.y[5:8,-1] * volcell
     mcp_masses_fin = sol.y[:5, -1] * volmcp
-    print(ext_masses_org.sum() + ncells*cell_masses_org.sum() + ncells*nmcps*mcp_masses_org.sum())
-    print(ext_masses_fin.sum() + ncells*cell_masses_fin.sum() + ncells*nmcps*mcp_masses_fin.sum())
+    mass_org = ext_masses_org.sum() + ncells*cell_masses_org.sum() + ncells*nmcps*mcp_masses_org.sum()
+    mass_fin = ext_masses_fin.sum() + ncells*cell_masses_fin.sum() + ncells*nmcps*mcp_masses_fin.sum()
+    print(mass_org)
+    print(mass_fin)
 
 
 if __name__ == '__main__':

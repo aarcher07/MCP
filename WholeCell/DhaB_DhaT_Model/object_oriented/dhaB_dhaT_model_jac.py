@@ -14,7 +14,7 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
-mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
 
 import warnings
 import sympy as sp
@@ -34,8 +34,9 @@ VARS_TO_TEX = {'kcatfDhaB': r'$k_{\text{cat}}^{f,\text{dhaB}}$',
                 'KmDhaTN': r'$K_{\text{M}}^{\text{NADH},\text{dhaT}}$',
                 'NADH_MCP_INIT': r'$[\text{NADH}]$ ',
                 'NAD_MCP_INIT': r'$[\text{NAD+}]$ ',
-                'km':r'$k_{m}$',
-                'kc': r'$k_{c}$',
+                'PermMCPPolar':r'$P_{\text{MCP},\text{Polar}}$',
+                'NonPolarBias':r'$\alpha_{\text{MCP},\text{Non-Polar}}$',
+                'PermCell': r'$P_{\text{Cell}}$',
                 'dPacking': 'dPacking', 
                 'nmcps': 'Number of MCPs'}
 
@@ -46,8 +47,9 @@ VARS_TO_UNITS = {'kcatfDhaB': '/s',
                 'KmDhaTN': 'mM',
                 'NADH_MCP_INIT': 'mM',
                 'NAD_MCP_INIT': 'mM',
-                'km':'m/s',
-                'kc': 'm/s',
+                'PermMCPPolar':'m/s',
+                'NonPolarBias':'',
+                'PermCell': 'm/s',
                 'dPacking': '', 
                 'nmcps': ''}
 
@@ -105,18 +107,18 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         # index of 1,3-PDO after 5 hrs
         time_check = 5.
         self.first_index_close_enough =  np.argmin(np.abs(self.time_orig_hours-time_check)) # index of closest time after 5hrs
-        self.index_1_3PDO_ext = -3 # index of P_ext 
+        self.index_1_3PDO_ext = -1 # index of P_ext 
         range_1_3PDO_ext_param_sens = range(self.index_1_3PDO_ext*self.nparams_sens,
                                             (self.index_1_3PDO_ext+1)*self.nparams_sens)
         self.indices_1_3PDO_ext_params_sens = np.array([(self.first_index_close_enough,i) for i in range_1_3PDO_ext_param_sens])
-        self.indices_sens_1_3PDO_ext_after_timecheck = np.array([(-1,i) for i in range_1_3PDO_ext_param_sens])
+        self.indices_sens_1_3PDO_ext_before_timecheck = np.array([(-1,i) for i in range_1_3PDO_ext_param_sens])
 
         # index of Glycerol after 5 hrs
-        self.index_Glycerol_ext = -1 # index of Glycerol_ext 
+        self.index_Glycerol_ext = -3 # index of Glycerol_ext 
         range_Glycerol_ext_param_sens = range(self.index_Glycerol_ext*self.nparams_sens,
                                              (self.index_Glycerol_ext+1)*self.nparams_sens)
         self.indices_Glycerol_ext_params_sens = np.array([(self.first_index_close_enough,i) for i in range_Glycerol_ext_param_sens])
-        self.indices_sens_Glycerol_ext_after_timecheck = np.array([(-1,i) for i in range_1_3PDO_ext_param_sens])
+        self.indices_sens_Glycerol_ext_before_timecheck = np.array([(-1,i) for i in range_Glycerol_ext_param_sens])
 
 
     def _set_initial_conditions(self):
@@ -142,6 +144,19 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
                 sens0[i::model_local_sens.nparams_sens] = 1
         self.sens0 = sens0
 
+    def _event_stop(self,t,y,params_sens_dict):
+        """
+        Event stop function for integration
+
+        :t: time
+        :y: state variables
+        :params_sens_dict: dictionary of parameter values
+        """
+
+        dSsample = np.array(self._sderiv(t,y[:self.nvars],params_sens_dict))
+        dSsample_dot = np.abs(dSsample).sum()
+        return dSsample_dot -  self.tolsolve 
+
     def jac(self,params_sens_dict):
         """
         Computes the sensitivities of the system at self.nsamples log-spaced time points 
@@ -163,12 +178,9 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
 
         
         #stop event
-        tolsolve = self.tolsolve
-        def event_stop(t,y):
-            dSsample = np.array(self._sderiv(t,y[:self.nvars],params_sens_dict))
-            dSsample_dot = np.abs(dSsample).sum()
-            return dSsample_dot - tolsolve 
+        event_stop = lambda t,y: self._event_stop(t,y,params_sens_dict)
         event_stop.terminal = True
+
         #integrate
         sol = solve_ivp(dsens_param,[0, self.final_time+1], xs0, method="BDF",
                         jac = dsens_param_jac,t_eval=self.time_orig,
@@ -176,7 +188,6 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
                         events=event_stop)
 
         return [sol.status,sol.t,sol.y.T]
-
 
     def jac_subset(self,params_sens_dict):
         """
@@ -191,35 +202,64 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
                                   and evaluated at params_sens_dict.values()
 
         """
-        status, time, jac_sample = self.jac(params_sens_dict)
+        try:
+            status, time, jac_sample = self.jac(params_sens_dict)
+        except ValueError:
+            return [[],[],[]]
+            
+        # conservation of mass
+        y0 = np.array(self.y0(**params_sens_dict))
+        if 'nmcps' in self.params_values_fixed.keys():
+            nmcps = self.params_values_fixed['nmcps']
+        else:
+            nmcps = params_sens_dict['nmcps']
+        # original mass
+        ext_masses_org = y0[(self.nvars-3):self.nvars]* self.external_volume
+        cell_masses_org = y0[5:8] * self.cell_volume 
+        mcp_masses_org = y0[:5] * self.mcp_volume
+        mass_org = ext_masses_org.sum() +  self.ncells*cell_masses_org.sum() +  self.ncells*nmcps*mcp_masses_org.sum()
 
+        # final mass
+        ext_masses_fin = jac_sample[-1,(self.nvars-3):self.nvars] * self.external_volume
+        cell_masses_fin = jac_sample[-1,5:8] * self.cell_volume
+        mcp_masses_fin = jac_sample[-1,:5] * self.mcp_volume
+        mass_fin = ext_masses_fin.sum() + self.ncells*cell_masses_fin.sum() + self.ncells*nmcps*mcp_masses_fin.sum()
+        relative_diff = mass_fin/mass_org
+        
         # get sensitivities of max 3-HPA
         index_3HPA_max = np.argmax(jac_sample[:,self.index_3HPA_cytosol]) 
         # check if derivative is 0 of 3-HPA 
         statevars_maxabs = jac_sample[index_3HPA_max,:self.nvars]
         dev_3HPA = self._sderiv(time[index_3HPA_max],statevars_maxabs,params_sens_dict)[self.index_3HPA_cytosol]
-        if abs(dev_3HPA) < 1e-2:
-            indices_3HPA_max_cytosol_params_sens =  np.array([[index_3HPA_max,i] for i in self.range_3HPA_cytosol_params_sens])
-            jac_HPA_max = jac_sample[tuple(indices_3HPA_max_cytosol_params_sens.T)]
+
+        # check if integrated correctly
+        if (relative_diff > 0.5 and relative_diff < 1.5):
+            if abs(dev_3HPA) < 1e-2:
+                indices_3HPA_max_cytosol_params_sens =  np.array([[index_3HPA_max,i] for i in self.range_3HPA_cytosol_params_sens])
+                jac_HPA_max = jac_sample[tuple(indices_3HPA_max_cytosol_params_sens.T)]
+            else:
+                jac_HPA_max = []
+
+
+            # get sensitivities of Glycerol and 1,3-PDO after 5 hrs
+            if status == 0 or (time[-1] > 5*HRS_TO_SECS):
+                jac_P_ext = jac_sample[tuple(self.indices_1_3PDO_ext_params_sens.T)]
+                jac_G_ext = jac_sample[tuple(self.indices_Glycerol_ext_params_sens.T)]
+            elif status == 1:
+                jac_P_ext = jac_sample[tuple(self.indices_sens_1_3PDO_ext_before_timecheck.T)]
+                jac_G_ext = jac_sample[tuple(self.indices_sens_Glycerol_ext_before_timecheck.T)]
+            else:
+                jac_P_ext = []
+                jac_G_ext = []
+
+            jac_values = [jac_HPA_max,
+                          jac_G_ext,
+                          jac_P_ext]
+            return jac_values
         else:
-            jac_HPA_max = []
 
-
-        # get sensitivities of Glycerol and 1,3-PDO after 5 hrs
-        if status == 0 or (time[-1] > 5*HRS_TO_SECS):
-            jac_P_ext = jac_sample[tuple(self.indices_1_3PDO_ext_params_sens.T)]
-            jac_G_ext = jac_sample[tuple(self.indices_Glycerol_ext_params_sens.T)]
-        elif status == 1:
-            jac_P_ext = jac_sample[tuple(self.indices_sens_1_3PDO_ext_after_timecheck.T)]
-            jac_G_ext = jac_sample[tuple(self.indices_sens_Glycerol_ext_after_timecheck.T)]
-        else:
-            jac_P_ext = []
-            jac_G_ext = []
-
-        jac_values = [jac_HPA_max,
-                      jac_G_ext,
-                      jac_P_ext]
-        return jac_values
+   
+            return [[],[],[]]
 
 def main(argv, arc):
     # get inputs
@@ -231,7 +271,7 @@ def main(argv, arc):
     start_time = (10**(-15))
     final_time = 100*HRS_TO_SECS
 
-    integration_tol = 1e-6
+    integration_tol = 1e-3
     nsamples = 500
     tolsolve = 10**-10
     enz_ratio_name_split =  enz_ratio_name.split(":")
@@ -253,7 +293,7 @@ def main(argv, arc):
     params_sens_list = ['kcatfDhaB','KmDhaBG',
                         'kcatfDhaT','KmDhaTH','KmDhaTN',
                         'NADH_MCP_INIT',
-                        'km','kc',
+                        'PermMCPPolar','NonPolarBias','PermCell',
                         'dPacking', 'nmcps']
 
     params_sens_dict  = {'kcatfDhaB':400, # /seconds Input
@@ -262,10 +302,11 @@ def main(argv, arc):
                         'KmDhaTH': 0.77, # mM
                         'KmDhaTN': 0.03, # mM
                         'NADH_MCP_INIT': 0.36,
-                        'km': 10**-7, 
-                        'kc': 10.**-5,
+                        'PermMCPPolar': 10**-3, 
+                        'NonPolarBias': 10**-2, 
+                        'PermCell': 10.**-7,
                         'dPacking': 0.64,
-                        'nmcps': 10}
+                        'nmcps': 15}
 
     for key in params_sens_dict.keys():
         if ds == "log2":
