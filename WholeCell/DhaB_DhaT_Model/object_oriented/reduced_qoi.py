@@ -17,12 +17,13 @@ import pickle
 from skopt.space import Space
 from dhaB_dhaT_model_jac import *
 from active_subspaces_dhaT_dhaB_model import *
+from constants import QOI_NAMES
 from misc import generate_folder_name
 from active_subspaces import FUNCS_TO_FILENAMES,FUNCS_TO_NAMES
 import seaborn as sns
-
+from sklearn.utils import resample
 class ReducedQoI(QoI):
-    def __init__(self, directory, pickle_name, eig_ind, start_time,final_time,
+    def __init__(self, directory, pickle_name, eig_ind, nzsamples, start_time,final_time,
                 integration_tol, nintegration_samples, tolsolve, params_values_fixed,
                 param_sens_bounds, filename = None, external_volume = 9e-6, 
                 rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
@@ -40,19 +41,188 @@ class ReducedQoI(QoI):
             with open(directory + '/'+ filename+'/' +pickle_name + '.pkl', 'rb') as f:
                 pk_as = pickle.load(f)
             cost_matrices = pk_as['function results'][-1]
+            self.eig_ind = eig_ind
+            self.x_dim = len(param_sens_bounds.keys())
+            self.y_dims = [ind for ind in eig_ind]
+            self.z_dims = [self.x_dim - ind for ind in eig_ind]
+            self.nzsamples = nzsamples
+            super().__init__(cost_matrices, start_time,final_time, integration_tol, 
+                            nintegration_samples, tolsolve, params_values_fixed,
+                            param_sens_bounds, external_volume, rc, lc, rm, 
+                            ncells_per_metrecubed, cellular_geometry, ds)
+
+    def _partition_eigenvectors(self):
+        W1 = {}
+        W2 = {}
+        for i,func_name in QOI_NAMES:
+            eigvecs = self.eigenvectors_QoI[func_name]
+            W1[func_name] = eigvecs[:,:eig_ind[i]]
+            W2[func_name] = eigvecs[:,eig_ind[i]:]
+        self.W1 = W1
+        self.W2 = W2
 
 
-            super().__init__(cost_matrices, start_time,final_time,
-                integration_tol, nintegration_samples, tolsolve, params_values_fixed,
-                param_sens_bounds, external_volume, rc, lc, rm, ncells_per_metrecubed,
-                cellular_geometry, ds)
+    def _generate_optimization_parameters(self):
+        max_c= {}
+        min_c =[]
 
-directory = '/home/aarcher/Dropbox/PycharmProjects/MCP/WholeCell/DhaB_DhaT_Model/object_oriented/data/1:3'
-filename = 'kcatfDhaB_400_860_KmDhaBG_0,6_1,1_kcatfDhaT_40,0_100,0_KmDhaTH_0,1_1,0_KmDhaTN_0,0116_0,48_NADH_MCP_INIT_0,12_0,6_PermMCPPolar_-4_-2_NonPolarBias_-2_-1_PermCell_-9_-4_dPacking_0,3_0,64_nmcps_3,0_30,0'
-#name_pkl = 'sampling_rsampling_N_100000_enzratio_1:18_2021_01_29_20:01'
-name_pkl = 'sampling_rsampling_N_10000_enzratio_1:3_2021_02_09_18:41'
+        #first constraint
+        A1 = np.concatenate((-np.ones((z_dim,1)),np.eye(z_dim)),axis=1)
+        ub_constraint1 = np.zeros((z_dim))
+
+        #2nd linear constraint
+        A2 = {}
+        for i,func_name in QOI_NAMES:
+            W1 = self.W1[func_name]
+            W2 = self.W2[func_name]
+            x_dim = self.x_dim
+            z_dim = self.z_dims[i]
+            A2[func_name] = np.concatenate((np.zeros((x_dim,1)),W2),axis=1)
+            
+            # cost functions
+            max_c[func_name] = np.zeros(z_dim+1)
+            max_c[func_name][0] = -1
+            min_c[func_name] = np.zeros(z_dim+1)
+            min_c[func_name][0] = 1
+
+        self.max_c = max_c
+        self.min_c = min_c
+        self.A1 = A1
+        self.ub_constraint1 = ub_constraint1
+        self.A2 = A2
+
+    def _generate_single_z_bound(self,j,func_name,lb_constraint2,
+                                 ub_constraint2):
 
 
+        #set equality constraint
+        A1_eq = np.array([self.A1[func_name][j,:]])
+        b1_eq = self.ub_constraint1[func_name][j]
+        #set inequality constraint for max decision variable
+        A1_ineq = np.delete(self.A1[func_name],j,axis=0)
+        ub1_ineq = np.delete(self.ub_constraint1[func_name],j,axis=0)
+
+        # final constraints for max problem
+        A_ineq = np.concatenate((A1_ineq, self.A2[func_name], -self.A2[func_name]))
+        b_ineq = np.concatenate((ub1_ineq,ub_constraint2,lb_constraint2))
+        bounds_var = [(None,None) for _ in range(z_dim+1)]
+
+        # find max
+        res_max = opt.linprog( self.max_c[func_name], A_ub=A_ineq, b_ub=b_ineq,
+                               A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
+
+        # final constraints for min problem
+        A_ineq = np.concatenate((-A1_ineq, self.A2[func_name], -self.A2[func_name]))
+        b_ineq = np.concatenate((ub1_ineq,ub_constraint2,lb_constraint2))
+
+        # find min
+        res_min = opt.linprog( self.min_c[func_name], A_ub=A_ineq, b_ub=b_ineq,
+                                A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
+
+        return [res_min.fun, res_max.fun]
+
+    def _generate_z_bounds(self,y):
+        x_dim = self.x_dim
+        z_given_y_bounds = {} 
+        for i,func_name in QOI_NAMES:
+            # grab eigenvectors
+            W1 = self.W1[func_name]
+            W2 = self.W2[func_name]
+
+            z_dim = self.z_dims[i]
+            y_in_x = np.dot(W1,y)
+            # 2nd linear constraint
+            A2 = self.A2[func_name]
+            ub_constraint2 =  np.ones(x_dim)- y_in_x
+            lb_constraint2 = np.ones(x_dim) + y_in_x
+
+            # cost functions
+            max_c{i}
+            max_c{i}
+            # find the max edges of convex space
+            max_edge = -np.inf
+            for j in range(z_dim):
+                pot_max, pot_min = self._generate_single_z_bound(self,j,func_name, lb_constraint2, ub_constraint2)
+                if max_edge < -pot_max:
+                    max_edge = -pot_max
+                if  pot_min < min_edge:
+                    min_edge = pot_min
+
+            z_given_y_bounds[func_name] = [max_edge,min_edge]
+        return z_given_y_bounds
+
+    def _z_sampler(self,y):
+        #generate bounds of hypercube that contains z|y
+        z_given_y_bounds = self._generate_z_bounds(self,y)
+        z_samples = {}
+        for i,func_name in QOI_NAMES:
+            z_dim = self.z_dims[func_name]
+            max_edge,min_edge = z_given_y_bounds[func_name]
+            z_samples = []
+
+            # create bounds for z space
+            A2 = self.A2[func_name]
+            y_in_x = np.dot(W1,y)
+            ub_constraint2 = np.ones(x_dim)- y_in_x
+            lb_constraint2 = np.ones(x_dim) + y_in_x
+
+            z_ineqs_mat = np.concatenate((A2[:,1:], -A2[:,1:]))
+            z_ineqs_b = np.concatenate((ub_constraint2,lb_constraint2))
+                        
+            while(len(z_samples) != self.nzsamples):
+                z_pot_sample = (max_edge-min_edge)*np.random.uniform(size= z_dim) + min_edge
+                if (np.dot(z_ineqs_mat,z_pot_sample) - z_ineqs_b <= 0 ).all():
+                        z_samples.append(z_pot_sample)
+
+        z_samples[func_name] = z_samples
+
+    def generate_reduced_QoI_vals(self,y,gen_histogram=False, save = True):
+        z_samples = self._z_sampler(y)
+
+        red_qoi_sample_vals = {QOI_NAMES[0]: [[]],
+                               QOI_NAMES[1]: [[]],
+                               QOI_NAMES[2]: [[]]}
+        for i,func_name in QOI_NAMES:
+            n_sucessful_solves = 0
+            for z in z_samples[func_name]:
+                x = np.dot(W1,y) + np.dot(W2,z)
+                param_dict = {param_name:param_val for param_name, param_val  in zip(self.params_sens_list,x)}
+                sol_vals = self.generate_QoI_vals(param_dict)
+                if sol_vals[func_name]:
+                    n_sucessful_solves += 1
+                    red_qoi_sample_vals[func_name][0].append(sol_vals[func_name])
+
+        if gen_histogram:
+            self._generate_histogram(red_qoi_sample_vals)
+        red_qoi_sample_vals = [key:np.mean(qoi_vals[0]) for func_name,qoi_vals in red_qoi_sample_vals.items()]   
+        return red_qoi_sample_vals
+
+    def generate_resampled_reduced_QoI_vals(self,y,nbootstrap,random_state= None,
+                                            gen_histogram = False,
+                                            save = True):
+        n_iters_bootstrap = 0
+        red_qoi_resampled_vals = {QOI_NAMES[0]: [],
+                                  QOI_NAMES[1]: [],
+                                  QOI_NAMES[2]: []}
+        red_qoi_sample_vals = generate_reduced_QoI_vals(y)
+        while(n_iters_bootstrap < nbootstrap):
+            for i,func_name in QOI_NAMES:
+                red_qoi_resampled_vals[func_name].append(resample(red_qoi_sample_vals[func_name],
+                                                         random_state= None))
+        if gen_histogram:
+            self._generate_histogram(red_qoi_resampled_vals)
+        return red_qoi_resampled_vals
+
+
+    def _generate_histogram(self,red_qoi_vals,save = True):
+        for func_name,qoi_vals in red_qoi_resampled_vals.items():
+            if len(qoi_vals) <= 5:
+                indices = range(len(qoi_vals))
+            else:
+                indices = np.random.choice(range(len(qoi_vals)),replace=False,size=5)
+            for ind in indices: 
+
+            #CONTINUE FROM HERE. 
 
 cost_fun_3HPA = pk_as['function results'][-1][0]
 
