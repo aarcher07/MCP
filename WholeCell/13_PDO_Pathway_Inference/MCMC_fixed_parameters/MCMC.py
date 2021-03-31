@@ -16,15 +16,28 @@ def postdraws(rprior,logpost,jac=None,nsamp=2000):
 
 	k=0
 	while(k < 10):
-		tprop = rprior(1).reshape(-1)
+		params_trans = {'cellperGlyMass': 2*10**5,
+				'PermCellGlycerol':10**-4,
+				'PermCellPDO': 10**-3,
+				'PermCell3HPA': 10**-2,
+				'VmaxfDhaB': 800, 
+				'KmDhaBG': 0.1 ,
+				'VmaxfDhaT': 500,
+				'KmDhaTH': 0.1,
+				'VmaxfGlpK': 500 ,
+				'KmGlpKG': 10}
+		tprop = np.zeros(1 + len(params_trans.values()))		
+		tprop[0] = np.log10(1/2.)
+		tprop[1:] = list(np.log10(list(params_trans.values())))
+		tprop = tprop + 0.01*standard_normal(p)
 		try:
 			tprop = minimize(optimizelp, tprop, method="L-BFGS-B", jac=jac,
 							 bounds=np.concatenate((lb.reshape(-1,1),ub.reshape(-1,1)),axis=1),
-							 options={'maxiter': 10**2}).x
+							 options={'maxiter': 10**3}).x
 			k+=1
 			if(optimizelp(tprop) < optimizelp(tcurr)):
 				tcurr = tprop
-		except ValueError:
+		except (ValueError, TypeError):
 			continue
 	lpcurr = logpost(tcurr)
 	sca = np.std(rprior(2000),axis=0)
@@ -40,14 +53,14 @@ def postdraws(rprior,logpost,jac=None,nsamp=2000):
 			if (u > uniform(size=1)[0]):
 				tcurr = tprop
 				lpcurr = lpprop
-				vec[i,:]= tcurr
+			vec[i,:]= tcurr
 			i+=1
 
-		except ValueError:
+		except (ValueError, TypeError):
 			continue
 
-	sca = sqrtm(np.cov(vec,rowvar=False))
-	lmbda = 1./np.sqrt(4.)
+	sca = np.real(sqrtm(np.cov(vec,rowvar=False)))
+	lmbda = 1./np.sqrt(100.)
 	n = nsamp
 	thetadraw =  np.zeros((n,p))
 	i=0
@@ -61,7 +74,7 @@ def postdraws(rprior,logpost,jac=None,nsamp=2000):
 				lpcurr = lpprop
 			thetadraw[i,:]= tcurr
 			i+=1
-		except ValueError:
+		except (ValueError, TypeError):
 			continue
 	return thetadraw
 

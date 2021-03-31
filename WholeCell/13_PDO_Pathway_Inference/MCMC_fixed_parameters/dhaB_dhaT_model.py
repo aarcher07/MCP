@@ -48,6 +48,7 @@ class DhaBDhaTModel:
         self.cell_volume = (4*np.pi/3)*(self.rc)**3 + (np.pi)*(self.lc - 2*self.rc)*((self.rc)**2)
         self.cell_surface_area = 2*np.pi*self.rc*self.lc
         self.nparams_sens = len(PARAMETER_LIST)
+        self.ds_name = ds
         # differential equation parameters
         self._set_param_sp_symbols()
         self._set_sens_vars()
@@ -126,9 +127,8 @@ class DhaBDhaTModel:
         PermCell3HPA = params['PermCell3HPA']
         PermCellPDO  = params['PermCellPDO']
 
-
-        R_DhaB = params['VmaxfDhaB']*ratio*x[0]/ (params['KmDhaBG'] + ratio*x[0])
-        R_DhaT = params['VmaxfDhaT']*ratio*x[1]/(params['KmDhaTH'] + ratio*x[1])
+        R_DhaB = params['VmaxfDhaB']*ratio*x[0] / (params['KmDhaBG'] + ratio*x[0]) #+ (ratio*x[1])/params['KmDhaBH']) 
+        R_DhaT = params['VmaxfDhaT']*ratio*x[1]/(params['KmDhaTH'] + ratio*x[1]) 
         R_GlpK = params['VmaxfGlpK']*ratio*x[0]/(params['KmGlpKG'] + ratio*x[0])
 
         cell_area_volume = self.cell_surface_area/self.cell_volume
