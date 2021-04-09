@@ -24,9 +24,11 @@ import time
 import matplotlib.pyplot as plt
 from sklearn.metrics import auc
 from constants import *
+from misc_functions import *
 import sys
 
 class DhaBDhaTModel:
+
     def __init__(self, rc = 0.375e-6, lc = 2.47e-6,
                  external_volume = 0.002, ds = ''):
         """
@@ -47,7 +49,7 @@ class DhaBDhaTModel:
 
         self.cell_volume = (4*np.pi/3)*(self.rc)**3 + (np.pi)*(self.lc - 2*self.rc)*((self.rc)**2)
         self.cell_surface_area = 2*np.pi*self.rc*self.lc
-        self.nparams_sens = len(PARAMETER_LIST)
+        self.nparams_sens = len(MODEL_PARAMETER_LIST)
         self.ds_name = ds
         # differential equation parameters
         self._set_param_sp_symbols()
@@ -74,7 +76,7 @@ class DhaBDhaTModel:
         """
         sets dictionary of parameters to be analyzed using sensitivity analysis
         """
-        self.params_sens_sp_dict = {name:sp.symbols(name) for name in PARAMETER_LIST}
+        self.params_sens_sp_dict = {name:sp.symbols(name) for name in MODEL_PARAMETER_LIST}
         self.params_sens_sp = list((self.params_sens_sp_dict).values())
 
     def _set_sens_vars(self):
@@ -145,11 +147,9 @@ class DhaBDhaTModel:
         d[3] = x[-1] * self.cell_surface_area * PermCellGlycerol * (ratio*x[3 - n_compounds_cell] - x[3]) 
         d[4] = x[-1] * self.cell_surface_area * PermCell3HPA * (ratio*x[4 - n_compounds_cell] - x[4]) 
         d[5] = x[-1] * self.cell_surface_area * PermCellPDO * (ratio*x[5 - n_compounds_cell] - x[5]) 
-
-
         return d
 
-    def _sderiv_log_unif(self,t,x,params_sens):
+    def _sderiv_log_unif(self,t,x,log_params):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         [-1,1] transformed by transforming parameters into their original values
@@ -157,19 +157,13 @@ class DhaBDhaTModel:
         :param x: state variables
         :param params_sens: [-1,1] transformed parameter list
         """
-        if params_sens is None:
+        if log_params is None:
             print("Please set the parameter values")
-        params = {}
-        for param_name, param_val in params_sens.items():
-            if not param_name in VARIABLE_INIT_NAMES:
-                bound_a, bound_b = param_sens_log_unif_bounds[param_name]
-                param_trans = (bound_b - bound_a)*param_val + bound_a 
-                params[param_name] = 10**param_trans
-            else:
-                params[param_name] = param_val
+        params = transform_from_log_unif(log_params)
+
         return self._sderiv(t,x,params)
 
-    def _sderiv_log_norm(self,t,x,params_sens):
+    def _sderiv_log_norm(self,t,x,log_params):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
         [-1,1] transformed by transforming parameters into their original values
@@ -177,16 +171,12 @@ class DhaBDhaTModel:
         :param x: state variables
         :param params_sens:  transformed normal parameter list
         """
-        if params_sens is None:
+        if log_params is None:
             print("Please set the parameter values")
-        params = {}
-        for param_name, param_val in params_sens.items():
-            if not param_name in VARIABLE_INIT_NAMES:
-                params[param_name] = 10**param_val
-            else:
-                params[param_name] = param_val
+        params = transform_from_log(log_params)
 
         return self._sderiv(t,x,params)
+
     def _set_symbolic_sderiv(self):
         """
         Generates the symbol differential equation
@@ -241,10 +231,10 @@ class DhaBDhaTModel:
         if params_sens_dict is None:
             print("Please set the parameter values for local sensitivity analysis")
 
-        assert set(PARAMETER_LIST) == set(list(params_sens_dict.keys()))
+        assert set(MODEL_PARAMETER_LIST) == set(list(params_sens_dict.keys()))
 
         # reorder params_sens_dict if necessary
-        if PARAMETER_LIST != list(params_sens_dict.keys()):
+        if MODEL_PARAMETER_LIST != list(params_sens_dict.keys()):
             sys.exit("The internal parameter sensitivity list and the given parameter list do not correspond")
             # params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
             # params_sens_dict = params_sens_dict_sorted
@@ -294,10 +284,10 @@ class DhaBDhaTModel:
         if params_sens_dict is None:
             print("Please set the parameter values")
 
-        assert set(PARAMETER_LIST) == set(list(params_sens_dict.keys()))
+        assert set(MODEL_PARAMETER_LIST) == set(list(params_sens_dict.keys()))
 
         # reorder params_sens_dict if necessary
-        if PARAMETER_LIST != list(params_sens_dict.keys()):
+        if MODEL_PARAMETER_LIST != list(params_sens_dict.keys()):
             sys.exit("The internal parameter sensitivity list and the given parameter list do not correspond")
             # params_sens_dict_sorted = {param_name:params_sens_dict[param_name] for param_name in self.params_sens_list}
             # params_sens_dict = params_sens_dict_sorted
@@ -306,46 +296,36 @@ class DhaBDhaTModel:
 
 def main():
     external_volume = 0.002
-    params_trans = {#'maxGrowthRate': 10**8,
-                    #'saturationConstant': 1,
-                    'cellperGlyMass': 2*10**5,
-                    'PermCellGlycerol':10**-4,
-                    'PermCellPDO': 10**-3,
-                    'PermCell3HPA': 10**-2,
-                    'VmaxfDhaB': 800, 
-                    'KmDhaBG': 0.1 ,
-                    'VmaxfDhaT': 500,
-                    'KmDhaTH': 0.1,
-                    'VmaxfGlpK': 500 ,
-                    'KmGlpKG': 10}
+
+    params = {'cellperGlyMass': 0.3818047517423962, #2*10**5,
+            'PermCellGlycerol': 0.899465527666024, #10**-3,
+            'PermCellPDO': 0.14537655717211243,#10**-3,
+            'PermCell3HPA': 0.08205296911894387,
+            'VmaxfDhaB': 0.6930764973157587, 
+            'KmDhaBG': 0.294192085854041 ,
+            'VmaxfDhaT': 0.47201291520373767,
+            'KmDhaTH': 0.3077193508854612,
+            'VmaxfGlpK': 0.917492551649238 ,
+            'KmGlpKG': 0.11169033491696544}
 
     init_conds={'G_CYTO_INIT': 0, 
                 'H_CYTO_INIT': 0,
                 'P_CYTO_INIT': 0,
-                'G_EXT_INIT': 50, 
-                'H_EXT_INIT': 0,
+                'G_EXT_INIT': INIT_CONDS_GLY_PDO_DCW[50][0], 
+                'H_EXT_INIT': INIT_CONDS_GLY_PDO_DCW[50][1],
                 'P_EXT_INIT': 0,
-                'CELL_CONC_INIT': 0.2*DCW_TO_COUNT_CONC
+                'CELL_CONC_INIT': INIT_CONDS_GLY_PDO_DCW[50][2]*0.5217871564671509*DCW_TO_COUNT_CONC
                 }
-    ds='log_norm'
-    print('hi')
-    if ds == 'log_unif':
-        params = {}
-        for param_name, param_val in params_trans.items():
-            if not param_name in VARIABLE_INIT_NAMES:
-                bound_a,bound_b = param_sens_log_bounds[param_name]
-                params[param_name] = 2*(np.log10(param_val) - bound_a)/(bound_b - bound_a) - 1
-            else:
-                params[param_name] = param_val
-    elif ds == 'log_norm':
-        params = {}
-        for param_name, param_val in params_trans.items():
-            if not param_name in VARIABLE_INIT_NAMES:
-                params[param_name] = np.log10(param_val) 
-            else:
-                params[param_name] = param_val
-    else:
-        params = params_trans
+
+    ds='log_unif'
+
+    
+    # if ds == 'log_unif':
+    #     params = transform_to_log_unif(params_trans)
+    # elif ds == 'log_norm':
+    #     params = transform_to_log(params_trans)
+    # else:
+    #     params = params_trans
 
     dhaB_dhaT_model = DhaBDhaTModel(external_volume = external_volume, 
                                     ds=ds)
@@ -364,18 +344,15 @@ def main():
     for i,init_names in enumerate(VARIABLE_INIT_NAMES):
         y0[i] = init_conds[init_names]  
 
-    tol = 1e-3
+    tol = 1e-7
     nsamples = 500
     timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
 
     ds = lambda t,x: dhaB_dhaT_model.ds(t,x,params)
     ds_jac = lambda t,x: dhaB_dhaT_model.sderiv_jac_state_vars_fun(t,x,params)
 
-    try:
-        sol = solve_ivp(ds,[0, fintime+1], y0, method = 'BDF', jac = ds_jac, t_eval=timeorig,
-                        atol=tol,rtol=tol)#, events=event_stop)
-    except ValueError:
-        return
+    sol = solve_ivp(ds,[0, fintime+1], y0, method = 'BDF', jac = ds_jac, t_eval=timeorig,
+                    atol=tol,rtol=tol)
 
     print(sol.message)
 

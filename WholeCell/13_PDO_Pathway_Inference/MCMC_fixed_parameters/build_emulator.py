@@ -8,32 +8,6 @@ import pandas as pd
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize
 
-# load data 
-
-# synthetic parameters
-filename = 'norm_sample_paramspace_len_50_date_2021_03_17_16:11.pkl'
-
-file_name_full_param = 'data/' + "cleaned_params_init_params_"+ filename[:-4]
-
-pv = np.loadtxt(file_name_full_param + '.csv',delimiter=",")
-
-# QoI synthetic
-filename_QoI = 'data/' + "PCGP_synthetic_data_" + filename[:-4]
-
-QoI_syn = np.loadtxt(filename_QoI + '.csv',delimiter=",")
-
-
-# time points and init conditions
-time_vals = [0,2, 4, 6, 8]
-init_conds = [[48.4239274209863, 0.861642364731331, 0.060301507537688],
-              [57.3451166180758, 1.22448979591837, 0.100696991929568],
-              [72.2779071192256, 1.49001347874035, 0.057971014492754],
-              [80.9160305343512, 1.52671755725191, 0.07949305141638]]
-nparams = len(PARAMETER_LIST) + len(init_conds[0])
-
-# edit param data
-
-
 
 def corr(pv1,pv2, eta1):
 	K = np.ones((pv1.shape[0],pv2.shape[0]))
@@ -42,7 +16,7 @@ def corr(pv1,pv2, eta1):
 	return K
 
 def timeSigma(eta2):
-	sigma_f = np.exp(-eta2*np.abs(np.subtract.outer(time_vals, time_vals)))
+	sigma_f = np.exp(-eta2*np.abs(np.subtract.outer(TIME_EVALS, TIME_EVALS)))
 	return sigma_f
 
 
@@ -128,6 +102,3 @@ def predictGP(fitted_info, t_test, t_tr, f_tr):# obtain the fitted info
 
 	return {'pred_mean': gamma_vec, 'pred_var':kappa_vec}
 
-fitted_info = fitGP(pv,QoI_syn)
-print(predictGP(fitted_info, pv[0,:].reshape(1,-1), pv, QoI_syn))
-print(QoI_syn[0,:])

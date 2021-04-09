@@ -6,79 +6,88 @@ from scipy.special import lambertw
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 
-def postdraws(rprior,logpost,jac=None,nsamp=2000):
+def postdraws(rprior,logpost,lbda = 0.01,nsamp=2000,
+			  max_opt_iters = 10,initial_param = None,
+			  maxiter = 10**3, jac=None):
+	"""
+	MCMC draws
+
+	: rprior		: function takes n, the number of samples, and outputs the n draws from the prior
+	: logpost		: function computes the log posterior density at a point
+	: nsamples      : number of MCMC points
+	: lamb          : perturbation magnitude
+	: max_opt_inters: number of optimization searches to find most likely point
+	: initial_param : function that describes how to initialize optimization
+	: maxiter       : maximum number of iterations for each optimization problem
+	: jac			: jacobian of the log posterior
+	"""
+
 	lb = np.quantile(rprior(2000),0.001,axis=0)
 	ub = np.quantile(rprior(2000),0.999,axis=0)
 
 	optimizelp = lambda tcurr: -logpost(tcurr)
-	tcurr = rprior(1).reshape(-1)
+	tcurr = rprior(1).reshape(-1) # initalize tcurr
 	p = len(tcurr)
-
 	k=0
-	while(k < 10):
-		params_trans = {'cellperGlyMass': 2*10**5,
-				'PermCellGlycerol':10**-4,
-				'PermCellPDO': 10**-3,
-				'PermCell3HPA': 10**-2,
-				'VmaxfDhaB': 800, 
-				'KmDhaBG': 0.1 ,
-				'VmaxfDhaT': 500,
-				'KmDhaTH': 0.1,
-				'VmaxfGlpK': 500 ,
-				'KmGlpKG': 10}
-		tprop = np.zeros(1 + len(params_trans.values()))		
-		tprop[0] = np.log10(1/2.)
-		tprop[1:] = list(np.log10(list(params_trans.values())))
-		tprop = tprop + 0.01*standard_normal(p)
+	while(k < max_opt_iters):
+
+		# initalize optimization
+		if initial_param:
+			tprop = initial_param()
+		else:
+			tprop = rprior(1).reshape(-1)
+
+		# do optimization
 		try:
 			tprop = minimize(optimizelp, tprop, method="L-BFGS-B", jac=jac,
 							 bounds=np.concatenate((lb.reshape(-1,1),ub.reshape(-1,1)),axis=1),
-							 options={'maxiter': 10**3}).x
-			k+=1
-			if(optimizelp(tprop) < optimizelp(tcurr)):
-				tcurr = tprop
+							 options={'maxiter': maxiter, 'disp': True}).x
 		except (ValueError, TypeError):
 			continue
+		k+=1
+		if (optimizelp(tprop) < optimizelp(tcurr)):
+			tcurr = tprop
+
+
+	# do MCMC with prior std
 	lpcurr = logpost(tcurr)
 	sca = np.std(rprior(2000),axis=0)
-	lbda = 0.01
-	n = nsamp
-	vec = np.zeros((n,p))
+	vec = np.zeros((nsamp,p))
 	i=0
-	while(i < n):
+	while(i < nsamp):
 		tprop = tcurr + lbda * sca* standard_normal(p)
 		try:
 			lpprop= logpost(tprop)
-			u = min(1,np.exp(lpprop-lpcurr))
-			if (u > uniform(size=1)[0]):
-				tcurr = tprop
-				lpcurr = lpprop
-			vec[i,:]= tcurr
-			i+=1
-
 		except (ValueError, TypeError):
 			continue
+		u = min(1,np.exp(lpprop-lpcurr))
+		if (u > uniform(size=1)[0]):
+			tcurr = tprop
+			lpcurr = lpprop
+		vec[i,:]= tcurr
+		i+=1
 
+	# do MCMC walk again but with learned, corrected scaling
 	sca = np.real(sqrtm(np.cov(vec,rowvar=False)))
-	lmbda = 1./np.sqrt(100.)
-	n = nsamp
-	thetadraw =  np.zeros((n,p))
+	thetadraw =  np.zeros((nsamp,p))
 	i=0
-	while(i < n):
-		tprop = tcurr + lmbda*np.dot(sca,standard_normal(p))
+	while(i < nsamp):
+		tprop = tcurr + lbda*np.dot(sca,standard_normal(p))
 		try:
 			lpprop = logpost(tprop)
-			u = min(1,np.exp(lpprop-lpcurr))
-			if (u > uniform(size=1)[0]):
-				tcurr = tprop
-				lpcurr = lpprop
-			thetadraw[i,:]= tcurr
-			i+=1
 		except (ValueError, TypeError):
 			continue
+
+		u = min(1,np.exp(lpprop-lpcurr))
+		if (u > uniform(size=1)[0]):
+			tcurr = tprop
+			lpcurr = lpprop
+		thetadraw[i,:]= tcurr
+		i+=1
+
 	return thetadraw
 
-def main():
+def test():
 	def hitf(vals):
 		g = vals[:,0]
 		m = vals[:,1]
@@ -108,10 +117,10 @@ def main():
 	loglik =lambda theta: -0.5*np.dot(y-f(theta),y-f(theta)) / 0.1**2
 	logpost =lambda theta: loglik(theta) + logprior(theta)
 	nsamples = 10**4
-	tdraws = postdraws(rprior,logpost, nsamp = nsamples)
+	tdraws = postdraws(rprior,logpost, lbda = 0.01, nsamp = nsamples)
 	for i in range(tdraws.shape[1]):
 		plt.plot(range(int(nsamples)),tdraws[:,i])
 		plt.show()
 
 if __name__ == '__main__':
-	main()
+	test()

@@ -26,9 +26,9 @@ def varSigma(eta3):
 	return(sigma_f)
 
 def MLE(logeta, to, fo):
-	logeta1 = logeta[:nparams]
-	logeta2 = logeta[nparams]
-	logeta3 = logeta[nparams+1]
+	logeta1 = logeta[:NPARAMS]
+	logeta2 = logeta[NPARAMS]
+	logeta3 = logeta[NPARAMS+1]
 
 	# obtain the covariance via kronecker product
 	corr0 = corr(to, to, np.exp(logeta1))# c(., .)
@@ -47,9 +47,9 @@ def MLE(logeta, to, fo):
 
 def negloglik(logeta, t0, f0):
 	n = len(f0)# obtain sigmahat for a given eta
-	logeta1 = logeta[:nparams]
-	logeta2 = logeta[nparams]
-	logeta3 = logeta[nparams+1]
+	logeta1 = logeta[:NPARAMS]
+	logeta2 = logeta[NPARAMS]
+	logeta3 = logeta[NPARAMS+1]
 	gammahat, sigmahat = MLE(logeta, t0, f0)
 	corr0 = corr(t0, t0, np.exp(logeta1))# c(t0, t0)
 	timeSigma0 = timeSigma(np.exp(logeta2))# Sigma
@@ -63,22 +63,22 @@ def negloglik(logeta, t0, f0):
 
 	return 1/2*logdetkappa0 + n/2*np.log(sigmahat)
 
-def fitGP(t_tr, f_tr, init_logeta=0*np.ones(nparams+2),
-		  lowerb=-5*np.ones(nparams+2),
-		  upperb=5*np.ones(nparams+2)):
+def fitGP(t_tr, f_tr, init_logeta=0*np.ones(NPARAMS+2),
+		  lowerb=-np.ones(NPARAMS+2), upperb=np.ones(NPARAMS+2),
+		  maxiter = int(10**3)):
   negloglik_log_eta = lambda log_eta: negloglik(log_eta,t_tr, f_tr)
   log_eta_hat = minimize(negloglik_log_eta, init_logeta, 
   						 method="L-BFGS-B", 
   						 bounds=np.concatenate((lowerb.reshape(-1,1),upperb.reshape(-1,1)),axis=1),
-  						 options={'maxiter': int(10**3)}).x
+  						 options={'maxiter': maxiter}).x
   gammahat, sigmahat = MLE(log_eta_hat, t_tr, f_tr)
   return {'etahat': np.exp(log_eta_hat),'sigmahat': sigmahat, 'gammahat': gammahat}
 
 def predictGP(fitted_info, t_test, t_tr, f_tr):# obtain the fitted info
 	etahat = fitted_info['etahat']
-	etahat1 = etahat[:nparams]
-	etahat2 = etahat[nparams]
-	etahat3 = etahat[nparams+1]
+	etahat1 = etahat[:NPARAMS]
+	etahat2 = etahat[NPARAMS]
+	etahat3 = etahat[NPARAMS+1]
 	sigmahat = fitted_info['sigmahat']
 	gammahat = fitted_info['gammahat']
 
