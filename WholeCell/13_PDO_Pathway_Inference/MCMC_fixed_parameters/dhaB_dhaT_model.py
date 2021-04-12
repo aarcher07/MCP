@@ -297,16 +297,16 @@ class DhaBDhaTModel:
 def main():
     external_volume = 0.002
 
-    params = {'cellperGlyMass': 0.3818047517423962, #2*10**5,
-            'PermCellGlycerol': 0.899465527666024, #10**-3,
-            'PermCellPDO': 0.14537655717211243,#10**-3,
-            'PermCell3HPA': 0.08205296911894387,
-            'VmaxfDhaB': 0.6930764973157587, 
-            'KmDhaBG': 0.294192085854041 ,
-            'VmaxfDhaT': 0.47201291520373767,
-            'KmDhaTH': 0.3077193508854612,
-            'VmaxfGlpK': 0.917492551649238 ,
-            'KmGlpKG': 0.11169033491696544}
+    params_trans = {'cellperGlyMass': 10**(5.73158464),
+                'PermCellGlycerol': 10**(-3.55285234),
+                'PermCellPDO': 10**(-3.85344833),
+                'PermCell3HPA': 10**(-2.34212333),
+                'VmaxfDhaB': 10**(3.26266939), 
+                'KmDhaBG': 10**(0.71152905) ,
+                'VmaxfDhaT': 10**(2.85561206),
+                'KmDhaTH': 10**(0.69665821),
+                'VmaxfGlpK':10**(1.99560497) ,
+                'KmGlpKG': 10**(-1.24867452)}
 
     init_conds={'G_CYTO_INIT': 0, 
                 'H_CYTO_INIT': 0,
@@ -317,15 +317,15 @@ def main():
                 'CELL_CONC_INIT': INIT_CONDS_GLY_PDO_DCW[50][2]*0.5217871564671509*DCW_TO_COUNT_CONC
                 }
 
-    ds='log_unif'
+    ds='log_norm'
 
     
-    # if ds == 'log_unif':
-    #     params = transform_to_log_unif(params_trans)
-    # elif ds == 'log_norm':
-    #     params = transform_to_log(params_trans)
-    # else:
-    #     params = params_trans
+    if ds == 'log_unif':
+        params = transform_to_log_unif(params_trans)
+    elif ds == 'log_norm':
+        params = transform_to_log(params_trans)
+    else:
+        params = params_trans
 
     dhaB_dhaT_model = DhaBDhaTModel(external_volume = external_volume, 
                                     ds=ds)
@@ -391,7 +391,7 @@ def main():
     plt.ylabel('concentration (mM)')
     plt.show()
 
-    plt.plot(timeorighours,sol.y[-1,:].T/DCW_TO_COUNT_CONC, colour[i])
+    plt.plot(timeorighours,sol.y[-1,:].T/((10**-0.3531)*DCW_TO_COUNT_CONC), colour[i])
     plt.title('Plot of cell concentration')
     plt.xlabel('time (hr)')
     plt.ylabel('concentration (cell per m^3)')

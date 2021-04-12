@@ -2,11 +2,12 @@ import numpy as np
 import pandas as pd
 from constants import *
 import matplotlib.pyplot as plt
+from numpy.random import standard_normal
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 from dhaB_dhaT_model import DhaBDhaTModel
-from MCMC import postdraws
+from MCMC import postdraws,adaptive_postdraws
 import time
 import pickle
 from scipy.integrate import solve_ivp
@@ -58,7 +59,7 @@ def logprior(params,ds):
 			logpdf += stats.loguniform.logpdf(params[i],a=vals[0],b=vals[1])
 	return logpdf
 
-def loglik(params,dhaB_dhaT_model,sigma=0.1):
+def loglik(params,dhaB_dhaT_model,sigma=[2,2,0.1]):
 
 	#CALIBRATION CONSTANT
 	if dhaB_dhaT_model.ds_name == 'log_unif':
@@ -91,50 +92,53 @@ def loglik(params,dhaB_dhaT_model,sigma=0.1):
 
 		# compute difference for loglikelihood
 		fvals[:,2] = fvals[:,2]/(scalar*DCW_TO_COUNT_CONC)
-		data_diff_matrix = (fvals-data_sample_df)/data_sample_df
-		data_diff_matrix[:,2] = data_diff_matrix[:,2]
+		sigma2 = np.array(sigma)**2
+		data_diff_matrix = (fvals-data_sample_df)/sigma2[np.newaxis,:]
 		diff_f_data.extend(data_diff_matrix.ravel())
-	return -0.5*np.dot(diff_f_data,diff_f_data) / sigma**2
+	return -0.5*np.dot(diff_f_data,diff_f_data) 
 
-def test(sigma = 0.01,ds = "log_unif"):
+def test(sigma = [2,2,0.1],ds = "log_unif"):
 	dhaB_dhaT_model = DhaBDhaTModel(ds =ds)
 
-	params_trans = {'cellperGlyMass': 2*10**5,
-					'PermCellGlycerol': 10**-4,
-					'PermCellPDO': 10**-3,
-					'PermCell3HPA': 10**-2,
-					'VmaxfDhaB':  800, 
-					'KmDhaBG': 0.1 ,
-					'VmaxfDhaT': 500,
-					'KmDhaTH': 1,
-					'VmaxfGlpK': 500 ,
-					'KmGlpKG': 1 } 
+	# params_trans = {'cellperGlyMass': 10**(5.03291814),
+	# 			'PermCellGlycerol': 10**(-3.47400513),
+	# 			'PermCellPDO': 10**(-4.91886901),
+	# 			'PermCell3HPA': 10**(-2.38249514),
+	# 			'VmaxfDhaB': 10**(2.81084489), 
+	# 			'KmDhaBG': 10**(-0.1953104) ,
+	# 			'VmaxfDhaT': 10**(3.17329415),
+	# 			'KmDhaTH': 10**( 0.74316688),
+	# 			'VmaxfGlpK':10**(2.82780978) ,
+	# 			'KmGlpKG': 10**(-1.26258495)}
 
-	init_conds={'G_CYTO_INIT': 0, 
-				'H_CYTO_INIT': 0,
-				'P_CYTO_INIT': 0,
-				'G_EXT_INIT': 50, 
-				'H_EXT_INIT': 0,
-				'P_EXT_INIT': 0,
-				'CELL_CONC_INIT': 0.2*DCW_TO_COUNT_CONC
-				}
+	# init_conds={'G_CYTO_INIT': 0, 
+	# 			'H_CYTO_INIT': 0,
+	# 			'P_CYTO_INIT': 0,
+	# 			'G_EXT_INIT': 50, 
+	# 			'H_EXT_INIT': 0,
+	# 			'P_EXT_INIT': 0,
+	# 			'CELL_CONC_INIT': 0.2*DCW_TO_COUNT_CONC
+	# 			}
 
 
-	if dhaB_dhaT_model.ds_name == 'log_unif':
-		params_dict = {}
-		for param_name, param_val in params_trans.items():
-			bound_a,bound_b = PARAMETER_LOG_UNIF_BOUNDS[param_name]
-			params_dict[param_name] = (np.log10(param_val) - bound_a)/(bound_b - bound_a)
+	# if dhaB_dhaT_model.ds_name == 'log_unif':
+	# 	params_dict = {}
+	# 	for param_name, param_val in params_trans.items():
+	# 		bound_a,bound_b = PARAMETER_LOG_UNIF_BOUNDS[param_name]
+	# 		params_dict[param_name] = (np.log10(param_val) - bound_a)/(bound_b - bound_a)
 
-	elif dhaB_dhaT_model.ds_name == 'log_norm':
-		params_dict = {}
-		for param_name, param_val in params_trans.items():
-			params_dict[param_name] = np.log10(param_val)
+	# elif dhaB_dhaT_model.ds_name == 'log_norm':
+	# 	params_dict = {}
+	# 	for param_name, param_val in params_trans.items():
+	# 		params_dict[param_name] = np.log10(param_val)
 
-	params = np.zeros(1 + len(params_dict.values()))
-	params[0] = np.log10(1/2.)
-	params[1:] = list(params_dict.values())
-	
+	# params = np.zeros(1 + len(params_dict.values()))
+	# params[0] = -0.25265
+	# params[1:] = list(params_dict.values())
+
+	file_name = 'MCMC_results_data/adaptive_beta_0,9_norm_nsamples_1000_sigma_[2,0_date_2021_04_11_22:04_rank_0'
+	params= load_obj(file_name)[-1]
+
 	loglik_sigma = lambda param: loglik(param,dhaB_dhaT_model,sigma=sigma)
 	logpost = lambda param: loglik_sigma(param) + logprior(param, dhaB_dhaT_model.ds_name)
 
@@ -144,34 +148,72 @@ def test(sigma = 0.01,ds = "log_unif"):
 
 
 def main(argv, arc):
+	# get arguments 
+	nsamps = int(float(argv[1]))
+	sigma = [float(arg) for arg in sys.argv[2:5]]
+	dhaB_dhaT_model = DhaBDhaTModel(ds =argv[5])
+	lbdabeta = float(argv[6])
+	adaptive = int(argv[7])
 
-	nsamps = float(argv[1])
-	sigma = float(argv[2])
-	dhaB_dhaT_model = DhaBDhaTModel(ds =argv[3])
 
+	# set distributions
 	loglik_sigma = lambda params: loglik(params,dhaB_dhaT_model,sigma=sigma)
 	logpost = lambda params: loglik_sigma(params) + logprior(params, dhaB_dhaT_model.ds_name)
 	rprior_ds = lambda n: rprior(n,dhaB_dhaT_model.ds_name)
 
-	nsamples = int(nsamps)
 
-	tdraws = postdraws(rprior_ds,logpost, nsamp = nsamples, jac = None)
+	# set inital starting point
+	def initial_param():
+		# params_trans = {'cellperGlyMass': 10**(5.03291814),
+		# 			'PermCellGlycerol': 10**(-3.47400513),
+		# 			'PermCellPDO': 10**(-4.91886901),
+		# 			'PermCell3HPA': 10**(-2.38249514),
+		# 			'VmaxfDhaB': 10**(2.81084489), 
+		# 			'KmDhaBG': 10**(-0.1953104) ,
+		# 			'VmaxfDhaT': 10**(3.17329415),
+		# 			'KmDhaTH': 10**( 0.74316688),
+		# 			'VmaxfGlpK':10**(2.82780978) ,
+		# 			'KmGlpKG': 10**(-1.26258495)}
+
+		# param_start = np.zeros(1 + len(params_trans.values()))		
+		# param_start[0] = 10**(-0.25265953)
+		# param_start[1:] = list(np.log10(list(params_trans.values())))
+		file_name = 'MCMC_results_data/adaptive_beta_0,9_norm_nsamples_1000_sigma_[2,0_date_2021_04_11_22:04_rank_0'
+		param_start = load_obj(file_name)[-1]
+		return param_start
+	if adaptive:
+		tdraws = adaptive_postdraws(rprior_ds,logpost, nsamp=nsamps,beta=lbdabeta,
+ 									max_opt_iters = 1,initial_param = initial_param,
+ 									maxiter = 10, jac=None)
+	else:
+		tdraws = postdraws(rprior_ds,logpost,lbda = lbdabeta, nsamp=nsamps,maxpostdens = True,
+							max_opt_iters = 1,initial_param = initial_param, maxiter = 10, 
+							jac=None)
+
 	date_string = time.strftime("%Y_%m_%d_%H:%M")
 
 	for i,param_name in enumerate(VARS_TO_TEX.keys()):
-		plt.plot(range(int(nsamples)),tdraws[:,i])
+		plt.plot(range(int(nsamps)),tdraws[:,i])
 		plt.title('Plot of MCMC distribution of ' + r'$\log(' + VARS_TO_TEX[param_name][1:-1] + ')$')
 		plt.xlabel('iterations index')
 		plt.ylabel(r'$\log(' + VARS_TO_TEX[param_name][1:-1] + ')$')
-		file_name = ds[4:] + "_nsamples_"+ str(nsamples)  + "_sigma_" + str(sigma)[:4].replace('.',',') +'_date_'+date_string +"_param_" + param_name + "_rank_" + str(rank)+ '.png'
+		if adaptive:
+			adapt_name = "adaptive"
+			betalambda = "beta"
+		else:
+			adapt_name = "adaptive"
+			betalambda = "lambda"
+
+		file_name =adapt_name + "_" + betalambda + "_" + str(lbdabeta).replace('.',',') + "_" + ds[4:] + "_nsamples_"+ str(nsamps)  + "_sigma_"  + str(np.round(sigma,decimals=3)).replace('.',',') +'_date_'+date_string  + "_param_" + param_name + "_rank_" + str(rank)+ '.png'
+
 		plt.savefig('MCMC_results_plots/'+file_name,bbox_inches='tight')
 		plt.close()
 
-	load_obj('MCMC_results_data/' + ds[4:] +  '_nsamples_'+ str(nsamples) + "_sigma_" + str(sigma)[:4].replace('.',',') +'_date_'+date_string + "_rank_" + str(rank) + '.pkl')
+	save_obj(tdraws,'MCMC_results_data/' +adapt_name + "_" + betalambda + "_" + str(lbdabeta).replace('.',',') + "_" + ds[4:] + "_nsamples_" + str(nsamps)  + "_sigma_" + str(str(np.round(sigma,decimals=3))).replace('.',',')  +'_date_'+date_string + "_rank_" + str(rank))
 
 
 if __name__ == '__main__':
-	test(sigma = float(sys.argv[2]) , ds = sys.argv[3])
+	test(sigma = [float(arg) for arg in sys.argv[2:5]] , ds = sys.argv[5])
 	for ds in ['log_norm']:
 		argv = sys.argv
 		argv.append(ds)
