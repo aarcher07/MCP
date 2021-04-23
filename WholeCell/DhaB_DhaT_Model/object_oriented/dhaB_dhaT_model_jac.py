@@ -31,10 +31,10 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
 
     def __init__(self,start_time,final_time, 
                 integration_tol, nsamples, tolsolve, params_values_fixed,
-                params_sens_list, time_check = 5., external_volume = 9e-6, 
+                params_sens_list, external_volume = 9e-6, 
                 rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
                 ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
-                transform = "log10"):
+                ds = "log10"):
 
         """
         :params start_time: initial time of the system -- cannot be 0
@@ -45,23 +45,22 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         :params params_values_fixed: dictionary parameters whose senstivities are not being studied and 
                                      their values
         :params params_sens_list: list of parameters whose sensitivities are being studied
-        :params time_check: time to check PDO concentration 
         :params external_volume: external volume of the system
         :params rc: radius of system
         :params lc: length of the cylindrical component of cellular_geometry = 'rod'
         :params rm: radius of MCP
         :params ncells_per_metrecubed: number of cells per m^3
         :params cellular_geometry: geometry of the cell, rod (cylinder with hemispherical ends)/sphere
-        :params transform: transformation of the parameters, log2, log10 or identity.      
+        :params ds: transformation of the parameters, log2, log10 or identity.      
         """
         
         super().__init__(params_values_fixed, params_sens_list, external_volume, rc,
-                        lc , rm , ncells_per_metrecubed, cellular_geometry, transform)
+                        lc , rm , ncells_per_metrecubed, cellular_geometry, ds)
 
         # save integration parameters
         self._set_initial_conditions()
         self._set_initial_senstivity_conditions()
-        self.xs0 = lambda params_sens_dict: np.concatenate([self.x0(*params_sens_dict.values()),self.sens0])
+        self.xs0 = lambda params_sens_dict: np.concatenate([self.y0(*params_sens_dict.values()),self.sens0])
         self.start_time = start_time
         self.final_time = final_time
         self.integration_tol = integration_tol
@@ -76,7 +75,7 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
                                                   self.nvars+(self.index_3HPA_cytosol+1)*self.nparams_sens)
 
         # index of 1,3-PDO after 5 hrs
-        self.time_check = time_check
+        time_check = 5.
         self.first_index_close_enough =  np.argmin(np.abs(self.time_orig_hours-time_check)) # index of closest time after 5hrs
         self.index_1_3PDO_ext = -1 # index of P_ext 
         range_1_3PDO_ext_param_sens = range(self.index_1_3PDO_ext*self.nparams_sens,
@@ -84,19 +83,26 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         self.indices_1_3PDO_ext_params_sens = np.array([(self.first_index_close_enough,i) for i in range_1_3PDO_ext_param_sens])
         self.indices_sens_1_3PDO_ext_before_timecheck = np.array([(-1,i) for i in range_1_3PDO_ext_param_sens])
 
+        # index of Glycerol after 5 hrs
+        self.index_Glycerol_ext = -3 # index of Glycerol_ext 
+        range_Glycerol_ext_param_sens = range(self.index_Glycerol_ext*self.nparams_sens,
+                                             (self.index_Glycerol_ext+1)*self.nparams_sens)
+        self.indices_Glycerol_ext_params_sens = np.array([(self.first_index_close_enough,i) for i in range_Glycerol_ext_param_sens])
+        self.indices_sens_Glycerol_ext_before_timecheck = np.array([(-1,i) for i in range_Glycerol_ext_param_sens])
+
 
     def _set_initial_conditions(self):
         """
         Set initial condition of the reaction system
         :params init_conditions:
         """
-        x0 = []
+        y0 = np.zeros(len(VARIABLE_INIT_NAMES))
         for i,variable in enumerate(VARIABLE_INIT_NAMES):
-            if variable in self.params_values_fixed.keys():
-                x0.append(self.params_values_fixed[variable])
-            else:
-                x0.append(self.params_sens_sp_dict[variable])
-        self.x0 = sp.lambdify(self.params_sens_sp,x0)
+            try:
+                y0[i] = self.params_values_fixed[variable] 
+            except KeyError:
+                y0[i] = self.params_sens_sp_dict[variable]
+        self.y0 = sp.lambdify(self.params_sens_sp,y0)
 
     def _set_initial_senstivity_conditions(self):
         """
@@ -140,6 +146,7 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         
         xs0 = self.xs0(params_sens_dict)
 
+        
         #stop event
         event_stop = lambda t,y: self._event_stop(t,y,params_sens_dict)
         event_stop.terminal = True
@@ -171,15 +178,15 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
             return 
             
         # conservation of mass
-        x0 = np.array(self.x0(**params_sens_dict))
+        y0 = np.array(self.y0(**params_sens_dict))
         if 'nmcps' in self.params_values_fixed.keys():
             nmcps = self.params_values_fixed['nmcps']
         else:
             nmcps = params_sens_dict['nmcps']
         # original mass
-        ext_masses_org = x0[(self.nvars-3):self.nvars]* self.external_volume
-        cell_masses_org = x0[5:8] * self.cell_volume 
-        mcp_masses_org = x0[:5] * self.mcp_volume
+        ext_masses_org = y0[(self.nvars-3):self.nvars]* self.external_volume
+        cell_masses_org = y0[5:8] * self.cell_volume 
+        mcp_masses_org = y0[:5] * self.mcp_volume
         mass_org = ext_masses_org.sum() +  self.ncells*cell_masses_org.sum() +  self.ncells*nmcps*mcp_masses_org.sum()
 
         # final mass
@@ -207,23 +214,27 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
             # get sensitivities of Glycerol and 1,3-PDO after 5 hrs
             if status == 0 or (time[-1] > 5*HRS_TO_SECS):
                 jac_P_ext = jac_sample[tuple(self.indices_1_3PDO_ext_params_sens.T)]
+                jac_G_ext = jac_sample[tuple(self.indices_Glycerol_ext_params_sens.T)]
             elif status == 1:
                 jac_P_ext = jac_sample[tuple(self.indices_sens_1_3PDO_ext_before_timecheck.T)]
+                jac_G_ext = jac_sample[tuple(self.indices_sens_Glycerol_ext_before_timecheck.T)]
             else:
                 jac_P_ext = []
+                jac_G_ext = []
 
             jac_values = [jac_HPA_max,
+                          jac_G_ext,
                           jac_P_ext]
             return jac_values
         else:
-            return [[],[]]
+            return 
 
 def main(argv, arc):
     # get inputs
     enz_ratio_name = argv[1]
-    delta_param = float(argv[2])
+    
     # initialize variables
-    transform = 'log10'
+    ds = 'log10'
 
     start_time = (10**(-15))
     final_time = 100*HRS_TO_SECS
@@ -241,7 +252,7 @@ def main(argv, arc):
                           'P_MCP_INIT': 0,
                           'G_CYTO_INIT': 0,
                           'H_CYTO_INIT': 0,
-                          'P_CYTO_INIT': 0 ,
+                          'P_CYTO,INIT': 0 ,
                           'G_EXT_INIT': 200,
                           'H_EXT_INIT': 0,
                           'P_EXT_INIT': 0}
@@ -266,13 +277,13 @@ def main(argv, arc):
                         'nmcps': 15}
 
     for key in params_sens_dict.keys():
-        if transform == "log2":
+        if ds == "log2":
             params_sens_dict[key] = np.log2(params_sens_dict[key])
-        if transform == "log10":
+        if ds == "log10":
             params_sens_dict[key] = np.log10(params_sens_dict[key])
 
     dhaB_dhaT_model_jacobian = DhaBDhaTModelJac(start_time, final_time, integration_tol, nsamples,tolsolve,
-                                                   params_values_fixed,params_sens_list, transform = transform)
+                                                   params_values_fixed,params_sens_list, ds = ds)
     jacobian_est = np.array(dhaB_dhaT_model_jacobian.jac_subset(params_sens_dict))
 
     # format output
@@ -288,16 +299,17 @@ def main(argv, arc):
                               for params in params_sens_dict.keys()]
         param_senstivities = [ "$" + ("{:.3f}".format(ja) if abs(ja) > 0.001  else "<0.001") + "$" for ja in jacobian_est[i,:]]
 
-        DeltaQoI = [("($" + "{:.3f}".format(ja*np.log10(1-delta_param)) + "$, $" + "{:.3f}".format(ja*np.log10(1 + delta_param)) + "$)"  
+        DeltaQoI = [("($" + "{:.3f}".format(ja*np.log10(0.8)) + "$, $" + "{:.3f}".format(ja*np.log10(1.2)) + "$)"  
                      if abs(ja) > 0.001 else "--") for ja in jacobian_est[i,:] ]
+        percentage_change = 20/100
         if i == 0:
             for ja in jacobian_est[i,:]:
                 if ja > 0:
-                    min_max_3_HPA += ja*np.log10(1 - delta_param) 
-                    max_max_3_HPA += ja*np.log10(1 + delta_param)
+                    min_max_3_HPA += ja*np.log10(1 - percentage_change) 
+                    max_max_3_HPA += ja*np.log10(1 + percentage_change)
                 else:   
-                    min_max_3_HPA += ja*np.log10(1 + delta_param) 
-                    max_max_3_HPA += ja*np.log10(1- delta_param)
+                    min_max_3_HPA += ja*np.log10(1 + percentage_change) 
+                    max_max_3_HPA += ja*np.log10(1- percentage_change)
             print(min_max_3_HPA)
             print(max_max_3_HPA)
         param_results = pd.DataFrame({'Parameter': param_names_tex,
