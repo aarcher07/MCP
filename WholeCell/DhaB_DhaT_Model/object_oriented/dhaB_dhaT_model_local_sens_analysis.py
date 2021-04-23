@@ -34,17 +34,17 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
 
     def __init__(self,params_values_fixed, params_sens_list, external_volume = 9e-6,
                 rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, ncells_per_metrecubed = 8e14,
-                cellular_geometry = "rod", ds = "log2"):
+                cellular_geometry = "rod", transform = "identity"):
         """
-        :params params_values_fixed:
-        :params params_sens_list:
-        :params external_volume:
-        :params rc:
-        :params lc:
-        :params rm:
-        :params ncells_per_metrecubed:
-        :params cellular_geometry:
-        :params ds:      
+        :params params_values_fixed:  non-sensitivity parameters
+        :params params_sens_list: parameters for the sensitivity study
+        :params external_volume: external voluime
+        :params rc: cell radius
+        :params lc: cell length
+        :params rm: MCP radius
+        :params ncells_per_metrecubed: number of cells per volume^3
+        :params cellular_geometry: cell geometry ("rod" or "sphere")
+        :params transform: parameter input: "log2", "log10", "identity"       
         """
 
         # check if parameter list have the correct parameter names
@@ -53,6 +53,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         potential_param_list.extend(list(params_values_fixed.keys()))
         potential_param_list.extend(params_sens_list)
 
+        assert transform in ["log2", "log10", "identity"]    
         assert len(PARAMETER_LIST + VARIABLE_INIT_NAMES) == len(potential_param_list)
         assert set(PARAMETER_LIST + VARIABLE_INIT_NAMES) == set(potential_param_list)
 
@@ -67,14 +68,13 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         self._set_param_sp_symbols()
         self._set_sens_vars()
 
-        if ds == "log2":
+        if transform == "log2":
             self._sderiv = self._sderiv_log2
-        elif ds == "log10":
+        elif transform == "log10":
             self._sderiv = self._sderiv_log10
-        else:
+        elif transform == "identity":
             self._sderiv = self._sderiv_id
 
-        self._set_fun_sderiv_jac_statevars()
         self._set_jacs_fun()
         self._create_jac_sens()
 
@@ -170,18 +170,29 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
             self._set_symbolic_state_vars()
         self.sderiv_symbolic = self._sderiv(0,self.x_sp,self.params_sens_sp_dict)
 
-    def _set_fun_sderiv_jac_statevars(self):
+    def _set_symbolic_sderiv_conc_sp(self):
         """
-        Overrides the supper and generates the jacobian function of the differential equation 
-        wrt state variables and as a function of state variables and parameters
+        Generates the symbol jacobian of the differential equation 
+        wrt state variables
         """
-        sderiv_jac_state_vars_sp = getattr(self, 'sderiv_jac_state_vars_sp', None)
-        if sderiv_jac_state_vars_sp is None:
-            self._set_symbolic_sderiv_jac_statevars()
-            sderiv_jac_state_vars_sp = self.sderiv_jac_state_vars_sp
-        sderiv_jac_state_vars_sp_fun = sp.lambdify((self.x_sp,self.params_sens_sp), sderiv_jac_state_vars_sp, 'numpy')
-        self.sderiv_jac_state_vars_sp_fun = lambda t,x,params_sens_dict: sparse.csr_matrix(sderiv_jac_state_vars_sp_fun(x,params_sens_dict.values()))
+        sderiv_symbolic = getattr(self, 'sderiv_symbolic', None)
+        if sderiv_symbolic is None:
+            self._set_symbolic_sderiv()
+            sderiv_symbolic = self.sderiv_symbolic
+        self.sderiv_jac_conc_sp = sp.Matrix(sderiv_symbolic).jacobian(self.x_sp)
 
+    def _set_symbolic_sderiv_conc_fun(self):
+        """
+        Generates the jacobian function of the differential equation 
+        wrt state variables
+        """
+
+        sderiv_jac_conc_sp = getattr(self, 'sderiv_jac_sp', None)
+        if sderiv_jac_conc_sp is None:
+            self._set_symbolic_sderiv_conc_sp()
+            sderiv_jac_conc_sp = self.sderiv_jac_conc_sp
+        sderiv_jac_conc_fun = sp.lambdify((self.x_sp,self.params_sens_sp), sderiv_jac_conc_sp,'numpy')
+        self.sderiv_jac_conc_fun = lambda t,x,params_sens_vals: sderiv_jac_conc_fun(x,params_sens_vals)
 
     def _set_jacs_fun(self):
         """
@@ -190,17 +201,19 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         """
 
         # SDeriv with param vals and symbols
-        sderiv_sym_param_sens = sp.Matrix(self._sderiv(0,self.x_sp,params_sens = self.params_sens_sp_dict))
-        
-        # derivative of rhs wrt params
-        sderiv_jac_params = sderiv_sym_param_sens.jacobian(self.params_sens_sp)
-        sderiv_jac_params_fun = sp.lambdify((self.x_sp,self.params_sens_sp), sderiv_jac_params,'numpy')
-        self.sderiv_jac_params_fun = lambda t,x,params_sens_vals: sderiv_jac_params_fun(x,params_sens_vals)
+        sderiv_symbolic = getattr(self, 'sderiv_jac_sp', None)
+        if sderiv_symbolic is None:
+            self._set_symbolic_sderiv()
+            sderiv_symbolic = self.sderiv_symbolic
+
+        sderiv_jac_conc_fun = getattr(self, 'sderiv_jac_conc_fun', None)
+        if sderiv_jac_conc_fun is None:
+            self._set_symbolic_sderiv_conc_fun()
 
         # derivative of rhs wrt Conc
-        sderiv_jac_conc = sderiv_sym_param_sens.jacobian(self.x_sp)
-        sderiv_jac_conc_fun = sp.lambdify((self.x_sp,self.params_sens_sp),sderiv_jac_conc,'numpy')
-        self.sderiv_jac_conc_fun = lambda t,x,params_sens_vals: sderiv_jac_conc_fun(x,params_sens_vals)
+        sderiv_jac_params = sp.Matrix(sderiv_symbolic).jacobian(self.params_sens_sp)
+        sderiv_jac_params_fun = sp.lambdify((self.x_sp,self.params_sens_sp), sderiv_jac_params,'numpy')
+        self.sderiv_jac_params_fun = lambda t,x,params_sens_vals: sderiv_jac_params_fun(x,params_sens_vals)
 
     def dsens(self,t,xs,params_sens_dict=None):
         """
@@ -283,7 +296,7 @@ def main(nsamples = 500):
     mintime = 10**(-15)
     secstohrs = 60*60
     fintime = 72*60*60
-    ds = ""    # parameter to check senstivity
+    transform = "log10"    # parameter to check senstivity
 
     params_values_fixed = {'KmDhaTH': 0.77, # mM
                           'KmDhaTN': 0.03, # mM
@@ -297,7 +310,7 @@ def main(nsamples = 500):
                           'P_MCP_INIT': 0,
                           'G_CYTO_INIT': 0,
                           'H_CYTO_INIT': 0,
-                          'P_CYTO,INIT': 0 ,
+                          'P_CYTO_INIT': 0 ,
                           'G_EXT_INIT': 200,
                           'H_EXT_INIT': 0,
                           'P_EXT_INIT': 0}
@@ -313,9 +326,9 @@ def main(nsamples = 500):
               'dPacking': 0.64,
               'nmcps': 15}
     for key in params_sens_dict.keys():
-        if ds == "log2":
+        if transform == "log2":
             params_sens_dict[key] = np.log2(params_sens_dict[key])
-        if ds == "log10":
+        if transform == "log10":
             params_sens_dict[key] = np.log10(params_sens_dict[key])
 
     #################################################
@@ -323,8 +336,10 @@ def main(nsamples = 500):
     #################################################
 
     # setup differential eq
-    model_local_sens = DhaBDhaTModelLocalSensAnalysis(params_values_fixed, params_sens_list, external_volume = external_volume, rc = 0.375e-6,
-                                                lc =  2.47e-6, rm = 7.e-8, ncells_per_metrecubed = ncells_per_metrecubed, cellular_geometry = "rod", ds = ds)
+    model_local_sens = DhaBDhaTModelLocalSensAnalysis(params_values_fixed, params_sens_list, external_volume = external_volume, 
+                                                     rc = 0.375e-6, lc =  2.47e-6, rm = 7.e-8,
+                                                     ncells_per_metrecubed = ncells_per_metrecubed, 
+                                                     cellular_geometry = "rod", transform = transform)
 
     #parameterize sensitivity functions
     dsens_param = lambda t, xs: model_local_sens.dsens(t,xs,params_sens_dict)

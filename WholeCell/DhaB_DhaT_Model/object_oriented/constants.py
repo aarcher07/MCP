@@ -6,6 +6,7 @@ Editing History:
 - 1/3/21
 """
 
+import numpy as np
 
 HRS_TO_SECS = 60*60
 
@@ -19,7 +20,7 @@ PARAMETER_LIST = ['KmDhaTH', 'KmDhaTN','kcatfDhaT',
                   'NADH_MCP_INIT','NAD_MCP_INIT']
 
 VARIABLE_INIT_NAMES = ['G_MCP_INIT','H_MCP_INIT','P_MCP_INIT',
-                       'G_CYTO_INIT', 'H_CYTO_INIT','P_CYTO,INIT',
+                       'G_CYTO_INIT', 'H_CYTO_INIT','P_CYTO_INIT',
                        'G_EXT_INIT', 'H_EXT_INIT','P_EXT_INIT']
 
 
@@ -60,3 +61,7 @@ param_sens_bounds = {'kcatfDhaB': [400, 860], # /seconds Input
                     'PermCell': np.log10([10**-9,10**-4]),
                     'dPacking': [0.3,0.64],
                     'nmcps': [3.,30.]}
+
+QOI_NAMES = ["maximum concentration of 3-HPA",
+             "Glycerol concentration after 5 hours",
+             "1,3-PDO concentration after 5 hours"]

@@ -55,18 +55,17 @@ class DhaBDhaTModel:
             self.cellular_geometry = "sphere"
             self.cell_volume = 4*np.pi*(self.rc**3)/3
             self.cell_surface_area = 4*np.pi*(self.rc**2)
-            self.vratio = self.cell_surface_area/external_volume
         elif cellular_geometry == "rod":
-            self.cellular_geometry = "cylinder"
+            self.cellular_geometry = "rod"
             self.cell_volume = (4*np.pi/3)*(self.rc)**3 + (np.pi)*(self.lc - 2*self.rc)*((self.rc)**2)
             self.cell_surface_area = 2*np.pi*self.rc*self.lc
-            self.vratio = self.cell_surface_area/external_volume 
+        self.vratio = self.cell_surface_area/external_volume 
 
         # differential equation parameters
         self.params = params
         self._set_symbolic_state_vars()
         if params:
-            self._set_fun_sderiv_jac_statevars()
+            self._set_symbolic_sderiv_conc_fun()
 
 
     def _sderiv(self,t,x,params=None):
@@ -156,7 +155,7 @@ class DhaBDhaTModel:
         self.sderiv_symbolic = self._sderiv(0,self.x_sp)
 
 
-    def _set_symbolic_sderiv_jac_statevars(self):
+    def _set_symbolic_sderiv_conc_sp(self):
         """
         Generates the symbol jacobian of the differential equation 
         wrt state variables
@@ -165,20 +164,20 @@ class DhaBDhaTModel:
         if sderiv_symbolic is None:
             self._set_symbolic_sderiv()
             sderiv_symbolic = self.sderiv_symbolic
-        self.sderiv_jac_state_vars_sp = sp.Matrix(sderiv_symbolic).jacobian(self.x_sp)
+        self.sderiv_jac_conc_sp = sp.Matrix(sderiv_symbolic).jacobian(self.x_sp)
         
-    def _set_fun_sderiv_jac_statevars(self):
+    def _set_symbolic_sderiv_conc_fun(self):
         """
         Generates the jacobian function of the differential equation 
         wrt state variables
         """
 
-        sderiv_jac_state_vars_sp = getattr(self, 'sderiv_jac_state_vars_sp', None)
-        if sderiv_jac_state_vars_sp is None:
-            self._set_symbolic_sderiv_jac_statevars()
-            sderiv_jac_state_vars_sp = self.sderiv_jac_state_vars_sp
-        sderiv_jac_state_vars_sp_fun = sp.lambdify(self.x_sp, sderiv_jac_state_vars_sp, 'numpy')
-        self.sderiv_jac_state_vars_sp_fun = lambda t,x: sparse.csr_matrix(sderiv_jac_state_vars_sp_fun(*x))
+        sderiv_jac_conc_sp = getattr(self, 'sderiv_jac_sp', None)
+        if sderiv_jac_conc_sp is None:
+            self._set_symbolic_sderiv_conc_sp()
+            sderiv_jac_conc_sp = self.sderiv_jac_conc_sp
+        sderiv_jac_conc_lam = sp.lambdify(self.x_sp, sderiv_jac_conc_sp, 'numpy')
+        self.sderiv_jac_conc_fun = lambda t,x: sparse.csr_matrix(sderiv_jac_conc_lam(*x))
 
 
 def main():
@@ -203,7 +202,6 @@ def main():
                         }
 
     nmcps = params['nmcps']
-    print(params)
 
     # make model
     dhaB_dhaT_model = DhaBDhaTModel(params, external_volume = external_volume, 
@@ -248,7 +246,7 @@ def main():
 
     time_1 = time.time()
     try:
-        sol = solve_ivp(dhaB_dhaT_model._sderiv,[0, fintime+1], y0, method="BDF",jac=dhaB_dhaT_model.sderiv_jac_state_vars_sp_fun, t_eval=timeorig,
+        sol = solve_ivp(dhaB_dhaT_model._sderiv,[0, fintime+1], y0, method="BDF",jac=dhaB_dhaT_model.sderiv_jac_conc_fun, t_eval=timeorig,
                         atol=tol,rtol=tol, events=event_stop)
     except ValueError:
         return
