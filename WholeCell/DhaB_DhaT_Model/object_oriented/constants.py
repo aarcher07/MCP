@@ -37,12 +37,12 @@ VARS_TO_TEX = {'kcatfDhaB': r'$k_{\text{cat}}^{f,\text{dhaB}}$',
                 'NADH_MCP_INIT': r'$[\text{NADH}]$ ',
                 'NAD_MCP_INIT': r'$[\text{NAD+}]$ ',
                 'PermMCPPolar':r'$P_{\text{MCP},\text{Polar}}$',
-                'PermMCPNonPolar':r'$$P_{\text{MCP},\text{Non-Polar}}$',
+                'PermMCPNonPolar':r'$P_{\text{MCP},\text{Non-Polar}}$',
                 'PermCellGlycerol':r'$P_{\text{Cell},G}$',
                 'PermCellPDO':r'$P_{\text{Cell},P}$',
                 'PermCell3HPA':r'$P_{\text{Cell},H}$',
-                'dPacking': 'dPacking', 
-                'nmcps': 'Number of MCPs'}
+                'dPacking': r'$\text{dPacking}$', 
+                'nmcps': r'$\text{Number of MCPs}$'}
 
 VARS_TO_UNITS = {'kcatfDhaB': '/s',
                 'KmDhaBG': 'mM',

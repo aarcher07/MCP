@@ -69,17 +69,6 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         self._set_param_sp_symbols()
         self._set_sens_vars()
 
-        if transform == "log2":
-            self._sderiv = self._sderiv_log2
-        elif transform == "log10":
-            self._sderiv = self._sderiv_log10
-        elif transform == "mixed":
-            self._sderiv = self._sderiv_mixed
-        elif transform == "identity":
-            self._sderiv = self._sderiv_id
-
-        self._set_jacs_fun()
-        self._create_jac_sens()
 
     def _set_param_sp_symbols(self):
         """
@@ -136,7 +125,8 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
             else:
                 params[param_name] = param_val
         params = {**self.params_values_fixed, **params}
-
+        print(params)
+        print(params_sens)
         return super()._sderiv(t,x,params)
 
     def _sderiv_log10(self,t,x,params_sens = None):
@@ -183,6 +173,23 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         else:
             print("Internal list of parameter senstivities and given dictionary do not correspond.")
 
+    def _sderiv(self,t,x,params_sens = None):
+        """
+        Overrides the _sderiv from dhaB_dhaT_model.py
+        :param t: time
+        :param x: state variables
+        :param params_sens: transformed parameter dictionary
+        """
+
+        if self.transform == "log2":
+            return self._sderiv_log2(t,x,params_sens)
+        elif self.transform == "log10":
+            return self._sderiv_log10(t,x,params_sens)
+        elif self.transform == "mixed":
+            return self._sderiv_mixed(t,x,params_sens)
+        elif self.transform == "identity":
+            return self._sderiv_id(t,x,params_sens)
+
     def _set_symbolic_sderiv(self):
         """
         Overrides the super and generates the symbol differential equation with symbolic parameters
@@ -191,6 +198,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         if x_sp is None:
             self._set_symbolic_state_vars()
         self.sderiv_symbolic = self._sderiv(0,self.x_sp,self.params_sens_sp_dict)
+
 
     def _set_symbolic_sderiv_conc_sp(self):
         """
@@ -317,7 +325,7 @@ def main(nsamples = 500):
     ncells_per_metrecubed = 8e14 # 7e13-8e14 cells per m^3
     mintime = 10**(-15)
     secstohrs = 60*60
-    fintime = 72*60*60
+    fintime = 20*60*60
     transform = "log10"    # parameter to check senstivity
 
     params_values_fixed = {'kcatfDhaT': 59.4, # /seconds
@@ -364,7 +372,8 @@ def main(nsamples = 500):
                                                      rc = 0.375e-6, lc =  2.47e-6, rm = 7.e-8,
                                                      ncells_per_metrecubed = ncells_per_metrecubed, 
                                                      cellular_geometry = "rod", transform = transform)
-
+    model_local_sens._set_jacs_fun()
+    model_local_sens._create_jac_sens()
     #parameterize sensitivity functions
     dsens_param = lambda t, xs: model_local_sens.dsens(t,xs,params_sens_dict)
     dsens_param_jac = lambda t, xs: model_local_sens.dsens_jac(t,xs,params_sens_dict)
@@ -387,19 +396,19 @@ def main(nsamples = 500):
     tol = 1e-3
     time_orig = np.logspace(np.log10(mintime),np.log10(fintime),nsamples)
     # terminal event
-    tol_solve = 10**-3
-    def event_stop(t,y):
-        dSsample = np.array(model_local_sens._sderiv(t,y[:model_local_sens.nvars],
-                                                       params_sens = params_sens_dict))
-        dSsample_dot = np.abs(dSsample).sum()
-        return dSsample_dot - tol_solve 
-    event_stop.terminal = True
+    # tol_solve = 10**-5
+    # def event_stop(t,y):
+    #     dSsample = np.array(model_local_sens._sderiv(t,y[:model_local_sens.nvars],
+    #                                                    params_sens = params_sens_dict))
+    #     dSsample_dot = np.abs(dSsample).sum()
+    #     return dSsample_dot - tol_solve 
+    # event_stop.terminal = True
 
 
     start_time = time.time()
 
     sol = solve_ivp(dsens_param,[0, fintime+10], ys0, method="BDF", 
-                    jac = dsens_param_jac, events=event_stop,
+                    jac = dsens_param_jac, #events=event_stop,
                     t_eval=time_orig, atol=tol,rtol=tol)
     end_time = time.time()
     index_max_3HPA = np.argmax(sol.y[4,:])

@@ -51,30 +51,20 @@ class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
         super().__init__(start_time,final_time,integration_tol, nsamples, tolsolve, params_values_fixed,
                         param_sens_list, external_volume, rc, lc, rm, 
                         ncells_per_metrecubed, cellular_geometry, transform)
+        self._set_jacs_fun()
+        self._create_jac_sens()
 
-
-
-    def jac_subset(self,params_sens):
+    def _sderiv(self,t,x,params_sens = None):
         """
-        Subsets sensitivities of the system, jac(params_sens_dict), to compute the
-        sensitivities of 3-HPA, Glycerol and 1,3-PDO after 5 hrs with parameter values between
-        [-1,1]
-
-        :params params_sens_dict: dictionary of the parameter values, [-1,1], to evaluate the
-                                  sensitivities
-
-        :return jac_values      : sensitivities of 3-HPA, Glycerol and
-                                  1,3-PDO after 5 hrs wrt parameters in params_sens_dict.keys()
-                                  and evaluated at params_sens_dict.values()
-
+        Overrides the _sderiv from dhaB_dhaT_model_local_sens_analysis.py
+        :param t: time
+        :param x: state variables
+        :param params_sens: transformed parameter dictionary
         """
-        if params_sens is None:
-            print("Please set the parameter values")
-
         # transform uniform parameters to associated log10,log2 or identity transform parameters
         params = unif_param_to_transform_params(params_sens,self.transform)
 
-        return super().jac_subset(params)
+        return super()._sderiv(t,x,params)
 
 
 
@@ -86,7 +76,7 @@ def main(argv, arc):
     transform = 'mixed'
     start_time = (10**(-15))
     final_time = 72*HRS_TO_SECS
-    integration_tol = 1e-3
+    integration_tol = 1e-6
     tolsolve = 1e-5
     nsamples = 500
     enz_ratio_name_split =  enz_ratio_name.split(":")
@@ -109,6 +99,8 @@ def main(argv, arc):
     params_unif = {key:val for key,val in zip(PARAM_SENS_MIXED_BOUNDS.keys(), sample_space.rvs(1)[0])}
     dhaB_dhaT_model_jacobian = DhaBDhaTModelJacAS(start_time, final_time, integration_tol, nsamples, tolsolve,
                                                 params_values_fixed,list(PARAM_SENS_MIXED_BOUNDS.keys()), transform = transform)
+    
+
     jacobian_est = np.array(dhaB_dhaT_model_jacobian.jac_subset(params_unif))
     
     print(jacobian_est)

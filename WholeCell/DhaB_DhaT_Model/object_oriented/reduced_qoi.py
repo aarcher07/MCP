@@ -21,6 +21,7 @@ from constants import QOI_NAMES
 from misc import generate_folder_name
 from active_subspaces import FUNCS_TO_FILENAMES,FUNCS_TO_NAMES
 import seaborn as sns
+import scipy.stats as stats
 from sklearn.utils import resample
 
 class ReducedQoI(QoI):
@@ -174,7 +175,7 @@ class ReducedQoI(QoI):
         inactive_given_active_bounds = self._generate_z_bounds(self,active_vals)
         inactive_samples_dict = {}
         
-        for i,func_name in QOI_NAMES:
+        for func_name in QOI_NAMES:
             inactive_dim = self.inactive_param_dims[func_name]
             min_edge,max_edge = inactive_given_active_bounds[func_name]
             inactive_samples = []
@@ -199,55 +200,41 @@ class ReducedQoI(QoI):
         return inactive_samples_dict
 
 
-    def generate_reduced_QoI_vals(self,active_vals,gen_histogram=False, save = True):
-        inactive_samples_dict = self._inactive_sampler(y)
+    def generate_reduced_QoI_vals(self,active_vals,gen_histogram=False):
 
-        red_qoi_sample_vals = {QOI_NAMES[0]: [[]],
-                               QOI_NAMES[1]: [[]],
-                               QOI_NAMES[2]: [[]]}
-        for i,func_name in QOI_NAMES:
+        inactive_samples_dict = self._inactive_sampler(y)
+        red_qoi_stats = {}
+        red_qoi_samples_dict = {}
+        for func_name in QOI_NAMES:
             n_sucessful_solves = 0
-            inactive_samples = 
+            red_qoi_sample_vals = [] 
+            inactive_samples = inactive_samples_dict[func_name]
             if len(inactive_samples) != 0:
-                for inactive_vals in inactive_samples[func_name]:
-                    x = np.dot(W1,active_val) + np.dot(W2,inactive_val)
-                    param_dict = {param_name:param_val for param_name, param_val  in zip(self.params_sens_list,x)}
+                for inactive_vals in inactive_samples:
+                    param_unif = np.dot(self.W1,active_vals) + np.dot(self.W2,inactive_vals)
+                    param_dict = {param_name:param_val for param_name, param_val  in zip(self.params_sens_list,param_unif)}
                     sol_vals = self.generate_QoI_vals(param_dict)
                     if sol_vals[func_name]:
                         n_sucessful_solves += 1
-                        red_qoi_sample_vals[func_name][0].append(sol_vals[func_name])
+                        red_qoi_sample_vals.append(sol_vals[func_name])
 
-        if gen_histogram:
-            self._generate_histogram(red_qoi_sample_vals)
-        red_qoi_sample_vals = [key:np.mean(qoi_vals[0]) for func_name,qoi_vals in red_qoi_sample_vals.items()]   
-        return red_qoi_sample_vals
+                red_qoi_stats["mean"][func_name] = np.mean(red_qoi_sample_vals)
+                red_qoi_stats["sd"][func_name] = np.sd(red_qoi_sample_vals)
+                red_qoi_stats["skew"][func_name] = stats.skew(red_qoi_sample_vals)
+                red_qoi_stats["mode"][func_name] = stats.mode(red_qoi_sample_vals)
+                if gen_histogram:
+                    self._generate_histogram(red_qoi_sample_vals) #save name?
+            else: 
+                red_qoi_stats["mean"][func_name] = None
+                red_qoi_stats["sd"][func_name] = None
+                red_qoi_stats["skew"][func_name] = None
+                red_qoi_stats["mode"][func_name] = None
 
-    def generate_resampled_reduced_QoI_vals(self,y,nbootstrap,random_state= None,
-                                            gen_histogram = False,
-                                            save = True):
-        n_iters_bootstrap = 0
-        red_qoi_resampled_vals = {QOI_NAMES[0]: [],
-                                  QOI_NAMES[1]: [],
-                                  QOI_NAMES[2]: []}
-        red_qoi_sample_vals = generate_reduced_QoI_vals(y)
-        while(n_iters_bootstrap < nbootstrap):
-            for i,func_name in QOI_NAMES:
-                red_qoi_resampled_vals[func_name].append(resample(red_qoi_sample_vals[func_name],
-                                                         random_state= None))
-        if gen_histogram:
-            self._generate_histogram(red_qoi_resampled_vals)
-        return red_qoi_resampled_vals
+            red_qoi_samples_dict[func_name] = red_qoi_sample_vals
+        
+        return red_qoi_samples_dict, red_qoi_stats
 
 
-    def _generate_histogram(self,red_qoi_vals,save = True):
-        for func_name,qoi_vals in red_qoi_resampled_vals.items():
-            if len(qoi_vals) <= 5:
-                indices = range(len(qoi_vals))
-            else:
-                indices = np.random.choice(range(len(qoi_vals)),replace=False,size=5)
-            for ind in indices: 
-
-            #CONTINUE FROM HERE. 
 
 cost_fun_3HPA = pk_as['function results'][-1][0]
 
