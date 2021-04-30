@@ -163,3 +163,22 @@ def generate_txt_output(cost_matrices, nfunction_evals, variance, difficult_para
         print(difficult_params)
         
         sys.stdout = original_stdout
+
+def unif_param_to_transform_params(params_sens,transform):
+    params = {}
+    if transform == "mixed":
+        param_bounds = PARAM_SENS_MIXED_BOUNDS
+    elif transform == "identity":
+        param_bounds = PARAM_SENS_BOUNDS
+    elif transform == "log2":
+        param_bounds = PARAM_SENS_LOG2_BOUNDS
+    elif transform == "log10":
+        param_bounds = PARAM_SENS_LOG10_BOUNDS
+        
+    for param_name, param_val in params_sens.items():
+        bound_a, bound_b = param_bounds[param_name]
+        param_trans = ((bound_b - bound_a)*param_val/2 + (bound_a + bound_b)/2) 
+        params[param_name] = param_trans
+    return params
+
+

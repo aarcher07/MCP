@@ -13,7 +13,7 @@ import numpy as np
 from scipy.integrate import solve_ivp
 from scipy.constants import *
 import sys
-from constants import PARAMETER_LIST, VARIABLE_INIT_NAMES
+from constants import *
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import matplotlib as mpl
@@ -44,7 +44,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         :params rm: MCP radius
         :params ncells_per_metrecubed: number of cells per volume^3
         :params cellular_geometry: cell geometry ("rod" or "sphere")
-        :params transform: parameter input: "log2", "log10", "identity"       
+        :params transform: parameter input: "log2", "log10", "identity" or "mixed" (identity and log10)     
         """
 
         # check if parameter list have the correct parameter names
@@ -53,7 +53,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         potential_param_list.extend(list(params_values_fixed.keys()))
         potential_param_list.extend(params_sens_list)
 
-        assert transform in ["log2", "log10", "identity"]    
+        assert transform in ["log2", "log10", "identity", "mixed"]    
         assert len(PARAMETER_LIST + VARIABLE_INIT_NAMES) == len(potential_param_list)
         assert set(PARAMETER_LIST + VARIABLE_INIT_NAMES) == set(potential_param_list)
 
@@ -65,6 +65,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         self.params_sens_list = params_sens_list
         self.params_values_fixed = params_values_fixed
         self.nparams_sens = len(params_sens_list)
+        self.transform = transform
         self._set_param_sp_symbols()
         self._set_sens_vars()
 
@@ -72,6 +73,8 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
             self._sderiv = self._sderiv_log2
         elif transform == "log10":
             self._sderiv = self._sderiv_log10
+        elif transform == "mixed":
+            self._sderiv = self._sderiv_mixed
         elif transform == "identity":
             self._sderiv = self._sderiv_id
 
@@ -116,6 +119,25 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
         else:
             print("Internal list of parameter senstivities and given dictionary do not correspond.")
 
+    def _sderiv_mixed(self,t,x,params_sens):
+        """
+        Computes the spatial derivative of the system at time point, t, with the parameters
+        identity and log10 transformed
+        :param t: time
+        :param x: state variables
+        :param params_sens: dictionary of parameter values
+        """
+        if params_sens is None:
+            print("Please set the parameter values")
+        params = {}
+        for param_name, param_val in params_sens.items():
+            if param_name in PERM_PARAMETER_LIST:
+                params[param_name] = 10**param_val
+            else:
+                params[param_name] = param_val
+        params = {**self.params_values_fixed, **params}
+
+        return super()._sderiv(t,x,params)
 
     def _sderiv_log10(self,t,x,params_sens = None):
         """
@@ -298,13 +320,15 @@ def main(nsamples = 500):
     fintime = 72*60*60
     transform = "log10"    # parameter to check senstivity
 
-    params_values_fixed = {'KmDhaTH': 0.77, # mM
+    params_values_fixed = {'kcatfDhaT': 59.4, # /seconds
+                          'KmDhaTH': 0.77, # mM
                           'KmDhaTN': 0.03, # mM
-                          'kcatfDhaT': 59.4, # /seconds
                           'enz_ratio': 1/3,
                           'NADH_MCP_INIT': 0.36,
                           'NAD_MCP_INIT': 1.,
-                          'PermMCPPolar': 1e-3,
+                          'PermMCPPolar': 10**-3, 
+                          'PermCellGlycerol': 10**-7,
+                          'PermCell3HPA': 10**-2,          
                           'G_MCP_INIT': 0,
                           'H_MCP_INIT': 0,
                           'P_MCP_INIT': 0,
@@ -316,13 +340,13 @@ def main(nsamples = 500):
                           'P_EXT_INIT': 0}
 
 
-    params_sens_list = ['kcatfDhaB', 'KmDhaBG', 'NonPolarBias', 'PermCell', 'dPacking', 'nmcps']
+    params_sens_list = ['kcatfDhaB', 'KmDhaBG', 'PermMCPNonPolar', 'PermCellPDO', 'dPacking', 'nmcps']
 
     # parameter to check senstivity
     params_sens_dict = {'kcatfDhaB':400, # /seconds Input
               'KmDhaBG': 0.6, # mM Input
-              'NonPolarBias': 10**-2, 
-              'PermCell': 10.**-7,
+              'PermMCPNonPolar': 10**-2, 
+              'PermCellPDO': 10.**-7,
               'dPacking': 0.64,
               'nmcps': 15}
     for key in params_sens_dict.keys():

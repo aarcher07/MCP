@@ -27,7 +27,7 @@ class QoI(DhaBDhaTModelJacAS):
                 integration_tol, nintegration_samples, tolsolve, params_values_fixed,
                 param_sens_bounds, external_volume = 9e-6, rc = 0.375e-6, lc = 2.47e-6,
                 rm = 7.e-8, ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
-                ds = ""):
+                tranform = "identity"):
         """
         :params cost_matrices: cost matrices associated with Active Subspaces
         :params start_time: initial time of the system -- cannot be 0
@@ -44,7 +44,7 @@ class QoI(DhaBDhaTModelJacAS):
         :params rm: radius of MCP
         :params ncells_per_metrecubed: number of cells per m^3
         :params cellular_geometry: geometry of the cell, rod (cylinder with hemispherical ends)/sphere
-        :params ds: transformation of the parameters, log2, log10 or [-1,1].   
+        :params tranform: transformation of the parameters, log2, log10, identity or mixed.   
         """
 
         self.cost_matrices = cost_matrices
@@ -74,7 +74,7 @@ class QoI(DhaBDhaTModelJacAS):
         """
         Generate the QoI value at parameter value, params_unif_dict
 
-        :params_unif_dict: dictionary of transformed parameters, log2, log10 or [-1,1]. 
+        :params_unif_dict: dictionary of transformed parameters, log2, log10, identity or mixed. 
         """
 
         sdev = lambda t,x: self._sderiv(t,x,params_unif_dict)

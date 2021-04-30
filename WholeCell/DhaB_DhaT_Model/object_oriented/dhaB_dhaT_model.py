@@ -112,7 +112,7 @@ class DhaBDhaTModel:
         R_DhaT = dhaT_conc*params['kcatfDhaT']*x[1] * params['NADH_MCP_INIT']  / (params['KmDhaTH']*params['KmDhaTN'] + x[1] * params['NADH_MCP_INIT'])
 
         d[0] = -R_DhaB + (3*params['PermMCPPolar']/self.rm)*(x[0 + n_compounds_cell] - x[0])  # microcompartment equation for G
-        d[1] =  R_DhaB -  R_DhaT + (3*params['NonPolarBias']*params['PermMCPPolar']/self.rm)*(x[1 + n_compounds_cell] - x[1])  # microcompartment equation for H
+        d[1] =  R_DhaB -  R_DhaT + (3*params['PermMCPNonPolar']/self.rm)*(x[1 + n_compounds_cell] - x[1])  # microcompartment equation for H
         d[2] = R_DhaT + (3*params['PermMCPPolar']/self.rm)*(x[2 + n_compounds_cell] - x[2])  # microcompartment equation for P
 
         ####################################################################################
@@ -124,17 +124,31 @@ class DhaBDhaTModel:
         for i in range(index, index + n_compounds_cell):
             # cell equations for ith compound in the cell
             if i % 3 == 1:
-                Pm = params['NonPolarBias']*params['PermMCPPolar']
+                Pm = params['PermMCPNonPolar']
             else:
                 Pm = params['PermMCPPolar']
 
-            d[i] = -params['PermCell']*(self.cell_surface_area/self.cell_volume) * (x[i] - x[i + n_compounds_cell]) - nmcps*Pm*(self.mcp_surface_area/self.cell_volume)*(x[i] - x[i- n_compounds_cell]) 
+            if i % 3 == 0:
+                Pc = params['PermCellGlycerol']
+            elif i % 3 == 1:
+                Pc = params['PermCell3HPA']
+            else:
+                Pc = params['PermCellPDO']
+
+            d[i] = -Pc*(self.cell_surface_area/self.cell_volume) * (x[i] - x[i + n_compounds_cell]) - nmcps*Pm*(self.mcp_surface_area/self.cell_volume)*(x[i] - x[i- n_compounds_cell]) 
 
         #####################################################################################
         ######################### external volume equations #################################
         #####################################################################################
         for i in reversed(range(-1, -1-n_compounds_cell, -1)):
-            d[i] = self.vratio*params['PermCell'] * ncells * (x[i - n_compounds_cell] - x[i])  # external equation for concentration
+            if i % 3 == 0:
+                Pc = params['PermCellGlycerol']
+            elif i % 3 == 1:
+                Pc = params['PermCell3HPA']
+            else:
+                Pc = params['PermCellPDO']
+
+            d[i] = self.vratio* Pc * ncells * (x[i - n_compounds_cell] - x[i])  # external equation for concentration
         return d
 
 
@@ -190,8 +204,10 @@ def main():
           'KmDhaTH': 0.55, # mM
           'KmDhaTN': 0.245, # mM
           'PermMCPPolar': 10**-3, 
-          'NonPolarBias': 10**-2,
-          'PermCell': 10.**-7,
+          'PermMCPNonPolar': 10**-2, 
+          'PermCellGlycerol': 10**-7,
+          'PermCellPDO':  10**-5,
+          'PermCell3HPA': 10**-2,
           'dPacking': 0.64,
           'enz_ratio': 1/18,
           'nmcps': 15.,

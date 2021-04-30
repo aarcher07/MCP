@@ -5,8 +5,6 @@ from constants import *
 from misc_functions import *
 from dhaB_dhaT_model import DhaBDhaTModel
 from scipy.integrate import solve_ivp
-from build_separable_GP import *
-
 
 def f(params,init_conds,dhaB_dhaT_model,tsamples=TIME_EVALS,tol = 10**-5):
 	tsamplessecs = np.array([t*HRS_TO_SECS for t in tsamples])

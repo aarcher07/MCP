@@ -149,7 +149,7 @@ def test():
     as_test = ActiveSubspaces(jac, 1, 2,niters=10)
     results = as_test.compute_cost_matrix()
     if rank == 0:
-        print(np.linalg.eig(results[-1]))
+        print(np.linalg.eig(results['FUNCTION_RESULTS']["FINAL_COST_MATRIX"]))
 
 def dhaB_dhaT_model(argv, arc):
     # get inputs
@@ -158,7 +158,7 @@ def dhaB_dhaT_model(argv, arc):
     sampling =  argv[3]
     threshold = float(argv[4])
     # initialize variables
-    ds = ''
+    ds = 'log10'
     start_time = (10**(-15))
     final_time = 100*HRS_TO_SECS
     integration_tol = 1e-3
@@ -236,5 +236,6 @@ def dhaB_dhaT_model(argv, arc):
                                enz_ratio_name, niters,date_string,threshold, save=True)
 
 if __name__ == '__main__':
+    test()
     dhaB_dhaT_model(sys.argv, len(sys.argv))
 

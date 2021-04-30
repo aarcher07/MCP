@@ -22,62 +22,84 @@ from misc import generate_folder_name
 from active_subspaces import FUNCS_TO_FILENAMES,FUNCS_TO_NAMES
 import seaborn as sns
 from sklearn.utils import resample
+
 class ReducedQoI(QoI):
-    def __init__(self, directory, pickle_name, eig_ind, nzsamples, start_time,final_time,
-                integration_tol, nintegration_samples, tolsolve, params_values_fixed,
-                param_sens_bounds, filename = None, external_volume = 9e-6, 
-                rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
-                ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
-                ds = ""):
+    def __init__(self, directory_costmat, costmat_pickle_name, 
+                max_eig_inds, n_inactive_samples, 
+                start_time,final_time,integration_tol, nintegration_samples, tolsolve,
+                params_values_fixed, param_sens_bounds, 
+                #directory_zsamples = None,  zsamples_pickle_name = None,
+                folder_name= None,
+                external_volume = 9e-6, rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
+                ncells_per_metrecubed =8e14, cellular_geometry = "rod", transform = "identity"):
 
 
-            self.directory = directory
+            # load cost matrix
+            self.directory_costmat = directory_costmat
 
-            if filename:
+            if folder_name:
                 self.folder_name = generate_folder_name(param_sens_bounds)
             else:
                 self.folder_name = folder_name
 
-            with open(directory + '/'+ filename+'/' +pickle_name + '.pkl', 'rb') as f:
+            with open(directory + '/'+ folder_name+'/' +pickle_name + '.pkl', 'rb') as f:
                 pk_as = pickle.load(f)
             cost_matrices = pk_as['function results'][-1]
-            self.eig_ind = eig_ind
-            self.x_dim = len(param_sens_bounds.keys())
-            self.y_dims = [ind for ind in eig_ind]
-            self.z_dims = [self.x_dim - ind for ind in eig_ind]
-            self.nzsamples = nzsamples
+            
+            # load previous z samples
+            self.n_inactive_samples = n_inactive_samples
+            # if directory_zsamples or zsamples_pickle_name:
+            #     self.zsamples = {}
+            # else:
+            #     with open(directory_zsamples + '/'+ folder_name+'/' +zsamples_pickle_name + '.pkl', 'rb') as f:
+            #         self.zsamples = pickle.load(f)
+
+            # compute and store eigenvectors
             super().__init__(cost_matrices, start_time,final_time, integration_tol, 
                             nintegration_samples, tolsolve, params_values_fixed,
                             param_sens_bounds, external_volume, rc, lc, rm, 
-                            ncells_per_metrecubed, cellular_geometry, ds)
+                            ncells_per_metrecubed, cellular_geometry, transform)
 
+            #dimensions of reduced and full sample for each QoI
+            self.max_eig_inds = max_eig_inds
+            self.param_dim = len(param_sens_bounds.keys())
+            self.active_param_dims = {func_name: max_eig_inds[func_name] for func_name in QOI_NAMES}
+            self.inactive_param_dims = {func_name: (self.param_dim - max_ind) for func_name in QOI_NAMES}
+    
     def _partition_eigenvectors(self):
         W1 = {}
         W2 = {}
-        for i,func_name in QOI_NAMES:
+        for func_name in QOI_NAMES:
             eigvecs = self.eigenvectors_QoI[func_name]
-            W1[func_name] = eigvecs[:,:eig_ind[i]]
-            W2[func_name] = eigvecs[:,eig_ind[i]:]
+            W1[func_name] = eigvecs[:,:self.active_param_dims[func_name]]
+            W2[func_name] = eigvecs[:,self.active_param_dims[func_name]:]
         self.W1 = W1
         self.W2 = W2
 
 
     def _generate_optimization_parameters(self):
-        max_c= {}
-        min_c =[]
+        # cost fun
+        max_c = {}
+        min_c = {}
 
-        #first constraint
-        A1 = np.concatenate((-np.ones((z_dim,1)),np.eye(z_dim)),axis=1)
-        ub_constraint1 = np.zeros((z_dim))
+        #slack constraint
+        slack_constraint_matrix = {}
+        slack_constraint_ub = {}
+        #inactive constraint
+        inactive_constraint_matrix = {}
 
-        #2nd linear constraint
-        A2 = {}
-        for i,func_name in QOI_NAMES:
-            W1 = self.W1[func_name]
+        for func_name in QOI_NAMES:
+
+            # get size of z dimension
+            z_dim = self.inactive_param_dims[func_name]
+            param_dim = self.param_dim
+            # store constraints for slack matrix
+            slack_constraint_matrix[func_name] = np.concatenate((-np.ones((z_dim,1)),np.eye(z_dim)),axis=1)
+            slack_constraint_ub[func_name] = np.zeros((z_dim)) 
+
+            # store constraints for inactive matrix
             W2 = self.W2[func_name]
-            x_dim = self.x_dim
-            z_dim = self.z_dims[i]
-            A2[func_name] = np.concatenate((np.zeros((x_dim,1)),W2),axis=1)
+            inactive_constraint_matrix[func_name] = np.concatenate((np.zeros((param_dim,1)),W2),axis=1)
             
             # cost functions
             max_c[func_name] = np.zeros(z_dim+1)
@@ -87,110 +109,113 @@ class ReducedQoI(QoI):
 
         self.max_c = max_c
         self.min_c = min_c
-        self.A1 = A1
-        self.ub_constraint1 = ub_constraint1
-        self.A2 = A2
+        self.slack_constraint_matrix = slack_constraint_matrix
+        self.slack_constraint_ub = slack_constraint_ub
+        self.inactive_constraint_matrix = inactive_constraint_matrix
 
-    def _generate_single_z_bound(self,j,func_name,lb_constraint2,
-                                 ub_constraint2):
+    def _generate_inactive_bounds(self,active_vals):
+        inactive_bounds = {func_name: [np.inf,-np.inf] for func_name in QOI_NAMES}
 
+        for func_name in QOI_NAMES: 
 
-        #set equality constraint
-        A1_eq = np.array([self.A1[func_name][j,:]])
-        b1_eq = self.ub_constraint1[func_name][j]
-        #set inequality constraint for max decision variable
-        A1_ineq = np.delete(self.A1[func_name],j,axis=0)
-        ub1_ineq = np.delete(self.ub_constraint1[func_name],j,axis=0)
+            inactive_dim = self.inactive_param_dims[func_name]
 
-        # final constraints for max problem
-        A_ineq = np.concatenate((A1_ineq, self.A2[func_name], -self.A2[func_name]))
-        b_ineq = np.concatenate((ub1_ineq,ub_constraint2,lb_constraint2))
-        bounds_var = [(None,None) for _ in range(z_dim+1)]
-
-        # find max
-        res_max = opt.linprog( self.max_c[func_name], A_ub=A_ineq, b_ub=b_ineq,
-                               A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
-
-        # final constraints for min problem
-        A_ineq = np.concatenate((-A1_ineq, self.A2[func_name], -self.A2[func_name]))
-        b_ineq = np.concatenate((ub1_ineq,ub_constraint2,lb_constraint2))
-
-        # find min
-        res_min = opt.linprog( self.min_c[func_name], A_ub=A_ineq, b_ub=b_ineq,
-                                A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
-
-        return [res_min.fun, res_max.fun]
-
-    def _generate_z_bounds(self,y):
-        x_dim = self.x_dim
-        z_given_y_bounds = {} 
-        for i,func_name in QOI_NAMES:
-            # grab eigenvectors
+            #generate active component of x
             W1 = self.W1[func_name]
-            W2 = self.W2[func_name]
+            active_in_param = np.dot(W1,active_vals[func_name])
 
-            z_dim = self.z_dims[i]
-            y_in_x = np.dot(W1,y)
-            # 2nd linear constraint
-            A2 = self.A2[func_name]
-            ub_constraint2 =  np.ones(x_dim)- y_in_x
-            lb_constraint2 = np.ones(x_dim) + y_in_x
+            # upper and lower bound in actove constraint matrix
+            inactive_ub_constraint =  np.ones(self.param_dim)- active_in_param
+            inactive_lb_constraint = np.ones(self.param_dim) + active_in_param
+            for j in range(inactive_dim):
+                #set equality constraint
+                slack_constraint_matrix_eq = np.array([self.slack_constraint_matrix[func_name][j,:]])
+                slack_constraint_eq = self.slack_constraint_ub[func_name][j]
+                #set inequality constraint for max decision variable
+                slack_constraint_matrix_ineq = np.delete(self.slack_constraint_matrix[func_name],j,axis=0)
+                slack_constraint_ineq = np.delete(self.slack_constraint_ub[func_name],j,axis=0)
 
-            # cost functions
-            max_c{i}
-            max_c{i}
-            # find the max edges of convex space
-            max_edge = -np.inf
-            for j in range(z_dim):
-                pot_max, pot_min = self._generate_single_z_bound(self,j,func_name, lb_constraint2, ub_constraint2)
-                if max_edge < -pot_max:
-                    max_edge = -pot_max
-                if  pot_min < min_edge:
-                    min_edge = pot_min
+                # final constraints for max problem
+                mat_ineq = np.concatenate((slack_constraint_matrix_ineq,
+                                         self.inactive_constraint_matrix[func_name],
+                                         -self.inactive_constraint_matrix[func_name]))
+                ub_ineq = np.concatenate((slack_constraint_ineq,
+                                          inactive_ub_constraint,
+                                          inactive_lb_constraint))
+                bounds_var = [(None,None) for _ in range(inactive_dim+1)]
 
-            z_given_y_bounds[func_name] = [max_edge,min_edge]
-        return z_given_y_bounds
+                # find max
+                res_max = opt.linprog(self.max_c[func_name], A_ub=mat_ineq, b_ub=ub_ineq,
+                                      A_eq=slack_constraint_matrix_eq, b_eq=slack_constraint_eq,
+                                      bounds=bounds_var)
 
-    def _z_sampler(self,y):
+                # inactive upper bound 
+                if res_max.status == 0:
+                    if inactive_bounds[func_name][1] < -res_max.fun:
+                        inactive_bounds[func_name][1] = -res_max.fun
+
+                # final constraints for min problem
+                mat_ineq = np.concatenate((-slack_constraint_matrix_ineq,
+                                         self.inactive_constraint_matrix[func_name],
+                                         -self.inactive_constraint_matrix[func_name]))
+
+                # find min
+                res_min = opt.linprog( self.min_c[func_name], A_ub=A_ineq, b_ub=b_ineq,
+                                        A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
+                # inactive lower bound 
+                if res_max.status == 0:
+                    if -res_max.fun < inactive_bounds[func_name][0]:
+                        inactive_bounds[func_name][0] = -res_max.fun
+        return inactive_bounds
+
+    def _inactive_sampler(self,active_vals):
+        
         #generate bounds of hypercube that contains z|y
-        z_given_y_bounds = self._generate_z_bounds(self,y)
-        z_samples = {}
+        inactive_given_active_bounds = self._generate_z_bounds(self,active_vals)
+        inactive_samples_dict = {}
+        
         for i,func_name in QOI_NAMES:
-            z_dim = self.z_dims[func_name]
-            max_edge,min_edge = z_given_y_bounds[func_name]
-            z_samples = []
+            inactive_dim = self.inactive_param_dims[func_name]
+            min_edge,max_edge = inactive_given_active_bounds[func_name]
+            inactive_samples = []
+            if not (max_edge == -np.inf) and  not (min_edge == np.inf)
 
-            # create bounds for z space
-            A2 = self.A2[func_name]
-            y_in_x = np.dot(W1,y)
-            ub_constraint2 = np.ones(x_dim)- y_in_x
-            lb_constraint2 = np.ones(x_dim) + y_in_x
+                # create bounds for z space
+                inactive_constraint_matrix = self.inactive_constraint_matrix[func_name]
+                active_in_param = np.dot(W1,active_vals[func_name])
+                # upper and lower bound in actove constraint matrix
+                inactive_ub_constraint =  np.ones(self.param_dim)- active_in_param
+                inactive_lb_constraint = np.ones(self.param_dim) + active_in_param
 
-            z_ineqs_mat = np.concatenate((A2[:,1:], -A2[:,1:]))
-            z_ineqs_b = np.concatenate((ub_constraint2,lb_constraint2))
+                inactive_ineqs_mat = np.concatenate((inactive_constraint_matrix[:,1:], -inactive_constraint_matrix[:,1:]))
+                inactive_ineqs_b = np.concatenate((ub_constraint2,lb_constraint2))
                         
-            while(len(z_samples) != self.nzsamples):
-                z_pot_sample = (max_edge-min_edge)*np.random.uniform(size= z_dim) + min_edge
-                if (np.dot(z_ineqs_mat,z_pot_sample) - z_ineqs_b <= 0 ).all():
-                        z_samples.append(z_pot_sample)
+                while(len(inactive_samples) < self.nzsamples):
+                    inactive_pot_sample = (max_edge-min_edge)*np.random.uniform(size= inactive_dim) + min_edge
+                    if (np.dot(inactive_ineqs_mat,inactive_pot_sample) - inactive_ineqs_b <= 0 ).all():
+                        inactive_samples.append(inactive_pot_sample)
+            # store inactive samples
+            inactive_samples_dict[func_name] = inactive_samples
+        return inactive_samples_dict
 
-        z_samples[func_name] = z_samples
 
-    def generate_reduced_QoI_vals(self,y,gen_histogram=False, save = True):
-        z_samples = self._z_sampler(y)
+    def generate_reduced_QoI_vals(self,active_vals,gen_histogram=False, save = True):
+        inactive_samples_dict = self._inactive_sampler(y)
 
         red_qoi_sample_vals = {QOI_NAMES[0]: [[]],
                                QOI_NAMES[1]: [[]],
                                QOI_NAMES[2]: [[]]}
         for i,func_name in QOI_NAMES:
             n_sucessful_solves = 0
-            for z in z_samples[func_name]:
-                x = np.dot(W1,y) + np.dot(W2,z)
-                param_dict = {param_name:param_val for param_name, param_val  in zip(self.params_sens_list,x)}
-                sol_vals = self.generate_QoI_vals(param_dict)
-                if sol_vals[func_name]:
-                    n_sucessful_solves += 1
-                    red_qoi_sample_vals[func_name][0].append(sol_vals[func_name])
+            inactive_samples = 
+            if len(inactive_samples) != 0:
+                for inactive_vals in inactive_samples[func_name]:
+                    x = np.dot(W1,active_val) + np.dot(W2,inactive_val)
+                    param_dict = {param_name:param_val for param_name, param_val  in zip(self.params_sens_list,x)}
+                    sol_vals = self.generate_QoI_vals(param_dict)
+                    if sol_vals[func_name]:
+                        n_sucessful_solves += 1
+                        red_qoi_sample_vals[func_name][0].append(sol_vals[func_name])
 
         if gen_histogram:
             self._generate_histogram(red_qoi_sample_vals)
