@@ -120,3 +120,11 @@ PARAM_SENS_LOG10_BOUNDS = {'kcatfDhaB': np.log10([400, 860]), # /seconds Input
 QOI_NAMES = ["maximum concentration of 3-HPA",
              "Glycerol concentration after 5 hours",
              "1,3-PDO concentration after 5 hours"]
+
+FUNCS_TO_NAMES = {'maximum concentration of 3-HPA': r'$\max_{t}\text{3-HPA}(t;\vec{p})$',
+                  'Glycerol concentration after 5 hours': r'$\text{Glycerol}(5\text{ hrs}; \vec{p})$',
+                  '1,3-PDO concentration after 5 hours': r'$\text{1,3-PDO}(5\text{ hrs}; \vec{p})$'}
+
+FUNCS_TO_FILENAMES = {'maximum concentration of 3-HPA': 'max3HPA',
+                     'Glycerol concentration after 5 hours': 'G5hrs',
+                     '1,3-PDO concentration after 5 hours': 'P5hrs'}

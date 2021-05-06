@@ -125,8 +125,7 @@ class DhaBDhaTModelLocalSensAnalysis(DhaBDhaTModel):
             else:
                 params[param_name] = param_val
         params = {**self.params_values_fixed, **params}
-        print(params)
-        print(params_sens)
+
         return super()._sderiv(t,x,params)
 
     def _sderiv_log10(self,t,x,params_sens = None):

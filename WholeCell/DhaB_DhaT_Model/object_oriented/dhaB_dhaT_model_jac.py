@@ -172,123 +172,31 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
                                   and evaluated at params_sens_dict.values()
 
         """
+
+
+        # Initialize variables
+
+        jac_P_ext = None
+        jac_G_ext = None
+        jac_HPA_max = None
+
+        P_ext = None
+        G_ext = None
+        HPA_max = None
+
         try:
             status, time, jac_sample = self.jac(params_sens_dict)
         except ValueError:
-            return 
-        time_orig_hours = time/HRS_TO_SECS
-       #plot parameters
-        namesvars = ['Glycerol', '3-HPA', '1,3-PDO']
-        colour = ['b','r','y','c','m']
+            sol_values = {}
+            sol_values[QOI_NAMES[0]] = HPA_max
+            sol_values[QOI_NAMES[1]] =  G_ext
+            sol_values[QOI_NAMES[2]] =  P_ext
 
-        # cellular solutions
-        # for i in range(0,ncompounds):
-        #     ycell = jac_sample[5+i, :]
-        #     plt.plot(sol.t/secstohrs, ycell, colour[i])
-        index_max_3HPA = np.argmax(jac_sample[:,4])
-        print(np.max(jac_sample[:,4]))
-        i = 1
-        ycell = jac_sample[:,3+i]
-        plt.axvline(x=time_orig_hours[index_max_3HPA],ls='--',ymin=0.05,color='k')
-        print(ycell.shape)
-        print(time_orig_hours.shape)
-        plt.plot(time_orig_hours, ycell, colour[i])
-        plt.title('Plot of cellular 3-HPA concentration')
-        plt.legend(['3-HPA'], loc='upper right')
-        plt.xlabel('time (hr)')
-        plt.ylabel('concentration (mM)')
-        plt.grid() 
-        plt.show()
-
-        namesvars = ['Glycerol', '3-HPA', '1,3-PDO']
-
-        # plot sensitivity variable solutions for MCP variables
-        for i in range(0,len(namesvars)):
-            figure, axes = plt.subplots(nrows=int(math.ceil(len(self.params_sens_list)/2)), ncols=2, figsize=(10,10), sharex=True, sharey=True)
-            soly = jac_sample[:,(self.nvars + i*self.nparams_sens):(self.nvars + (i+1)*self.nparams_sens)]
-            maxy = np.max(soly)
-            miny =np.min(soly)
-            yub = 1.15*maxy if maxy > 0 else 0.85*maxy
-            lub = 0.85*miny if miny > 0 else 1.15*miny
-            for j,param in enumerate(self.params_sens_list):
-                axes[j // 2, j % 2].plot(time_orig_hours, soly[:,j].T)
-                axes[j // 2, j % 2].set_ylabel(r'$\partial (\text{' + namesvars[i] + '})/\partial \log_{10}' + VARS_TO_TEX[param][1:])
-
-                axes[j // 2, j % 2].set_title(VARS_TO_TEX[param])
-                axes[j // 2, j % 2].set_ylim([lub, yub])
-                axes[j // 2, j % 2].grid()
-                if j >= (self.nparams_sens-2):
-                    axes[(self.nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
-
-            figure.suptitle(r'Sensitivity, $\partial (\text{' + namesvars[i]+'})/\partial\log_{10} p_i$, of the MCP concentration of '
-                           + namesvars[i] + ' wrt $p_i$', y = 0.92)
-            # figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i]+')/\partial p_i$, of the MCP concentration of '
-            #                 + namesvars[i] + ' wrt $p_i$', y = 0.92)
-            # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
-            #             bbox_inches='tight')
-            plt.show()
-
-
-        # plot sensitivity variable solutions for cellular variables
-        for i in range(len(namesvars),2*len(namesvars)):
-            figure, axes = plt.subplots(nrows=int(math.ceil(len(self.params_sens_list)/2)), ncols=2, figsize=(10,10), sharex=True, sharey=True)
-            soly = jac_sample[:,(self.nvars + i*self.nparams_sens):(self.nvars + (i+1)*self.nparams_sens)]
-            maxy = np.max(soly)
-            miny = np.min(soly)
-            yub = 1.15*maxy if maxy > 0 else 0.85*maxy
-            lub = 0.85*miny if miny > 0 else 1.15*miny
-            for j,param in enumerate(self.params_sens_list):
-                print(param)
-                axes[j // 2, j % 2].plot(time_orig_hours, soly[:,j].T)
-                axes[j // 2, j % 2].set_ylabel(r'$\partial (\text{' + namesvars[i-len(namesvars)] + '})/\partial \log_{10}' + VARS_TO_TEX[param][1:])
-                #axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i-len(namesvars)] + ')/\partial ' + sens_vars_names[j][1:])
-                axes[j // 2, j % 2].set_title(VARS_TO_TEX[param])
-                axes[j // 2, j % 2].grid()
-                axes[j // 2, j % 2].set_ylim([lub, yub])
-                axes[j // 2, j % 2].axvline(x=time_orig_hours[index_max_3HPA],ls='--',ymin=0.05,color='k')
-
-                if j >= (self.nparams_sens-2):
-                    axes[(self.nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
-
-
-            figure.suptitle(r'Sensitivity, $\partial (\text{' + namesvars[i-len(namesvars)]+'})/\partial \log_{10} p_i$, of the cellular concentration of '
-                            + namesvars[i-len(namesvars)] + ' wrt $p_i$', y = 0.92)
-            # figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i-len(namesvars)]+')/\partial p_i$, of the cellular concentration of '
-            #                 + namesvars[i-len(namesvars)] + ' wrt $p_i$', y = 0.92)
-            # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityInternal_'+ namesvars[i-2] +'.png',
-            #             bbox_inches='tight')
-            plt.show()
-
-
-        # sensitivity variables
-        for i in range(-len(namesvars),0):
-            figure, axes = plt.subplots(nrows=int(math.ceil(len(self.params_sens_list)/2)), ncols=2, figsize=(10,10), sharex=True,sharey=True)
-            if i == -3:
-                soly = jac_sample[:,-(self.nparams_sens):]
-            else:
-                soly = jac_sample[:,-(i+4)*self.nparams_sens:-(i+3)*self.nparams_sens]
-            maxy = np.max(soly)
-            miny = np.min(soly)
-            yub = 1.15*maxy if maxy > 0 else 0.85*maxy
-            lub = 0.85*miny if miny > 0 else 1.15*miny
-            for j,param in enumerate(self.params_sens_list):
-                axes[j // 2, j % 2].plot(time_orig_hours, soly[:,j].T)
-                axes[j // 2, j % 2].set_ylabel(r'$\partial (\text{' + namesvars[i+3] + '})/\partial \log_{10}' + VARS_TO_TEX[param][1:])
-                # axes[j // 2, j % 2].set_ylabel(r'$\partial (' + namesvars[i+3] + ')/\partial ' + sens_vars_names[j][1:])
-                axes[j // 2, j % 2].set_ylim([lub, yub])
-                axes[j // 2, j % 2].set_title(VARS_TO_TEX[param])
-                axes[j // 2, j % 2].grid()
-                if j >= (self.nparams_sens-2):
-                    axes[(self.nparams_sens-1) // 2, j % 2].set_xlabel('time/hrs')
-
-            figure.suptitle(r'Sensitivity, $\partial (\text{' + namesvars[i + 3]+'})/\partial \log_{10} p_i$, of the external concentration of '
-                            + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
-            # figure.suptitle(r'Sensitivity, $\partial (' + namesvars[i + 3]+')/\partial \log_{10} p_i$, of the external concentration of '
-            #                 + namesvars[i + 3] + ' wrt $p_i$', y = 0.92)
-            # plt.savefig('/Users/aarcher/PycharmProjects/MCP/WholeCell/plots/Perm_SensitivityExternal_'+ namesvars[i+3]  +'.png',
-            #             bbox_inches='tight')
-            plt.show()
-
+            jac_values = {}
+            jac_values[QOI_NAMES[0]] = jac_HPA_max
+            jac_values[QOI_NAMES[1]] =  jac_G_ext
+            jac_values[QOI_NAMES[2]] =  jac_P_ext
+            return {'QoI_values': sol_values, 'jac_values': jac_values}
 
         # conservation of mass
         x0 = np.array(self.x0(**params_sens_dict))
@@ -313,33 +221,40 @@ class DhaBDhaTModelJac(DhaBDhaTModelLocalSensAnalysis):
         index_3HPA_max = np.argmax(jac_sample[:,self.index_3HPA_cytosol]) 
         # check if derivative is 0 of 3-HPA 
         statevars_maxabs = jac_sample[index_3HPA_max,:self.nvars]
-        dev_3HPA = self._sderiv(time[index_3HPA_max],statevars_maxabs,params_sens_dict)[self.index_3HPA_cytosol]
+        dev_3HPA = self._sderiv(time[index_3HPA_max],statevars_maxabs,params_sens_dict)[self.index_3HPA_cytosol] 
+        
         # check if integrated correctly
         if (relative_diff > 0.5 and relative_diff < 1.5):
             if abs(dev_3HPA) < 1e-2:
+                HPA_max = jac_sample[index_3HPA_max,self.index_3HPA_cytosol]
                 indices_3HPA_max_cytosol_params_sens =  np.array([[index_3HPA_max,i] for i in self.range_3HPA_cytosol_params_sens])
                 jac_HPA_max = jac_sample[tuple(indices_3HPA_max_cytosol_params_sens.T)]
-            else:
-                jac_HPA_max = []
-
 
             # get sensitivities of Glycerol and 1,3-PDO after 5 hrs
             if status == 0 or (time[-1] > 5*HRS_TO_SECS):
+                P_ext = jac_sample[self.first_index_close_enough,self.index_1_3PDO_ext]
+                G_ext = jac_sample[self.first_index_close_enough,self.index_Glycerol_ext]
                 jac_P_ext = jac_sample[tuple(self.indices_1_3PDO_ext_params_sens.T)]
                 jac_G_ext = jac_sample[tuple(self.indices_Glycerol_ext_params_sens.T)]
             elif status == 1:
+                P_ext = jac_sample[-1,self.index_1_3PDO_ext]
+                G_ext = jac_sample[-1,self.index_Glycerol_ext]
                 jac_P_ext = jac_sample[tuple(self.indices_sens_1_3PDO_ext_before_timecheck.T)]
                 jac_G_ext = jac_sample[tuple(self.indices_sens_Glycerol_ext_before_timecheck.T)]
-            else:
-                jac_P_ext = []
-                jac_G_ext = []
 
-            jac_values = [jac_HPA_max,
-                          jac_G_ext,
-                          jac_P_ext]
-            return jac_values
-        else:
-            return 
+
+        sol_values = {}
+        sol_values[QOI_NAMES[0]] = HPA_max
+        sol_values[QOI_NAMES[1]] =  G_ext
+        sol_values[QOI_NAMES[2]] =  P_ext
+
+        jac_values = {}
+        jac_values[QOI_NAMES[0]] = jac_HPA_max
+        jac_values[QOI_NAMES[1]] =  jac_G_ext
+        jac_values[QOI_NAMES[2]] =  jac_P_ext
+
+        return {'QoI_values': sol_values, 'jac_values': jac_values}
+            
 
 def main(argv, arc):
     # get inputs
@@ -397,44 +312,33 @@ def main(argv, arc):
         if transform == "log10":
             params_sens_dict[key] = np.log10(params_sens_dict[key])
 
+    # create jacobian object
     dhaB_dhaT_model_jacobian = DhaBDhaTModelJac(start_time, final_time, integration_tol, nsamples,tolsolve,
                                                    params_values_fixed,params_sens_list, transform = transform)
     dhaB_dhaT_model_jacobian._set_jacs_fun()
     dhaB_dhaT_model_jacobian._create_jac_sens()    
-    jacobian_est = np.array(dhaB_dhaT_model_jacobian.jac_subset(params_sens_dict))
+    sol_values, jac_values = dhaB_dhaT_model_jacobian.jac_subset(params_sens_dict).values()
 
     # format output
-    _, _, jac_sample = dhaB_dhaT_model_jacobian.jac(params_sens_dict)
-    max_3_HPA = np.max(jac_sample[:,dhaB_dhaT_model_jacobian.index_3HPA_cytosol])
-
-    min_max_3_HPA = max_3_HPA
-    max_max_3_HPA = max_3_HPA
-
-    for i in range(len(jacobian_est)):
+    TotalDeltaQoI = []
+    for qoi_name in QOI_NAMES:
+        # percentage change per parameter
         param_names_tex = [ VARS_TO_TEX[params] for params in params_sens_dict.keys()]
         param_values_tex = [ "$" + "{:.3f}".format(10**params_sens_dict[params]) + '$ ' + VARS_TO_UNITS[params] 
                               for params in params_sens_dict.keys()]
-        param_senstivities = [ "$" + ("{:.3f}".format(ja) if abs(ja) > 0.001  else "<0.001") + "$" for ja in jacobian_est[i,:]]
+        param_senstivities = [ "$" + ("{:.3f}".format(ja) if abs(ja) > 0.001  else "<0.001") + "$" for ja in jac_values[qoi_name]]
 
         DeltaQoI = [("($" + "{:.3f}".format(ja*np.log10(0.8)) + "$, $" + "{:.3f}".format(ja*np.log10(1.2)) + "$)"  
-                     if abs(ja) > 0.001 else "--") for ja in jacobian_est[i,:] ]
+                     if abs(ja) > 0.001 else "--") for ja in jac_values[qoi_name] ]
         percentage_change = 20/100
-        if i == 0:
-            for ja in jacobian_est[i,:]:
-                if ja > 0:
-                    min_max_3_HPA += ja*np.log10(1 - percentage_change) 
-                    max_max_3_HPA += ja*np.log10(1 + percentage_change)
-                else:   
-                    min_max_3_HPA += ja*np.log10(1 + percentage_change) 
-                    max_max_3_HPA += ja*np.log10(1- percentage_change)
-            print(min_max_3_HPA)
-            print(max_max_3_HPA)
+
+        # output as tex
         param_results = pd.DataFrame({'Parameter': param_names_tex,
                                       'Value': param_values_tex,
                                       'Sensitivity': param_senstivities,
                                       'Change in QoI given $\Delta x$': DeltaQoI})
 
-        caption = "Sensitivity results for " + QOI_NAMES[i] + " given " + enz_ratio_name_split[0] + " dhaB$_1$: " + enz_ratio_name_split[1] + " dhaT."
+        caption = "Sensitivity results for " + qoi_name + " given " + enz_ratio_name_split[0] + " dhaB$_1$: " + enz_ratio_name_split[1] + " dhaT."
 
         param_results_tex = param_results.to_latex(index=False,column_format='||c|c|c|c||',
                                                     escape=False, caption = caption)
@@ -447,6 +351,42 @@ def main(argv, arc):
             elif param_results_tex_edited[i][-2:] == '\\\\':
                 param_results_tex_edited[i] += '\\hline'
         print('\n'.join(param_results_tex_edited))
+
+        # get total change
+        min_qoi_val = sol_values[qoi_name]
+        max_qoi_val = sol_values[qoi_name]
+        for ja in jac_values[qoi_name]:
+            if ja > 0:
+                min_qoi_val += ja*np.log10(1 - percentage_change) 
+                max_qoi_val += ja*np.log10(1 + percentage_change)
+            else:   
+                min_qoi_val += ja*np.log10(1 + percentage_change) 
+                max_qoi_val += ja*np.log10(1- percentage_change)
+
+        if max_qoi_val > params_values_fixed['G_EXT_INIT'] and qoi_name == QOI_NAMES[2]:
+            max_qoi_val = params_values_fixed['G_EXT_INIT']
+
+        if min_qoi_val > 0:
+            TotalDeltaQoI.append(("($" + "{:.3f}".format(min_qoi_val) + "$ mM, $" + "{:.3f}".format(max_qoi_val) + "$ mM)" ))
+        else:
+            TotalDeltaQoI.append(("($" + "{:.3f}".format(0.) + "$ mM, $" + "{:.3f}".format(max_qoi_val) + "$ mM)" ))
+
+    # output total qoi change results
+    qoi_results = pd.DataFrame({'QoI': QOI_NAMES,
+                                'Total change in QoI': TotalDeltaQoI})
+    caption = "Total change results for all QoIs given " + enz_ratio_name_split[0] + " dhaB$_1$: " + enz_ratio_name_split[1] + " dhaT and $" + "{:.0%}".format(percentage_change) + "\\%$ in all parameters" 
+    qoi_results_tex = qoi_results.to_latex(index=False,column_format='||c|c|c|c||',
+                                             escape=False, caption = caption)
+    qoi_results_tex_edited = qoi_results_tex.splitlines().copy()
+
+    for i in range(len(qoi_results_tex_edited)):
+        if qoi_results_tex_edited[i] in ['\\midrule','\\toprule']:
+            qoi_results_tex_edited[i] = '\\hline'
+        elif qoi_results_tex_edited[i] == '\\bottomrule':
+            qoi_results_tex_edited[i] = ''                
+        elif qoi_results_tex_edited[i][-2:] == '\\\\':
+            qoi_results_tex_edited[i] += '\\hline'
+    print('\n'.join(qoi_results_tex_edited))
 
 if __name__ == '__main__':
     main(sys.argv, len(sys.argv))

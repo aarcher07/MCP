@@ -141,8 +141,8 @@ class QoI(DhaBDhaTModelJacAS):
                 P_ext = None
                 G_ext = None
 
-            sol_values[QOI_NAMES[0]] = HPA_max,
-            sol_values[QOI_NAMES[1]] =  G_ext,
+            sol_values[QOI_NAMES[0]] = HPA_max
+            sol_values[QOI_NAMES[1]] =  G_ext
             sol_values[QOI_NAMES[2]] =  P_ext
         return sol_values
             

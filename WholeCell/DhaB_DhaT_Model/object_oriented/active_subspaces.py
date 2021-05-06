@@ -36,15 +36,14 @@ rank = comm.Get_rank()
 
 
 class ActiveSubspaces:
-    def __init__(self,jac, nfuncs, nparams, niters=10**3, sampling = 'rsampling'):
+    def __init__(self,jac, nfuncs,funcnames, nparams, niters=10**3, sampling = 'rsampling'):
         """
         Initializes a class that computes and ranks the average sensitivity matrix  
         of each function used to compute jac, the sensitivity matrix of the functions. 
 
         The average sensitivity matrix is computed using Monte Carlo Integration. 
 
-        :params jac            : jacobian of the problem at hand. jac returns an
-                                 an array of dimensions, (nfuncs, nparams, nparams).
+        :params jac            : qoi values and sensitivities of the problem at hand. 
         :params nparams        : number of parameters whose senstivities being studied                         
         :params nfuncs          : number of functions whose jacobians are being evaluated
         :params niters         : maximum number of iterations
@@ -53,6 +52,7 @@ class ActiveSubspaces:
 
         self.jac = jac
         self.nfuncs = nfuncs
+        self.funcnames = funcnames
         self.nparams = nparams
         self.niters = niters
         self.sampling = sampling
@@ -68,11 +68,14 @@ class ActiveSubspaces:
             niters_rank = self.niters//size + self.niters % size
         else:
             niters_rank = self.niters//size
-        # generate data
-        param_samples_rank = []
-        param_samples_diff_int_rank = []
-        jac_list_rank = []
-        
+
+        # initialize data
+        param_samples_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
+        param_samples_diff_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
+        jac_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
+        qoi_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
+
+        #do random sampling of a parameters
         if self.sampling == "LHS":
             lhs = Lhs(lhs_type="classic", criterion=None)
             param_samples_unorganized = lhs.generate(self.sample_space, niters_rank)
@@ -82,74 +85,91 @@ class ActiveSubspaces:
             sobol = Sobol()
             param_samples_unorganized = sobol.generate(self.sample_space.dimensions, niters_rank)
 
+        # evaluate QoI at random sampling
         for sample in param_samples_unorganized:  
-            jac_sample = self.jac(sample)
-            if jac_sample:
-                param_samples_rank.append(sample)
-                jac_list_rank.append(jac_sample)
-            else:
-                param_samples_diff_int_rank.append(sample)
-
+            qoi_sample, jac_sample = self.jac(sample).values()
+            # store output
+            for qoi_name in self.funcnames:
+                if not (jac_sample[qoi_name] is None):
+                    param_samples_dict_rank[qoi_name].append(jac_sample[qoi_name])
+                    jac_dict_rank[qoi_name].append(jac_sample[qoi_name])
+                    qoi_dict_rank[qoi_name].append(qoi_sample[qoi_name])
+                else:
+                    param_samples_diff_dict_rank[qoi_name].append(sample)
 
         # gather data
-        jac_list = None
         param_samples = None
         param_samples_diff_int = None
-        jac_list = comm.gather(jac_list_rank, root=0)
-        param_samples = comm.gather(param_samples_rank, root=0)
-        param_samples_diff_int = comm.gather(param_samples_diff_int_rank, root=0)
+        jac_dict = None
+        qoi_dict= None
 
+        param_samples_dict = comm.gather(param_samples_dict_rank, root=0)
+        params_samples_diff_dict = comm.gather(param_samples_diff_dict_rank, root=0)
+        jac_dict = comm.gather(jac_dict_rank, root=0)
+        qoi_dict = comm.gather(qoi_dict_rank, root=0)
+
+        # format gathered data
         if rank == 0:
             #flatten data
-            jac_list_flattened = [item for sublist in jac_list for item in sublist]
-            param_samples_flattened = [item for sublist in param_samples for item in sublist]
-            param_samples_diff_int_flattened = [item for sublist in param_samples_diff_int for item in sublist]
+            param_samples_dict_flattened = {qoi_name:[] for qoi_name in self.funcnames}
+            param_samples_diff_dict_flattened = {qoi_name: [] for qoi_name in self.funcnames}
+            jac_dict_flattened = {qoi_name: [] for qoi_name in self.funcnames}
+            qoi_dict_flattened = {qoi_name: [] for qoi_name in self.funcnames}
 
-            # remove unsuccessful integrations 
-            jac_list_cleaned_reordered = [[] for _ in range(self.nfuncs)] # store list of outer product of jac for each QoI
-            nfuncs_successes = [0. for _ in range(self.nfuncs)] # count successful integration
+            for cpurank in range(size):
+                for qoi_name in self.funcnames:
+                    param_samples_dict_flattened[qoi_name].extend(param_samples_dict[cpurank][qoi_name]) 
+                    param_samples_diff_dict_flattened[qoi_name].extend(params_samples_diff_dict[cpurank][qoi_name])
+                    jac_dict_flattened[qoi_name].extend(jac_dict[cpurank][qoi_name])
+                    qoi_dict_flattened[qoi_name].extend(qoi_dict[cpurank][qoi_name])
 
-            for jac_sample in jac_list_flattened:
-                for i in range(self.nfuncs):
-                    if len(jac_sample[i]) != 0:
-                        jac_list_cleaned_reordered[i].append(np.outer(jac_sample[i],jac_sample[i]))
-                        nfuncs_successes[i] += 1.
+            #compute outer product
+            jac_outer_dict = {qoi_name: [] for qoi_name in self.funcnames}
+            nfuncs_dict = {qoi_name: 0 for qoi_name in self.funcnames}
+
+            for qoi_name in self.funcnames:
+                for i in range(len(jac_dict_flattened[qoi_name])):
+                    jac_sample = jac_dict_flattened[qoi_name][i]
+                    jac_outer_dict[qoi_name].append(np.outer(jac_sample,jac_sample))
+                    nfuncs_dict[qoi_name] += 1
 
             # compute cost matrix and norm convergence
-            cost_matrix = []
-            cost_matrix_cumul = []
-            norm_convergence = []
+            cost_matrix_dict = {}
+            cost_matrix_cumul_dict = {}
+            norm_convergence_dict = {}
 
-            for i in range(self.nfuncs):
-                cost_cumsum = np.cumsum(jac_list_cleaned_reordered[i],axis=0)/np.arange(1,nfuncs_successes[i]+1)[:,None,None]
-                cost_matrix_cumul.append(cost_cumsum)
-                cost_matrix.append(cost_cumsum[-1,:,:])
-                norm_convergence.append(np.linalg.norm(cost_cumsum,ord='fro',axis=(1,2))) 
+            for qoi_name in self.funcnames:
+                cost_cumsum = np.cumsum(jac_outer_dict[qoi_name],axis=0)/np.arange(1,nfuncs_dict[qoi_name]+1)[:,None,None]
+                cost_matrix_cumul_dict[qoi_name] = cost_cumsum
+                cost_matrix_dict[qoi_name] = cost_cumsum[-1,:,:]
+                norm_convergence_dict[qoi_name] = np.linalg.norm(cost_cumsum,ord='fro',axis=(1,2))
 
             # compute variance matrix
-            variance_matrix = []
-            for i in range(self.nfuncs):
-                variance_mat = np.sum((jac_list_cleaned_reordered[i]-cost_matrix[i])**2/(nfuncs_successes[i]-1),axis=0)            
-                variance_matrix.append(variance_mat)
-            param_results = {"PARAM_SAMPLES": param_samples_flattened,
-                             "DIFFICULT_PARAM_SAMPLES": param_samples_diff_int_flattened}
+            variance_matrix_dict = {}
+            for qoi_name in self.funcnames:
+                variance_mat = np.sum((jac_outer_dict[qoi_name]-cost_matrix_dict[qoi_name])**2/(nfuncs_dict[qoi_name]-1),axis=0)            
+                variance_matrix_dict[qoi_name] = variance_mat
 
-            fun_results = {"NUMBER_OF_FUNCTION_SUCCESS": nfuncs_successes,
-                           "NORM_OF_SEQ_OF_CUMUL_SUMS": norm_convergence,
-                           "SEQ_OF_CUMUL_SUMS": cost_matrix_cumul, 
-                           "VARIANCE_OF_ENTRIES": variance_matrix,
-                           "FINAL_COST_MATRIX":cost_matrix}
+            param_results = {"PARAM_SAMPLES": param_samples_dict_flattened,
+                             "DIFFICULT_PARAM_SAMPLES": param_samples_diff_dict_flattened}
+
+            fun_results = {"NUMBER_OF_FUNCTION_SUCCESS": nfuncs_dict,
+                           "NORM_OF_SEQ_OF_CUMUL_SUMS": norm_convergence_dict,
+                           "SEQ_OF_CUMUL_SUMS": cost_matrix_cumul_dict, 
+                           "VARIANCE_OF_ENTRIES": variance_matrix_dict,
+                           "FINAL_COST_MATRIX":cost_matrix_dict}
 
             return {'PARAMETER_RESULTS': param_results, 'FUNCTION_RESULTS': fun_results}
 
 
 def test():
     f = lambda x: np.exp(0.7*x[0] + 0.3*x[1])
-    jac = lambda x: [np.array([0.7*f(x),0.3*f(x)])]
-    as_test = ActiveSubspaces(jac, 1, 2,niters=10)
+    jac = lambda x:  np.array([0.7*f(x),0.3*f(x)])
+    f_jac =lambda x: {'QoI_values': {"exp": f(x)}, 'jac_values': {"exp": jac(x)}}
+    as_test = ActiveSubspaces(f_jac, 1,["exp"], 2,niters=int(1e3))
     results = as_test.compute_cost_matrix()
     if rank == 0:
-        print(np.linalg.eig(results['FUNCTION_RESULTS']["FINAL_COST_MATRIX"]))
+        print(np.linalg.eig(results['FUNCTION_RESULTS']["FINAL_COST_MATRIX"]["exp"]))
 
 def dhaB_dhaT_model(argv, arc):
     # get inputs
@@ -158,7 +178,7 @@ def dhaB_dhaT_model(argv, arc):
     sampling =  argv[3]
     threshold = float(argv[4])
     # initialize variables
-    ds = 'log10'
+    transform = 'log10'
     start_time = (10**(-15))
     final_time = 100*HRS_TO_SECS
     integration_tol = 1e-3
@@ -173,33 +193,22 @@ def dhaB_dhaT_model(argv, arc):
                           'P_MCP_INIT': 0,
                           'G_CYTO_INIT': 0,
                           'H_CYTO_INIT': 0,
-                          'P_CYTO,INIT': 0 ,
+                          'P_CYTO_INIT': 0 ,
                           'G_EXT_INIT': 200,
                           'H_EXT_INIT': 0,
                           'P_EXT_INIT': 0}
-
-    param_sens_bounds = {'kcatfDhaB': [400, 860], # /seconds Input
-                        'KmDhaBG': [0.6,1.1], # mM Input
-                        'kcatfDhaT': [40.,100.], # /seconds
-                        'KmDhaTH': [0.1,1.], # mM
-                        'KmDhaTN': [0.0116,0.48], # mM
-                        'NADH_MCP_INIT': [0.12,0.60],
-                        'PermMCPPolar': np.log10([10**-4, 10**-2]),
-                        'NonPolarBias': np.log10([10**-2, 10**-1]),
-                        'PermCell': np.log10([10**-9,10**-4]),
-                        'dPacking': [0.3,0.64],
-                        'nmcps': [3.,30.]}
     
     # create object to generate jac
+    param_sens_list = list(PARAM_SENS_LOG10_BOUNDS.keys())
     dhaB_dhaT_model_jacobian_as = DhaBDhaTModelJacAS(start_time, final_time, integration_tol,
                                                      nsamples, tolsolve, params_values_fixed,
-                                                     param_sens_bounds, ds = ds)
+                                                     param_sens_list, transform = transform)
     def dhaB_dhaT_jac(runif):
-        param_sens_dict = {param_name: val for param_name,val in zip(param_sens_bounds.keys(),runif)}
+        param_sens_dict = {param_name: val for param_name,val in zip(param_sens_list,runif)}
         return dhaB_dhaT_model_jacobian_as.jac_subset(param_sens_dict) 
 
     # create object to run active subspaces
-    as_dhaB_dhaT_mod = ActiveSubspaces(dhaB_dhaT_jac, 3, len(param_sens_bounds),niters=niters, sampling = sampling)
+    as_dhaB_dhaT_mod = ActiveSubspaces(dhaB_dhaT_jac, 3, QOI_NAMES, len(param_sens_list),niters=niters, sampling = sampling)
 
     # run integration
     start_time = time.time()
@@ -214,26 +223,26 @@ def dhaB_dhaT_model(argv, arc):
         date_string = time.strftime("%Y_%m_%d_%H:%M")
 
         # create folder 
-        params_names = param_sens_bounds.keys()
-        folder = generate_folder_name(param_sens_bounds)
+        params_names = param_sens_list
+        folder = transform+"/"+date_string
         folder_name = os.path.abspath(os.getcwd()) + '/data/' + enz_ratio_name+ '/'+  folder
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
 
         # store results
-        file_name_pickle = folder_name + '/sampling_' + sampling + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.pkl'
+        file_name_pickle = folder_name + '/sampling_' + sampling + '_N_' + str(niters) + '.pkl'
         with open(file_name_pickle, 'wb') as f:
             pickle.dump(results, f)
         
         # save text output
         generate_txt_output(fun_results["FINAL_COST_MATRIX"], fun_results["NUMBER_OF_FUNCTION_SUCCESS"],
                             fun_results["VARIANCE_OF_ENTRIES"], param_results["DIFFICULT_PARAM_SAMPLES"],
-                            folder_name, param_sens_bounds, size, sampling,enz_ratio_name,niters,
-                            date_string, start_time,end_time)
+                            folder_name, transform, PARAM_SENS_LOG10_BOUNDS, size, sampling,enz_ratio_name,
+                            niters, start_time,end_time)
 
         # save eigenvalue plots
-        generate_eig_plots_QoI(fun_results["FINAL_COST_MATRIX"],param_sens_bounds,sampling,
-                               enz_ratio_name, niters,date_string,threshold, save=True)
+        generate_eig_plots_QoI(fun_results["FINAL_COST_MATRIX"],PARAM_SENS_LOG10_BOUNDS.keys(),
+                               folder,sampling, enz_ratio_name, niters,threshold, save=True)
 
 if __name__ == '__main__':
     test()

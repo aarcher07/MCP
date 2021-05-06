@@ -1,0 +1,728 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(readr)
+library(taRifx)
+library(tidyr)
+library(plotly)
+```
+```{r}
+FreeE_Propanediol.df <- read_table2("/home/aarcher/Downloads/FreeE_Propanediol.txt")
+FreeE_Propanal.df <- read_table2("/home/aarcher/Downloads/FreeE_Propanal[2].txt")
+
+FreeE_Propanediol.df <- FreeE_Propanediol.df[FreeE_Propanediol.df$`Axial-coord` > -9& FreeE_Propanediol.df$`Axial-coord` < 9,]
+FreeE_Propanal.df <- FreeE_Propanal.df[FreeE_Propanal.df$`Axial-coord` > -9& FreeE_Propanal.df$`Axial-coord` < 9,]
+
+FreeE_Propanediol_Center.df <- FreeE_Propanediol.df[FreeE_Propanediol.df$`Radial-coord` == 0.75 & FreeE_Propanediol.df$`Axial-coord` > -9& FreeE_Propanediol.df$`Axial-coord` < 9,]
+FreeE_Propanal_Center.df <- FreeE_Propanal.df[FreeE_Propanal.df$`Radial-coord` == 0.75 & FreeE_Propanal.df$`Axial-coord` > -9& FreeE_Propanal.df$`Axial-coord` < 9,]
+```
+
+```{r}
+ggplot(data = FreeE_Propanediol.df, mapping = aes(x = `Radial-coord`, y = `Axial-coord`, fill = freeE)) + geom_tile() +  xlab(label = "Radius Coord")+  ylab(label = "Axial Coord") + ggtitle('Free Energy Distribution of 1,2-PDO')
+plot(FreeE_Propanediol_Center.df$`Axial-coord`,FreeE_Propanediol_Center.df$freeE,ylab='Average Free Energy of 1,2-PDO', xlab='Axial Coord')
+```
+```{r}
+ggplot(data = FreeE_Propanal.df, mapping = aes(x = `Radial-coord`, y = `Axial-coord`, fill = freeE)) + geom_tile() +  xlab(label = "Radius Coord")+  ylab(label = "Axial Coord") + ggtitle('Free Energy Distribution of 1,2-PDO')
+plot(FreeE_Propanal_Center.df$`Axial-coord`,FreeE_Propanal_Center.df$freeE,ylab='Average Free Energy of Proponal', xlab='Axial Coord')
+```
+
+
+```{r}
+corr <- function(tv1,tv2,eta1){
+  K = matrix(1,nrow=dim(tv1)[1],ncol=dim(tv2)[1])
+  for(dlcv in 1:dim(tv1)[2]){
+  K <- K*exp(-eta1[dlcv]*outer(tv1[,dlcv],tv2[,dlcv],'-')^2)
+  }
+  K
+}
+
+
+
+MLE <-function(logeta, to, fo){
+  m <- length(logeta)
+  logeta1 <- logeta[-m]
+  logeta2 <- logeta[m]
+  
+  # obtain the covariance via kronecker product
+  
+  corr0 <- corr(to, to, exp(logeta1))# c(., .)
+  kappa0 <- corr0 + exp(logeta2)*diag(length(as.vector(fo)))
+  kappa0_inv <- solve(kappa0)
+  kappa0_inv_f0 <- solve(kappa0, as.vector(fo))
+  kappa0_inv_1 <- solve(kappa0, rep(1, length(as.vector(fo))))# estimated values
+  gammahat <- sum(kappa0_inv_f0)/sum(kappa0_inv_1)
+  sigmahat <- mean(t(kappa0_inv_f0 - gammahat*kappa0_inv_1)*(as.vector(fo) - gammahat))
+  return(list(gammahat=gammahat, sigmahat=sigmahat))
+  }
+```
+
+```{r}
+# train each f as GP
+negloglik <-function(logeta, t0, f0){
+  n <- length(as.vector(f0))# obtain sigmahat for a given eta
+  m <- length(logeta)
+  logeta1 <- logeta[-m]
+  logeta2 <- logeta[m]
+  estimators <- MLE(logeta, t0, f0)
+  sigmahat <- estimators$sigmahat# obtain the covariance matrices
+  corr0 <- corr(t0, t0, exp(logeta1))# c(t0, t0)
+  kappa0 <- corr0 + exp(logeta2)*diag(n)
+
+  # obtain the log of determinants efficiently
+  logdetkappa0 <- determinant(kappa0,logarithm=TRUE)$modulus
+  return(1/2*logdetkappa0 + n/2*log(sigmahat))
+  }
+```
+
+```{r}
+fitGP <-function(logeta=c(1, 1, 1), lowerb=c(-1, -1,-1), upperb=c(4, 4,4), t_tr, f_tr){
+  log_eta_hat <- optim(par=logeta,fn=negloglik,lower=lowerb,upper=upperb,method="L-BFGS-B", t0=t_tr, f0=f_tr)$par
+  estimators <- MLE(log_eta_hat, t_tr, f_tr)
+  m <- length(log_eta_hat)
+  return(list(etahat=exp(log_eta_hat[-m]),g=exp(log_eta_hat[m]),sigmahat=estimators$sigmahat,gammahat=estimators$gammahat))
+}
+predictGP <-function(fitted_info, t_test, t_tr, f_tr){# obtain the fitted info
+  etahat1 <- fitted_info$etahat
+  g <- fitted_info$g
+  sigmahat <- fitted_info$sigmahat
+  gammahat <- fitted_info$gammahat
+  
+  # obtain the final covariance structure
+  
+  corr0 <- corr(t_tr, t_tr, etahat1)  # c(t_tr, t_tr)
+  kappa0 <- corr0 + g*diag(length(as.vector(f_tr)))
+  kappa0_inv <- (1/sigmahat)*solve(kappa0)
+  kappa0_inv_f0 <- kappa0_inv%*%(as.vector(f_tr) - gammahat)
+  corr_Tv <- corr(t_test, t_tr, etahat1)# c(t_test, t_tr)
+  kappa_Tv <- sigmahat*corr_Tv# c(t_test, t_tr)
+  
+  corr_toTv <- corr(t_tr, t_test, etahat1)# c(t_tr, t_test)
+  kappa_toTv <- sigmahat *corr_toTv#  c(., .)
+  
+  gamma_vec <- (gammahat + kappa_Tv%*%kappa0_inv_f0)
+  dkappa <- sigmahat * rep(1, dim(t_test)[1]*dim(f_tr)[2])
+  kappa_vec <- (pmax(dkappa -apply(t((kappa_Tv)%*%(kappa0_inv))*(kappa_toTv), 2, sum), 10**(-13)))
+  return(list(pred_mean=gamma_vec, pred_var=kappa_vec))}
+```
+
+```{r}
+
+ftrain <- as.matrix(FreeE_Propanal.df[,3])
+inputtrain <-as.matrix(FreeE_Propanal.df[,1:2])
+fitted_info <- fitGP(logeta=c(1, 1,1), lowerb=c(0, 0,0), upperb=c(5, 5,5), inputtrain, ftrain)
+fitted_info
+```
+
+
+```{r}
+predmean =rep(0,dim(inputtrain)[1])
+predLB =  rep(0,dim(inputtrain)[1])
+predUB =rep(0,dim(inputtrain)[1])
+for(k in 1:dim(inputtrain)[1]){
+  predinfo <- predictGP(fitted_info,t(as.matrix(inputtrain[k,])), inputtrain, ftrain)
+  predmean[k] <- predinfo$pred_mean
+  predLB[k] = predmean[k]- qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUB[k] = predmean[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(paste('PCGPMethod: Test MSE:',round(mean((predmean-ftrain)^2),3),', Coverage:',100*round(mean((predLB<ftrain)*(predUB>ftrain)),3),'%',sep =''))
+```
+```{r}
+FreeE_Propanal_Pred.df <- FreeE_Propanal.df
+FreeE_Propanal_LB.df <- FreeE_Propanal.df
+FreeE_Propanal_UB.df <- FreeE_Propanal.df
+
+
+FreeE_Propanal_Pred.df$freeE <- predmean
+FreeE_Propanal_LB.df$freeE <- predLB
+FreeE_Propanal_UB.df$freeE <- predUB
+z <- as.matrix(spread(FreeE_Propanal.df, `Radial-coord`, freeE)[,-1])
+zpred <- as.matrix(spread(FreeE_Propanal_Pred.df, `Radial-coord`, freeE)[,-1])
+zLB <- as.matrix(spread(FreeE_Propanal_LB.df, `Radial-coord`, freeE)[,-1])
+zUB <- as.matrix(spread(FreeE_Propanal_UB.df, `Radial-coord`, freeE)[,-1])
+
+color <- rep(1, length(z))
+dim(color) <- dim(z)
+
+x <-unique(FreeE_Propanal.df$`Radial-coord`)
+y <-unique(FreeE_Propanal.df$`Axial-coord`)
+
+p<-  plot_ly() %>% add_trace(x=FreeE_Propanal.df$`Radial-coord`, y=FreeE_Propanal.df$`Axial-coord`, z=FreeE_Propanal.df$freeE, mode= "markers",type = "scatter3d",marker = list(size = 2, color = "blue", symbol = 104), opacity=0.7,showlegend = FALSE )
+p <- p %>% add_trace( x=x, y=y, z=zpred,type = "surface",colorscale = list(c(0, 1), c("tan", "blue")),opacity=0.7)  
+
+df1 <- split(FreeE_Propanal_LB.df, FreeE_Propanal_LB.df$`Radial-coord`)
+df2 <- split(FreeE_Propanal_LB.df, FreeE_Propanal_LB.df$`Axial-coord`)
+
+for(i in seq_along(df1)){
+  df_sp <- df1[[i]]
+  p <- add_trace(p, line = list(
+    color = "#000000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+for(i in seq_along(df2)){
+  df_sp <- df2[[i]]
+  p <- add_trace(p, line = list(
+    color = "#000000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+
+df1 <- split(FreeE_Propanal_UB.df, FreeE_Propanal_UB.df$`Radial-coord`)
+df2 <- split(FreeE_Propanal_UB.df, FreeE_Propanal_UB.df$`Axial-coord`)
+
+for(i in seq_along(df1)){
+  df_sp <- df1[[i]]
+  p <- add_trace(p, line = list(
+    color = "#FF0000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+for(i in seq_along(df2)){
+  df_sp <- df2[[i]]
+  p <- add_trace(p, line = list(
+    color = "#FF0000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+p%>% layout(scene = list( xaxis = list(title = "Radius, r"),yaxis = list(title = "Axial, z")))
+```
+
+```{r}
+
+axiallen <- 1000
+axialcoord <- unique(FreeE_Propanal.df$`Axial-coord`)
+centercoords <-as.matrix( data.frame(seq(min(axialcoord),max(axialcoord),length.out=axiallen),rep(0,axiallen)))
+
+predmean =rep(0,dim(centercoords)[1])
+predLB =  rep(0,dim(centercoords)[1])
+predUB =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGP(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmean[k] <- predinfo$pred_mean
+  predLB[k] = predmean[k]- qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUB[k] = predmean[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+```
+
+```{r}
+plot(centercoords[,1],predmean, ylim = c(min(predLB),max(predUB)))
+lines(centercoords[,1],predLB)
+lines(centercoords[,1],predUB)
+deltax = (max(axialcoord)-min(axialcoord))/(axiallen-1)
+predmeandev = (predmean[3:axiallen]-predmean[1:(axiallen-2)])/deltax
+preddevLB = (predLB[3:axiallen]-predLB[1:(axiallen-2)])/deltax
+preddevUB = (predUB[3:axiallen]-predUB[1:(axiallen-2)])/deltax
+predmeandevdev = (predmean[3:axiallen]-2*predmean[2:(axiallen-1)] + predmean[1:(axiallen-2)])/deltax^2
+preddevdevLB = (predLB[3:axiallen]-2*predmean[2:(axiallen-1)] +predLB[1:(axiallen-2)])/deltax^2
+preddevdevUB = (predUB[3:axiallen]-2*predmean[2:(axiallen-1)] +predUB[1:(axiallen-2)])/deltax^2
+
+indmean = which(predmean==max(predmean))
+indLB = which(predLB==max(predLB))
+indUB = which(predUB==max(predUB))
+
+print(predmean[indmean])
+print(predLB[indLB])
+print(predUB[indUB])
+
+plot(centercoords[2:(axiallen-1),1],predmeandev , ylim = c(min(predmeandev,preddevLB,preddevUB),max(predmeandev,preddevLB,preddevUB)))
+lines(centercoords[2:(axiallen-1),1],preddevLB)
+lines(centercoords[2:(axiallen-1),1],preddevUB)
+
+print(predmeandev[indmean])
+print(preddevLB[indLB])
+print(preddevUB[indUB])
+
+plot(centercoords[2:(axiallen-1),1],predmeandevdev , ylim = c(min(predmeandevdev,preddevdevLB,preddevdevUB),max(predmeandevdev,preddevdevLB,preddevdevUB)))
+lines(centercoords[2:(axiallen-1),1],preddevdevLB)
+lines(centercoords[2:(axiallen-1),1],preddevdevUB)
+
+print(predmeandevdev[indmean])
+print(preddevdevLB[indLB])
+print(preddevdevUB[indUB])
+
+
+```
+
+```{r}
+corrdevobv <- function(tv1,tv2,eta1){
+  K <- -2*eta1[1]*exp(-eta1[1]*outer(tv1[,1],tv2[,1],'-')^2)*(outer(tv1[,1],tv2[,1],'-'))
+  K <- K*exp(-eta1[2]*abs(outer(tv1[,2],tv2[,2],'-'))^2)
+  K
+}
+
+predictGPdev <-function(fitted_info, t_test, t_tr, f_tr){# obtain the fitted info
+  etahat1 <- fitted_info$etahat
+  g <- fitted_info$g
+  sigmahat <- fitted_info$sigmahat
+  gammahat <- fitted_info$gammahat
+  
+  # obtain the final covariance structure
+  
+  corr0 <- corr(t_tr, t_tr, etahat1)  # c(t_tr, t_tr)
+  kappa0 <- corr0 + g*diag(length(as.vector(f_tr)))
+  kappa0_inv <- (1/sigmahat)*solve(kappa0)
+  kappa0_inv_f0 <- kappa0_inv%*%(as.vector(f_tr) - gammahat)
+  corr_Tv <- corrdevobv(t_test, t_tr, etahat1)# c(t_test, t_tr)
+  kappa_Tv <- sigmahat*corr_Tv# c(t_test, t_tr)
+  
+  corr_toTv <- corrdevobv(t_tr, t_test, etahat1)# c(t_tr, t_test)
+  kappa_toTv <- sigmahat *corr_toTv#  c(., .)
+  
+  gamma_vec <-  kappa_Tv%*%kappa0_inv_f0
+  dkappa <- sigmahat*(1 + g)*rep(1, dim(t_test)[1]*dim(f_tr)[2])
+  kappa_vec <- (pmax(dkappa -apply(t((kappa_Tv)%*%(kappa0_inv))*(kappa_toTv), 2, sum), 10**(-13)))
+  return(list(pred_mean=gamma_vec, pred_var=kappa_vec))}
+```
+
+```{r}
+
+predmeandev =rep(0,dim(centercoords)[1])
+predLBdev =  rep(0,dim(centercoords)[1])
+predUBdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandev[k] <- predinfo$pred_mean
+  predLBdev[k] = predmeandev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdev[k] = predmeandev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandev)# ylim = c(min(predLBdev),max(predUBdev)))
+lines(centercoords[,1],predLBdev)
+lines(centercoords[,1],predUBdev)
+inds = which(diff(sign(predmeandev)) != 0)
+print(predmeandev[inds])
+print(predLBdev[inds])
+print(predUBdev[inds])
+```
+
+```{r}
+corrdevdevobv <- function(tv1,tv2,eta1){
+  K <- 2*eta1[1]*exp(-eta1[1]*outer(tv1[,1],tv2[,1],'-')^2)*(2*eta1[1]*(outer(tv1[,1],tv2[,1],'-'))^2-1)
+  K <- K*exp(-eta1[2]*abs(outer(tv1[,2],tv2[,2],'-'))^2)
+  K
+}
+
+corrdevdevdevobv <- function(tv1,tv2,eta1){
+  K <- -4*(eta1[1]^2)*(outer(tv1[,1],tv2[,1],'-'))*exp(-eta1[1]*outer(tv1[,1],tv2[,1],'-')^2)*(2*eta1[1]*(outer(tv1[,1],tv2[,1],'-'))^2-3)
+  K <- K*exp(-eta1[2]*abs(outer(tv1[,2],tv2[,2],'-'))^2)
+  K
+}
+
+corrdevdevdevdevobv <- function(tv1,tv2,eta1){
+  K <- 4*(eta1[1]^2)*exp(-eta1[1]*outer(tv1[,1],tv2[,1],'-')^2)*(4*eta1[1]*(outer(tv1[,1],tv2[,1],'-')^2)*(eta1[1]*(outer(tv1[,1],tv2[,1],'-'))^2-3)+3)
+  K <- K*exp(-eta1[2]*abs(outer(tv1[,2],tv2[,2],'-'))^2)
+  K
+}
+
+predictGPdevdev <-function(fitted_info, t_test, t_tr, f_tr){# obtain the fitted info
+  etahat1 <- fitted_info$etahat
+  g <- fitted_info$g
+  sigmahat <- fitted_info$sigmahat
+  gammahat <- fitted_info$gammahat
+  
+  # obtain the final covariance structure
+  
+  corr0 <- corr(t_tr, t_tr, etahat1)  # c(t_tr, t_tr)
+  kappa0 <- corr0 + g*diag(length(as.vector(f_tr)))
+  kappa0_inv <- (1/sigmahat)*solve(kappa0)
+  kappa0_inv_f0 <- kappa0_inv%*%(as.vector(f_tr) - gammahat)
+  corr_Tv <- corrdevdevobv(t_test, t_tr, etahat1)# c(t_test, t_tr)
+  kappa_Tv <- sigmahat*corr_Tv# c(t_test, t_tr)
+  
+  corr_toTv <- corrdevdevobv(t_tr, t_test, etahat1)# c(t_tr, t_test)
+  kappa_toTv <- sigmahat *corr_toTv#  c(., .)
+  
+  gamma_vec <-  kappa_Tv%*%kappa0_inv_f0
+  dkappa <- sigmahat*(1 + g)*rep(1, dim(t_test)[1]*dim(f_tr)[2])
+  kappa_vec <- (pmax(dkappa -apply(t((kappa_Tv)%*%(kappa0_inv))*(kappa_toTv), 2, sum), 10**(-13)))
+  return(list(pred_mean=gamma_vec, pred_var=kappa_vec))}
+
+predictGPdevdevdev <-function(fitted_info, t_test, t_tr, f_tr){# obtain the fitted info
+  etahat1 <- fitted_info$etahat
+  g <- fitted_info$g
+  sigmahat <- fitted_info$sigmahat
+  gammahat <- fitted_info$gammahat
+  
+  # obtain the final covariance structure
+  
+  corr0 <- corr(t_tr, t_tr, etahat1)  # c(t_tr, t_tr)
+  kappa0 <- corr0 + g*diag(length(as.vector(f_tr)))
+  kappa0_inv <- (1/sigmahat)*solve(kappa0)
+  kappa0_inv_f0 <- kappa0_inv%*%(as.vector(f_tr) - gammahat)
+  corr_Tv <- corrdevdevdevobv(t_test, t_tr, etahat1)# c(t_test, t_tr)
+  kappa_Tv <- sigmahat*corr_Tv# c(t_test, t_tr)
+  
+  corr_toTv <- corrdevdevdevobv(t_tr, t_test, etahat1)# c(t_tr, t_test)
+  kappa_toTv <- sigmahat *corr_toTv#  c(., .)
+  
+  gamma_vec <-  kappa_Tv%*%kappa0_inv_f0
+  dkappa <- sigmahat*(1 + g)*rep(1, dim(t_test)[1]*dim(f_tr)[2])
+  kappa_vec <- (pmax(dkappa -apply(t((kappa_Tv)%*%(kappa0_inv))*(kappa_toTv), 2, sum), 10**(-13)))
+  return(list(pred_mean=gamma_vec, pred_var=kappa_vec))}
+
+predictGPdevdevdevdev <-function(fitted_info, t_test, t_tr, f_tr){# obtain the fitted info
+  etahat1 <- fitted_info$etahat
+  g <- fitted_info$g
+  sigmahat <- fitted_info$sigmahat
+  gammahat <- fitted_info$gammahat
+  
+  # obtain the final covariance structure
+  
+  corr0 <- corr(t_tr, t_tr, etahat1)  # c(t_tr, t_tr)
+  kappa0 <- corr0 + g*diag(length(as.vector(f_tr)))
+  kappa0_inv <- (1/sigmahat)*solve(kappa0)
+  kappa0_inv_f0 <- kappa0_inv%*%(as.vector(f_tr) - gammahat)
+  corr_Tv <- corrdevdevdevdevobv(t_test, t_tr, etahat1)# c(t_test, t_tr)
+  kappa_Tv <- sigmahat*corr_Tv# c(t_test, t_tr)
+  
+  corr_toTv <- corrdevdevdevdevobv(t_tr, t_test, etahat1)# c(t_tr, t_test)
+  kappa_toTv <- sigmahat *corr_toTv#  c(., .)
+  
+  gamma_vec <-  kappa_Tv%*%kappa0_inv_f0
+  dkappa <- sigmahat*(1 + g)*rep(1, dim(t_test)[1]*dim(f_tr)[2])
+  kappa_vec <- (pmax(dkappa -apply(t((kappa_Tv)%*%(kappa0_inv))*(kappa_toTv), 2, sum), 10**(-13)))
+  return(list(pred_mean=gamma_vec, pred_var=kappa_vec))}
+```
+
+```{r}
+
+predmeandevdev =rep(0,dim(centercoords)[1])
+predLBdevdev =  rep(0,dim(centercoords)[1])
+predUBdevdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdevdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandevdev[k] <- predinfo$pred_mean
+  predLBdevdev[k] = predmeandevdev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdevdev[k] = predmeandevdev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(predmeandevdev[inds])
+print(predLBdevdev[inds])
+print(predUBdevdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandevdev, ylim = c(min(predLBdev),max(predUBdev)))
+lines(centercoords[,1],predLBdevdev)
+lines(centercoords[,1],predUBdevdev)
+```
+
+```{r}
+
+predmeandevdevdev =rep(0,dim(centercoords)[1])
+predLBdevdevdev =  rep(0,dim(centercoords)[1])
+predUBdevdevdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdevdevdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandevdevdev[k] <- predinfo$pred_mean
+  predLBdevdevdev[k] = predmeandevdevdev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdevdevdev[k] = predmeandevdevdev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(predmeandevdevdev[inds])
+print(predLBdevdevdev[inds])
+print(predUBdevdevdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandevdevdev, ylim = c(min(predLBdevdevdev),max(predUBdevdevdev)))
+lines(centercoords[,1],predLBdevdevdev)
+lines(centercoords[,1],predUBdevdevdev)
+```
+
+```{r}
+
+predmeandevdevdevdev =rep(0,dim(centercoords)[1])
+predLBdevdevdevdev =  rep(0,dim(centercoords)[1])
+predUBdevdevdevdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdevdevdevdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandevdevdevdev[k] <- predinfo$pred_mean
+  predLBdevdevdevdev[k] = predmeandevdevdevdev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdevdevdevdev[k] = predmeandevdevdevdev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(predmeandevdevdevdev[inds])
+print(predLBdevdevdevdev[inds])
+print(predUBdevdevdevdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandevdevdevdev, ylim = c(min(predLBdevdevdevdev),max(predUBdevdevdevdev)))
+lines(centercoords[,1],predLBdevdevdevdev)
+lines(centercoords[,1],predUBdevdevdevdev)
+```
+
+```{r}
+kBT = (293*0.001985)
+print((exp(predmean[inds[4]]-min(predmean))/kBT)*sqrt(-2*pi*kBT/predmeandevdev[inds[4]]) + kBT*((1/8)*(predmeandevdevdevdev[inds[4]]/(predmeandevdev[inds[4]])^2) - (5/24)*((predmeandevdevdev[inds[4]])^2/(predmeandevdev[inds[4]])^3)))
+print((exp(predLB[inds[4]]-min(predLB))/kBT)*sqrt(-2*pi*kBT/predLBdevdev[inds[4]])+ kBT*((1/8)*(predLBdevdevdevdev[inds[4]]/(predLBdevdev[inds[4]])^2) - (5/24)*((predLBdevdevdev[inds[4]])^2/(predLBdevdev[inds[4]])^3)))
+
+```
+
+```{r}
+ftrain <- as.matrix(FreeE_Propanediol.df[,3])
+inputtrain <-as.matrix(FreeE_Propanediol.df[,1:2])
+fitted_info <- fitGP(logeta=c(1, 1,1), lowerb=c(0, 0,0), upperb=c(5, 5,5), inputtrain, ftrain)
+fitted_info
+```
+
+
+```{r}
+predmean =rep(0,dim(inputtrain)[1])
+predLB =  rep(0,dim(inputtrain)[1])
+predUB =rep(0,dim(inputtrain)[1])
+for(k in 1:dim(inputtrain)[1]){
+  predinfo <- predictGP(fitted_info,t(as.matrix(inputtrain[k,])), inputtrain, ftrain)
+  predmean[k] <- predinfo$pred_mean
+  predLB[k] = predmean[k]- qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUB[k] = predmean[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(paste('PCGPMethod: Test MSE:',round(mean((predmean-ftrain)^2),3),', Coverage:',100*round(mean((predLB<ftrain)*(predUB>ftrain)),3),'%',sep =''))
+```
+```{r}
+FreeE_Propanediol_Pred.df <- FreeE_Propanediol.df
+FreeE_Propanediol_LB.df <- FreeE_Propanediol.df
+FreeE_Propanediol_UB.df <- FreeE_Propanediol.df
+
+
+FreeE_Propanediol_Pred.df$freeE <- predmean
+FreeE_Propanediol_LB.df$freeE <- predLB
+FreeE_Propanediol_UB.df$freeE <- predUB
+
+z <- as.matrix(spread(FreeE_Propanediol.df, `Radial-coord`, freeE)[,-1])
+zpred <- as.matrix(spread(FreeE_Propanediol_Pred.df, `Radial-coord`, freeE)[,-1])
+zLB <- as.matrix(spread(FreeE_Propanediol_LB.df, `Radial-coord`, freeE)[,-1])
+zUB <- as.matrix(spread(FreeE_Propanediol_UB.df, `Radial-coord`, freeE)[,-1])
+
+color <- rep(1, length(z))
+dim(color) <- dim(z)
+
+x <-unique(FreeE_Propanediol.df$`Radial-coord`)
+y <-unique(FreeE_Propanediol.df$`Axial-coord`)
+p <- plot_ly() %>% add_trace( x=x, y=y, z=z,type = "surface",colorscale = list(c(0, 1), c("tan", "blue")))
+
+df1 <- split(FreeE_Propanediol_LB.df, FreeE_Propanediol_LB.df$`Radial-coord`)
+df2 <- split(FreeE_Propanediol_LB.df, FreeE_Propanediol_LB.df$`Axial-coord`)
+
+for(i in seq_along(df1)){
+  df_sp <- df1[[i]]
+  p <- add_trace(p, line = list(
+    color = "#000000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+for(i in seq_along(df2)){
+  df_sp <- df2[[i]]
+  p <- add_trace(p, line = list(
+    color = "#000000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+
+df1 <- split(FreeE_Propanediol_UB.df, FreeE_Propanediol_UB.df$`Radial-coord`)
+df2 <- split(FreeE_Propanediol_UB.df, FreeE_Propanediol_UB.df$`Axial-coord`)
+
+for(i in seq_along(df1)){
+  df_sp <- df1[[i]]
+  p <- add_trace(p, line = list(
+    color = "#FF0000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+for(i in seq_along(df2)){
+  df_sp <- df2[[i]]
+  p <- add_trace(p, line = list(
+    color = "#FF0000", 
+    width = 2
+  ), 
+  mode = "lines", 
+  type = "scatter3d", 
+  x = df_sp$`Radial-coord`,
+  y = df_sp$`Axial-coord`,
+  z = df_sp$freeE,
+  showlegend = FALSE)
+}
+p%>% layout(scene = list( xaxis = list(title = "Radius, r"),yaxis = list(title = "Axial, z")))
+```
+
+```{r}
+
+
+axiallen <- 1000
+axialcoord <- unique(FreeE_Propanal.df$`Axial-coord`)
+centercoords <-as.matrix( data.frame(seq(min(axialcoord),max(axialcoord),length.out=axiallen),rep(0,axiallen)))
+
+predmean =rep(0,dim(centercoords)[1])
+predLB =  rep(0,dim(centercoords)[1])
+predUB =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGP(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmean[k] <- predinfo$pred_mean
+  predLB[k] = predmean[k]- qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUB[k] = predmean[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+ind = which(predmean==max(predmean))
+print(centercoords[ind,1])
+print(predmean[ind])
+print(predLB[ind])
+print(predUB[ind])
+```
+
+```{r}
+plot(centercoords[,1],predmean, ylim = c(min(predLB),max(predUB)))
+lines(centercoords[,1],predLB)
+lines(centercoords[,1],predUB)
+
+```
+
+```{r}
+
+predmeandev =rep(0,dim(centercoords)[1])
+predLBdev =  rep(0,dim(centercoords)[1])
+predUBdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandev[k] <- predinfo$pred_mean
+  predLBdev[k] = predmeandev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdev[k] = predmeandev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+inds = which(diff(sign(predmeandev)) != 0)
+print(centercoords[inds,1])
+
+print(predmeandev[inds])
+print(predLBdev[inds])
+print(predUBdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandev, ylim = c(min(predLBdev),max(predUBdev)))
+lines(centercoords[,1],predLBdev)
+lines(centercoords[,1],predUBdev)
+
+```
+
+```{r}
+
+predmeandevdev =rep(0,dim(centercoords)[1])
+predLBdevdev =  rep(0,dim(centercoords)[1])
+predUBdevdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdevdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandevdev[k] <- predinfo$pred_mean
+  predLBdevdev[k] = predmeandevdev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdevdev[k] = predmeandevdev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(predmeandevdev[inds])
+print(predLBdevdev[inds])
+print(predUBdevdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandevdev, ylim = c(min(predLBdev),max(predUBdev)))
+lines(centercoords[,1],predLBdevdev)
+lines(centercoords[,1],predUBdevdev)
+```
+
+```{r}
+
+predmeandevdevdev =rep(0,dim(centercoords)[1])
+predLBdevdevdev =  rep(0,dim(centercoords)[1])
+predUBdevdevdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdevdevdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandevdevdev[k] <- predinfo$pred_mean
+  predLBdevdevdev[k] = predmeandevdevdev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdevdevdev[k] = predmeandevdevdev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(predmeandevdevdev[inds])
+print(predLBdevdevdev[inds])
+print(predUBdevdevdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandevdevdev, ylim = c(min(predLBdevdevdev),max(predUBdevdevdev)))
+lines(centercoords[,1],predLBdevdevdev)
+lines(centercoords[,1],predUBdevdevdev)
+```
+
+```{r}
+
+predmeandevdevdevdev =rep(0,dim(centercoords)[1])
+predLBdevdevdevdev =  rep(0,dim(centercoords)[1])
+predUBdevdevdevdev =rep(0,dim(centercoords)[1])
+for(k in 1:dim(centercoords)[1]){
+  predinfo <- predictGPdevdevdevdev(fitted_info,t(as.matrix(centercoords[k,])), inputtrain, ftrain)
+  predmeandevdevdevdev[k] <- predinfo$pred_mean
+  predLBdevdevdevdev[k] = predmeandevdevdevdev[k] - qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+  predUBdevdevdevdev[k] = predmeandevdevdevdev[k]+ qnorm(1-0.05/2)*sqrt(predinfo$pred_var)
+}
+print(predmeandevdevdevdev[inds])
+print(predLBdevdevdevdev[inds])
+print(predUBdevdevdevdev[inds])
+```
+
+
+```{r}
+plot(centercoords[,1],predmeandevdevdevdev, ylim = c(min(predLBdevdevdevdev),max(predUBdevdevdevdev)))
+lines(centercoords[,1],predLBdevdevdevdev)
+lines(centercoords[,1],predUBdevdevdevdev)
+```
+
+```{r}
+kBT = (293*0.001985)
+print((exp(predmean[inds[4]]-min(predmean))/kBT)*sqrt(-2*pi*kBT/predmeandevdev[inds[4]]) + kBT*((1/8)*(predmeandevdevdevdev[inds[4]]/(predmeandevdev[inds[4]])^2) - (5/24)*((predmeandevdevdev[inds[4]])^2/(predmeandevdev[inds[4]])^3)))
+print((exp(predLB[inds[4]]-min(predLB))/kBT)*sqrt(-2*pi*kBT/predLBdevdev[inds[4]])+ kBT*((1/8)*(predLBdevdevdevdev[inds[4]]/(predLBdevdev[inds[4]])^2) - (5/24)*((predLBdevdevdev[inds[4]])^2/(predLBdevdev[inds[4]])^3)))
+
+```

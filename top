@@ -1,0 +1,497 @@
+[33mcommit f71cda7001f0ff0b853a0d12f19793e77a35564d[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Fri Apr 23 10:04:56 2021 -0500
+
+    Niall meeting
+
+[33mcommit 35638587418ed95717731d0c6447e8891f67b049[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Apr 12 14:03:38 2021 -0500
+
+    edits before putting on quest
+
+[33mcommit 0b361be388e5ec4cf5f9cdd88efde9e4703a7340[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Fri Apr 9 15:54:20 2021 -0500
+
+    update MCMC for Sasha
+
+[33mcommit 01892233bbe689b45dff7037eeb5ac8b35794622[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Mar 30 20:13:14 2021 -0500
+
+    corrections to MCMC algorithm and dhaB model
+
+[33mcommit 88e115ee41ccdbfa6a73838da6debabacc0d7765[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Mar 23 20:02:51 2021 -0500
+
+    MCMC inference
+
+[33mcommit a532764366a77a7d12ec85ff17e0c687a2c129af[m
+Merge: 6cb6574 bbdfa2e
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Mar 1 22:17:00 2021 -0600
+
+    Merge branch 'master' of github.com:aarcher07/MCP
+
+[33mcommit 6cb6574a4d8db85c18e1d0693ecda59b4120a9c6[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Mar 1 22:16:42 2021 -0600
+
+    testing
+
+[33mcommit bbdfa2e6a37fbb436a5d31ea5ad1188f0f180141[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Mon Mar 1 22:16:15 2021 -0600
+
+    Delete WholeCell/DhaB_DhaT_Model/object_oriented/plot directory
+
+[33mcommit eadf7680d0da3ec46b079840d948561e56d6e905[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Mar 1 22:06:28 2021 -0600
+
+    lost time no see
+
+[33mcommit 75c5713d1d03c0a32676d022fc09d360d804fa4e[m
+Merge: e44fb75 5e68f1f
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Jan 27 22:35:15 2021 -0600
+
+    Merge branch 'master' of github.com:aarcher07/MCP
+
+[33mcommit e44fb7573e7e8d5741c63de0c6a75551247dfbf5[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Jan 27 22:32:51 2021 -0600
+
+    gitignore
+
+[33mcommit 5e68f1fe8fecb93509868ecbbdbc740e1bfdc411[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Wed Jan 27 22:29:12 2021 -0600
+
+    Delete WholeCell/DhaB_DhaT_Model/object_oriented/data directory
+
+[33mcommit ad3fb78e29fd9e7d93b3cb0e64616d96a652b44e[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Jan 27 22:21:48 2021 -0600
+
+    added sampling methods -- regular random sampling appears to converge within 1e3
+
+[33mcommit 3a8e758813d0ff21eb24449dcb094d09f4ef581e[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Jan 26 22:03:52 2021 -0600
+
+    before using LHS
+
+[33mcommit 9fba1eafe536c483b496e92e6d02d73067b0477b[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Dec 22 14:01:44 2020 -0600
+
+    before test runs
+
+[33mcommit 1d3b5cb7e041b4253bcbdeab4e901e2d4718f626[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Thu Dec 10 16:56:18 2020 -0600
+
+    about to put on quest
+
+[33mcommit e73918c5f0b5209ceb89ae3af74576b36dfb7e96[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Dec 7 14:28:50 2020 -0600
+
+    weekly update
+
+[33mcommit 6d517b8e3f5328c69476dcccaf8c1b4c5fbeed2c[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Sun Nov 29 18:09:25 2020 -0600
+
+    params to params_sens
+
+[33mcommit a5e100a0aff28efb6076a08edd5c42ad8da6c8f1[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Sun Nov 29 00:46:37 2020 -0600
+
+    coded active subspaces in more efficient way. there appears to be some difference in the test case function
+
+[33mcommit cb6274af50bdac5e0d846702c638a664eafc3e0e[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Nov 25 21:24:26 2020 -0600
+
+    fixed local fixed sensitivity analysis
+
+[33mcommit f13e936699076a39670c57646fffe2aca4242b37[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Nov 25 17:02:43 2020 -0600
+
+    before changing to multiprocessing from mpi4py
+
+[33mcommit 4678fbfe36c1ba3a11a3e34ee7f639e070764ca1[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Sat Nov 21 11:01:20 2020 -0600
+
+    creating OOP for dhaT-dhaB model
+
+[33mcommit d4897c2d9062bf89cfafc03c25e20676b1b9bd36[m
+Merge: 230d3ef 0127d2e
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Nov 11 19:48:11 2020 -0600
+
+    Merge branch 'master' of github.com:aarcher07/MCP
+
+[33mcommit 230d3ef31f551e3eca3066991e542589a2acf412[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Nov 11 19:48:02 2020 -0600
+
+    active subspaces of DhaB_DhaT_model. to convert to object-oriented framework
+
+[33mcommit 0127d2ec1cdd568a18171d86dc4bc2ac21703763[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Thu Oct 29 14:05:49 2020 -0500
+
+    Delete .Rhistory
+
+[33mcommit 606e67a04bec0d9694266069f34eb98311624719[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 22:01:10 2020 -0500
+
+    more changes 1
+
+[33mcommit 0956ecf9fd65df2f1592f5ecd65b214cc694c2f5[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 21:59:23 2020 -0500
+
+    more changes
+
+[33mcommit 5e1425781356c97ebea750dd5e62294dc2f5d6ed[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 15:07:43 2020 -0500
+
+    formatting issues
+
+[33mcommit abce0da5be26fc9aab8f40a53937874a49aa7568[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 15:06:03 2020 -0500
+
+    more corrections 1
+
+[33mcommit 9551f4047bee2f38980297db15453c33857438c3[m
+Merge: df6e2f2 4e0cf3a
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 15:02:43 2020 -0500
+
+    Merge branch 'master' of github.com:aarcher07/MCP
+
+[33mcommit df6e2f20a36b73f0ebe82e1afea6c185281e77e1[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 15:02:29 2020 -0500
+
+    more corrections
+
+[33mcommit 4e0cf3a84ee43951c06a10aef0eff90fe7347fb6[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 15:00:19 2020 -0500
+
+    Delete .Rhistory
+
+[33mcommit ae3641beb2d57ddb8741c4efd73102d4f65c0dfa[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 14:59:02 2020 -0500
+
+    .txt to .md and corrections
+
+[33mcommit f38140ac98ed6823032334aca7636ea531b4bf8e[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Oct 28 14:52:06 2020 -0500
+
+    DhaB_DhaT model folder editted
+
+[33mcommit fd5e2d334680c5b4f820dce0156c2d3b62fe89f6[m
+Merge: 514e387 d749935
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:31:05 2020 -0500
+
+    Merge branch 'master' of github.com:aarcher07/MCP
+
+[33mcommit 514e387d87b9536f8dc1d1c9deeb4b7ba55c4efa[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:30:59 2020 -0500
+
+    cleaning up
+
+[33mcommit d749935cf7034fbd7fb60dd9d32e924c1bea067e[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:29:45 2020 -0500
+
+    Delete Whole_Cell_Wild_Type-checkpoint.ipynb
+
+[33mcommit 241651ecd03bd0c19cf25dbc2168e9c0d489a213[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:29:41 2020 -0500
+
+    Delete Whole_Cell_Engineered_System_IcdE-checkpoint.ipynb
+
+[33mcommit b32cefcc4fb2bc816f64983ddbf8d8124621a5f6[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:29:37 2020 -0500
+
+    Delete Untitled-checkpoint.ipynb
+
+[33mcommit b919fdd37495cdeeed3ad01b8d659a5318dc8f05[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:20:24 2020 -0500
+
+    Update README.md
+
+[33mcommit 1ab06b2148f50a8c69e809f026be75bbbeac4135[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:05:38 2020 -0500
+
+    Delete prog1_template-checkpoint.ipynb
+
+[33mcommit ff4b1f14fda6171248c815f4ff0f30631deb0438[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:05:09 2020 -0500
+
+    Delete workspace.xml
+
+[33mcommit 45254dc9ccb2d4258a4a8ef612d02d6879145d48[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:04:54 2020 -0500
+
+    Delete MCP.iml
+
+[33mcommit 90ae863b709bd72a91d3d44352e95de2dfe339b7[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:04:51 2020 -0500
+
+    Delete misc.xml
+
+[33mcommit 0fbf126dbc5e8be20113c6ba31a3be9af5dcf838[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:04:48 2020 -0500
+
+    Delete modules.xml
+
+[33mcommit b5c0d1e2135092fa5608009d2bc370cdcd1d5abe[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 17:04:44 2020 -0500
+
+    Delete vcs.xml
+
+[33mcommit c826501491d2656c43d73104c74d899af3abf333[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 16:30:17 2020 -0500
+
+    Create README.md
+
+[33mcommit 89c3e93b0594e65f8b79af858d0be2bb517ea09e[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Oct 27 16:26:27 2020 -0500
+
+    deprecated model commented
+
+[33mcommit 10f2fb7d1d5e6e7b00b6005826ea3a67ab2c1543[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 19:08:59 2020 -0500
+
+    finished editing for today, 26/10/20
+
+[33mcommit db30a5c0a0b8d2f61aa7ec4b79ab03470b3febc6[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 17:51:03 2020 -0500
+
+    Delete .~lock.rod_constant_NADH_1mM_EncapsulationAndExpressionResultsWellMixedMCP.xls#
+
+[33mcommit 108567681f239f9d1b1dd700b0dbae534aa68e8a[m
+Merge: 70e878e 6dcc6b0
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 17:49:08 2020 -0500
+
+    Merge branch 'master' of github.com:aarcher07/MCP
+
+[33mcommit 70e878e146fef98398129033f1252e8eb1d90cba[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 17:49:04 2020 -0500
+
+    cleaning up
+
+[33mcommit 6dcc6b05781792b5354a1627df8bfda8a48ae6c4[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 17:47:23 2020 -0500
+
+    Update ReadMe.txt
+
+[33mcommit 16382b8c03c7c608ca88474ab003c752f8a1e435[m
+Author: aarcher <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 17:45:15 2020 -0500
+
+    Update ReadMe.txt
+
+[33mcommit 7371e3f42e74f2ac48606ec240fd32439c69fb3d[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 17:42:35 2020 -0500
+
+    Deprecated ReadMe
+
+[33mcommit bec94153928bb3dea31b6fdc74b0f530fb040aab[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 16:02:14 2020 -0500
+
+    reorganized files 2
+
+[33mcommit 2491d1ce408102455c91aac96772d009d46c0713[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 15:53:31 2020 -0500
+
+    reorganized files
+
+[33mcommit 27b0d0d04e0808787688ec2829af2e8e5e39a1c3[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Mon Oct 26 15:18:57 2020 -0500
+
+    First Commit in a long time
+
+[33mcommit 26504e1981f9dcdd6f0e79ad60de2317db786a77[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Fri Aug 7 16:02:04 2020 -0500
+
+    Results with ratios and 1,3-PDO pathway with different models
+
+[33mcommit 160939a76dc1827f82dad2bd07f0e2f0988ff9b2[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Mar 17 22:23:28 2020 -0500
+
+    long awaited commit
+
+[33mcommit 383e7e0c1a9ba427c65baf9f72bcd1bd7b21c77e[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Feb 26 20:17:35 2020 -0600
+
+    updated file to do sensitivity of parameters directly not indirectly through nondimensional parameters
+
+[33mcommit 6f17500c55b7ff7cd5fb79908862966c317d5eec[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Feb 25 22:24:33 2020 -0600
+
+    started active subspaces and completed local sensitivity analysis
+
+[33mcommit 42e64e2ebf96fd3956738bd22dcc8a7a988dbc46[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Feb 19 14:10:05 2020 -0600
+
+    commit before parallelizing
+
+[33mcommit 318ccffd581cf8ddbc14c279b48cb8a66bb3cf44[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Wed Feb 12 15:35:03 2020 -0600
+
+    commit before changing external conc of G and I to be clamped
+
+[33mcommit 534a9805aaed0eb6a92a3cb563a96d7f0bf1c4b2[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Sat Feb 8 13:36:27 2020 -0600
+
+    coded newton's step
+
+[33mcommit 3c6c5e221bb3c2498c16a746b242e769554c499c[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Fri Feb 7 13:55:26 2020 -0600
+
+    debugged -- need to code newton solver or find one in python that can handle multivariate functions
+
+[33mcommit 2ab4e016648dbff904de1f6a46e27f700a0d9e2a[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Thu Feb 6 18:02:25 2020 -0600
+
+    coded stiff solver
+
+[33mcommit d18b73dbf1553055f006f61546fbca0ada534aa1[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Tue Feb 4 00:09:43 2020 -0600
+
+    Got model working.
+    
+    Compute AUC, flux at steady state and concentration at steady state
+
+[33mcommit c1aa10512149882636523c9d290e5cfed5321218[m
+Author: Andre Archer <andregregoryarcher@gmail.com>
+Date:   Fri Jan 31 13:25:06 2020 -0600
+
+    code IcdE model
+
+[33mcommit 2bc1c168316bc698cb13cbd8858dcaaf7247317a[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Tue Nov 26 16:26:07 2019 -0600
+
+    Update ReadMe.txt
+
+[33mcommit 6bb003ad2c5e557350e0f6da824fe7da80c89823[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Tue Nov 26 16:17:03 2019 -0600
+
+    Rename Whole_Cell_Wild_Type.ipynb to WholeCell/Whole_Cell_Wild_Type.ipynb
+
+[33mcommit 55bed9822e1f57844784a4075095e504600be6ae[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Tue Nov 26 16:16:35 2019 -0600
+
+    Delete ScaledTimes.npy
+
+[33mcommit bfc6db11b3e5cdfb1ea7a5ab9d43f4a50c150b62[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Tue Nov 26 16:15:59 2019 -0600
+
+    Create ReadMe.txt
+
+[33mcommit 0b50e48e0508aac2f57d196453319828ace94eb7[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Tue Nov 26 16:10:42 2019 -0600
+
+    Add files via upload
+
+[33mcommit 2539c51469efab8b361e6ef72d7576faa9125f94[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Fri Jun 21 14:42:12 2019 -0500
+
+    Delete LinearThreshold.ipynb
+
+[33mcommit d5daa742869510e0b71f8b3ca1955706d9649142[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Fri Jun 21 14:38:03 2019 -0500
+
+    Add files via upload
+    
+    Exploring Taylor Expansions for MM reactions
+
+[33mcommit d63636113191364404b7b6e7fd828ed7efaac9fc[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Wed Jun 19 17:16:12 2019 -0500
+
+    Update LinearThreshold.ipynb
+
+[33mcommit 1c6df4274b9aaedab5e95f7acc0a1e39681965f8[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Wed Jun 19 17:12:31 2019 -0500
+
+    Update requirements.txt
+
+[33mcommit 6d46f38d3f231fdc811bad66055ace6793fafb5d[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Wed Jun 19 17:09:05 2019 -0500
+
+    Create requirements.txt
+    
+    This is the requirements for use of the linear threshold file for use with Binder
+
+[33mcommit c895ca5be6fa5f56e9a71446186f1c488d0e5020[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Wed Jun 19 15:43:45 2019 -0500
+
+    Add files via upload
+
+[33mcommit 6eb9e88b1b57a9db875c4298a991082e6e3fa689[m
+Author: Sasha Shirman <45049268+sshirman@users.noreply.github.com>
+Date:   Mon Jan 14 09:28:11 2019 -0600
+
+    Add files via upload

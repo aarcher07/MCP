@@ -33,31 +33,28 @@ def generate_folder_name(param_sens_bounds):
     folder = folder.replace(',_','_')
     return folder
 
-def eig_plots(eigenvalues,eigenvectors,param_sens_bounds,
-              sampling,func_name,enz_ratio_name,niters,date_string,
+def eig_plots(eigenvalues,eigenvectors,params_names,folder,
+              sampling,func_name,enz_ratio_name,niters,
               threshold = 0.1, save=True):
     """
     Plots eigenvalues and eigenvectors
     :eigenvalues      : eigenvalues to be plot in ascending order
     :eigenvectors     : associated eigenvectors, ordered by eigenvalues, to be ploted
-    :param_sens_bounds: dictionary of parameter ranges
+    :params_names: list of parameter names
     :sampling         : sampling used
     :func_name        : QoI name
     :enz_ratio_name   : enzyme ratio used
     :niters           : number of iterations used in the Monte Carlo
-    :date_string      : the date string attached
     :threshold        : threshold to ignore entries of eigenvector
     """
 
     #create folder name
-    params_names = param_sens_bounds.keys()
-    folder = generate_folder_name(param_sens_bounds)
     folder_name = os.path.abspath(os.getcwd())+ '/plot/'+ enz_ratio_name+ '/'+ folder
     if not os.path.exists(folder_name):
         os.makedirs(folder_name)
 
     # file name
-    file_name = "sampling_"+ sampling + "_" + FUNCS_TO_FILENAMES[func_name] + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.png'
+    file_name = "sampling_"+ sampling + "_" + FUNCS_TO_FILENAMES[func_name] + '_N_' + str(niters) + '.png'
 
     # eigenvalue plot
     grad_name = r'$E[\nabla_{\vec{\widetilde{p}}}$'+ FUNCS_TO_NAMES[func_name] +r'$(\nabla_{\vec{\widetilde{p}}}$' + FUNCS_TO_NAMES[func_name] +r'$^{\top}]$'
@@ -91,34 +88,31 @@ def eig_plots(eigenvalues,eigenvectors,param_sens_bounds,
     else:
         plt.show()
 
-def generate_eig_plots_QoI(cost_matrices,param_sens_bounds,sampling,
-                           enz_ratio_name,niters,date_string,threshold,
-                           save=True):
+def generate_eig_plots_QoI(cost_matrices,param_names,folder,sampling,
+                           enz_ratio_name,niters,threshold, save=True):
     """
     plots the eigenspace of the cost matrices of each QoI
 
     :cost_matrices    : list of numpy matrices for each QoI
     :eigenvectors     : associated eigenvectors, ordered by eigenvalues, to be ploted
-    :param_sens_bounds: dictionary of parameter ranges
+    :param_names: list of parameter names
     :sampling         : sampling used
     :func_name        : QoI name
     :enz_ratio_name   : enzyme ratio used
     :niters           : number of iterations used in the Monte Carlo
-    :date_string      : the date string attached
     :threshold        : threshold to ignore entries of eigenvector
     """
-    for i,func_name in enumerate(QOI_NAMES):
-       eigs, eigvals = np.linalg.eigh(cost_matrices[i])
+    for func_name in QOI_NAMES:
+       eigs, eigvals = np.linalg.eigh(cost_matrices[func_name])
        eigs = np.flip(eigs)
        eigsvals = np.flip(eigvals, axis=1)
-       eig_plots(eigs, eigvals,param_sens_bounds,sampling,
-                 func_name,enz_ratio_name,niters,date_string,
-                 threshold, save)
+       eig_plots(eigs, eigvals,param_names,folder,sampling,
+                 func_name,enz_ratio_name,niters,threshold, save)
 
 
 def generate_txt_output(cost_matrices, nfunction_evals, variance, difficult_params,
-                        folder_name, param_sens_bounds, size, sampling,enz_ratio_name,
-                        niters,date_string,start_time,end_time):
+                        folder_name, transform, param_sens_bounds, size, sampling,
+                        enz_ratio_name, niters,start_time,end_time):
     """
     creates and saves a text file of output
 
@@ -132,16 +126,18 @@ def generate_txt_output(cost_matrices, nfunction_evals, variance, difficult_para
     :sampling         : sampling used
     :enz_ratio_name   : enzyme ratio used
     :niters           : number of iterations used in the Monte Carlo
-    :date_string      : the date string attached
     :start_time       : start time of code to complete Monte Carlo integration
     :end_time         : end time of the code to complete Monte Carlo integration
     """
 
-    file_name_txt = folder_name + '/sampling_' + sampling + '_N_' + str(niters) + '_enzratio_' + enz_ratio_name+ '_'+ date_string + '.txt'
+    file_name_txt = folder_name + '/sampling_' + sampling + '_N_' + str(niters) + '.txt'
     original_stdout = sys.stdout
     with open(file_name_txt, 'w') as f:
         sys.stdout = f
-        print('solve time: ' + str(end_time-start_time))
+        print('transform : ' + transform )
+        print(param_sens_bounds)
+
+        print('\n solve time: ' + str(end_time-start_time))
         print('\n number of processors: ' + str(size))
 
         print('\n number of functions evaluations')
@@ -151,7 +147,7 @@ def generate_txt_output(cost_matrices, nfunction_evals, variance, difficult_para
         print(variance)
 
         print('\n max variance')
-        print([np.abs(np_arr).max() for np_arr in variance[-2]])
+        print([np.abs(np_arr).max() for np_arr in variance.values()])
 
         print('\n cost matrix')
         print(cost_matrices)
