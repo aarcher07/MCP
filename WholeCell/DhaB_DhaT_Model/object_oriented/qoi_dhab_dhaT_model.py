@@ -25,9 +25,9 @@ import seaborn as sns
 class QoI(DhaBDhaTModelJacAS):
     def __init__(self, cost_matrices, start_time,final_time,
                 integration_tol, nintegration_samples, tolsolve, params_values_fixed,
-                param_sens_bounds, external_volume = 9e-6, rc = 0.375e-6, lc = 2.47e-6,
+                param_sens_list, external_volume = 9e-6, rc = 0.375e-6, lc = 2.47e-6,
                 rm = 7.e-8, ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
-                tranform = "identity"):
+                transform = "identity"):
         """
         :params cost_matrices: cost matrices associated with Active Subspaces
         :params start_time: initial time of the system -- cannot be 0
@@ -37,20 +37,20 @@ class QoI(DhaBDhaTModelJacAS):
         :params nsamples: number of samples of time samples
         :params params_values_fixed: dictionary parameters whose senstivities are not being studied and 
                                      their values
-        :params param_sens_bounds: bounds of parameters whose sensitivities are being studied
+        :params param_sens_list: bounds of parameters whose sensitivities are being studied
         :params external_volume: external volume of the system
         :params rc: radius of system
         :params lc: length of the cylindrical component of cellular_geometry = 'rod'
         :params rm: radius of MCP
         :params ncells_per_metrecubed: number of cells per m^3
         :params cellular_geometry: geometry of the cell, rod (cylinder with hemispherical ends)/sphere
-        :params tranform: transformation of the parameters, log2, log10, identity or mixed.   
+        :params transform: transformation of the parameters, log2, log10, identity or mixed.   
         """
 
         self.cost_matrices = cost_matrices
-        super().__init__(start_time,final_time, integration_tol, nintegration_samples, tolsolve, params_values_fixed,
-                param_sens_bounds, external_volume, rc, lc, rm, ncells_per_metrecubed, cellular_geometry, 
-                ds)
+        super().__init__(start_time,final_time, integration_tol, nintegration_samples, 
+                        tolsolve, params_values_fixed, param_sens_list, external_volume,
+                        rc, lc, rm, ncells_per_metrecubed, cellular_geometry, transform)
         self._generate_eigenspace()
 
 
@@ -61,8 +61,8 @@ class QoI(DhaBDhaTModelJacAS):
 
         eigenvalues_QoI = {}
         eigenvectors_QoI = {}
-        for i,func_name in enumerate(QOI_NAMES):
-            eigs, eigvals = np.linalg.eigh(self.cost_matrices[i])
+        for func_name in QOI_NAMES:
+            eigs, eigvals = np.linalg.eigh(self.cost_matrices[func_name])
             eigenvalues_QoI[func_name] = np.flip(eigs)
             eigenvectors_QoI[func_name] = np.flip(eigvals, axis=1)
         self.eigenvalues_QoI = eigenvalues_QoI
@@ -76,20 +76,17 @@ class QoI(DhaBDhaTModelJacAS):
 
         :params_unif_dict: dictionary of transformed parameters, log2, log10, identity or mixed. 
         """
-
         sdev = lambda t,x: self._sderiv(t,x,params_unif_dict)
-        sdev_jac  = lambda t,x: self.sderiv_jac_state_vars_sp_fun(t,x,params_unif_dict)
-        y0 = np.array(self.y0(**params_unif_dict))
-
-        # event function
-        event_stop = lambda t,y: self._event_stop(t,y,params_unif_dict)
+        sdev_jac  = lambda t,x: self.sderiv_jac_conc_fun(t,x,params_unif_dict.values())
+        x0 = np.array(self.x0(**params_unif_dict))
+        event_stop = lambda t,x: self._event_stop(t,x,params_unif_dict)
         event_stop.terminal = True
 
         # initialize
         sol_values = {QOI_NAMES[0]: None,QOI_NAMES[1]: None, QOI_NAMES[2]: None}
         # solve ODE
         try:
-            sol = solve_ivp(sdev,[0, self.final_time+1], y0, method="BDF",jac=sdev_jac, 
+            sol = solve_ivp(sdev,[0, self.final_time+1], x0, method="BDF",jac=sdev_jac, 
                             t_eval=self.time_orig, atol=self.integration_tol,
                              rtol=self.integration_tol, events=event_stop)
         except ValueError:
@@ -107,12 +104,19 @@ class QoI(DhaBDhaTModelJacAS):
         if 'nmcps' in self.params_values_fixed.keys():
             nmcps = self.params_values_fixed['nmcps']
         else:
-            bound_mcp_a,bound_mcp_b = self.param_sens_bounds['nmcps']
-            nmcps = (params_unif_dict['nmcps'] +1)*(bound_mcp_b - bound_mcp_a)/2. * + bound_mcp_a
+            if self.transform == "log10":
+                bound_mcp_a,bound_mcp_b = PARAM_SENS_LOG10_BOUNDS['nmcps']
+                nmcps = 10**((params_unif_dict['nmcps'] +1)*(bound_mcp_b - bound_mcp_a)/2. + bound_mcp_a)
+            elif self.transform == "log2":
+                bound_mcp_a,bound_mcp_b = PARAM_SENS_LOG2_BOUNDS['nmcps']
+                nmcps = 2**((params_unif_dict['nmcps'] +1)*(bound_mcp_b - bound_mcp_a)/2. + bound_mcp_a)
+            else:
+                bound_mcp_a,bound_mcp_b = PARAM_SENS_BOUNDS['nmcps']
+                nmcps = (params_unif_dict['nmcps'] +1)*(bound_mcp_b - bound_mcp_a)/2. + bound_mcp_a
         # original mass
-        ext_masses_org = y0[(self.nvars-3):self.nvars]* self.external_volume
-        cell_masses_org = y0[5:8] * self.cell_volume 
-        mcp_masses_org = y0[:5] * self.mcp_volume
+        ext_masses_org = x0[(self.nvars-3):self.nvars]* self.external_volume
+        cell_masses_org = x0[5:8] * self.cell_volume 
+        mcp_masses_org = x0[:5] * self.mcp_volume
         mass_org = ext_masses_org.sum() +  self.ncells*cell_masses_org.sum() +  self.ncells*nmcps*mcp_masses_org.sum()
 
         # final mass
@@ -149,10 +153,10 @@ class QoI(DhaBDhaTModelJacAS):
 
 def main(argv, arc):
     # get inputs
-    enz_ratio_name = argv[1]
+    enz_ratio_name = "1:3"
 
     # initialize variables
-    ds = ''
+    transform = 'log10'
     start_time = (10**(-15))
     final_time = 72*HRS_TO_SECS
     integration_tol = 1e-4
@@ -167,55 +171,45 @@ def main(argv, arc):
                             'P_MCP_INIT': 0,
                             'G_CYTO_INIT': 0, 
                             'H_CYTO_INIT': 0,
-                            'P_CYTO,INIT': 0 ,
+                            'P_CYTO_INIT': 0 ,
                             'G_EXT_INIT': 200,
                             'H_EXT_INIT': 0,
                             'P_EXT_INIT': 0}
 
+    params_sens_dict = {'kcatfDhaB': np.log10(660), # /seconds Input
+                        'KmDhaBG': np.log10(0.7), # mM Input
+                        'kcatfDhaT': np.log10(80), # /seconds
+                        'KmDhaTH': np.log10(0.5), # mM
+                        'KmDhaTN': np.log10(0.3), # mM
+                        'NADH_MCP_INIT': np.log10(0.4),
+                        'PermMCPPolar': np.log10(10**-3),
+                        'PermMCPNonPolar': np.log10((10**-1)/2.),
+                        'PermCellGlycerol': np.log10(1.e-5), 
+                        'PermCellPDO': np.log10(1.e-4), 
+                        'PermCell3HPA': np.log10((1e-2)/2.), 
+                        'dPacking': np.log10(0.5),
+                        'nmcps': np.log10(15)}
 
-    param_sens_bounds = {'kcatfDhaB': [400, 860], # /seconds Input
-                        'KmDhaBG': [0.6,1.1], # mM Input
-                        'kcatfDhaT': [40.,100.], # /seconds
-                        'KmDhaTH': [0.1,1.], # mM
-                        'KmDhaTN': [0.0116,0.48], # mM
-                        'NADH_MCP_INIT': [0.12,0.60],
-                        'PermMCPPolar': np.log10([10**-4, 10**-2]),
-                        'NonPolarBias': np.log10([10**-2, 10**-1]),
-                        'PermCell': np.log10([10**-9,10**-4]),
-                        'dPacking': [0.3,0.64],
-                        'nmcps': [3.,30.]}
-
-    params_sens_dict  = {'kcatfDhaB': 400, # /seconds Input
-                        'KmDhaBG': 0.6, # mM Input
-                        'kcatfDhaT': 59.4, # /seconds
-                        'KmDhaTH': 0.77, # mM
-                        'KmDhaTN': 0.03, # mM
-                        'NADH_MCP_INIT': 0.36,
-                        'PermMCPPolar': np.log10(10**-3), 
-                        'NonPolarBias': np.log10(10**-2), 
-                        'PermCell': np.log10(10.**-7),
-                        'dPacking': 0.64,
-                        'nmcps': 15}
 
     params_unif = {}
     for param_name, param_val in params_sens_dict.items():
-        bound_a,bound_b = param_sens_bounds[param_name]
+        bound_a,bound_b = PARAM_SENS_LOG10_BOUNDS[param_name]
         params_unif[param_name] = 2*(param_val - bound_a)/(bound_b - bound_a) - 1
-
+    print(params_unif)
     directory = '/home/aarcher/Dropbox/PycharmProjects/MCP/WholeCell/DhaB_DhaT_Model/object_oriented/data/1:3'
-    filename = 'kcatfDhaB_400_860_KmDhaBG_0,6_1,1_kcatfDhaT_40,0_100,0_KmDhaTH_0,1_1,0_KmDhaTN_0,0116_0,48_NADH_MCP_INIT_0,12_0,6_PermMCPPolar_-4_-2_NonPolarBias_-2_-1_PermCell_-9_-4_dPacking_0,3_0,64_nmcps_3,0_30,0'
-    name_pkl = 'sampling_rsampling_N_10000_enzratio_1:3_2021_02_09_18:41'
+    filename = 'log10/2021_05_04_19:41'
+    name_pkl = 'sampling_rsampling_N_10000'
     with open(directory + '/'+ filename+'/' +name_pkl + '.pkl', 'rb') as f:
         pk_as = pickle.load(f)
-
-    cost_matrices = pk_as['function results'][-1]
+                                
+    cost_matrices = pk_as["FUNCTION_RESULTS"]["FINAL_COST_MATRIX"]
     qoi_ob = QoI(cost_matrices, start_time,final_time, integration_tol, nintegration_samples,
-                 tolsolve, params_values_fixed, param_sens_bounds, ds=ds)
+                 tolsolve, params_values_fixed, list(params_sens_dict.keys()), transform=transform)
     print(qoi_ob.generate_QoI_vals(params_unif))
 
-    for i,func_name in enumerate(QOI_NAMES):
-       eig_plots(qoi_ob.eigenvalues_QoI[func_name], qoi_ob.eigenvectors_QoI[func_name],param_sens_bounds,'rsampling',
-                 func_name,enz_ratio_name,10000,"2021-02-09-18:41", threshold = 0, save=False)
+    for func_name in QOI_NAMES:
+       eig_plots(qoi_ob.eigenvalues_QoI[func_name], qoi_ob.eigenvectors_QoI[func_name],params_sens_dict.keys(),
+                filename,'rsampling',func_name,enz_ratio_name,10000, threshold = 0, save=False)
 
 if __name__ == '__main__':
     main(sys.argv, len(sys.argv))

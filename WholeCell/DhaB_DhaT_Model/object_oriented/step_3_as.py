@@ -21,40 +21,18 @@ from misc import generate_folder_name
 from active_subspaces import FUNCS_TO_FILENAMES,FUNCS_TO_NAMES
 import seaborn as sns
 
-class ReducedQoI(QoI):
-    def __init__(self, directory, pickle_name, eig_ind, start_time,final_time,
-                integration_tol, nintegration_samples, tolsolve, params_values_fixed,
-                param_sens_bounds, filename = None, external_volume = 9e-6, 
-                rc = 0.375e-6, lc = 2.47e-6, rm = 7.e-8, 
-                ncells_per_metrecubed =8e14, cellular_geometry = "rod", 
-                ds = ""):
 
-
-            self.directory = directory
-
-            if filename:
-                self.folder_name = generate_folder_name(param_sens_bounds)
-            else:
-                self.folder_name = folder_name
-
-            with open(directory + '/'+ filename+'/' +pickle_name + '.pkl', 'rb') as f:
-                pk_as = pickle.load(f)
-            cost_matrices = pk_as['function results'][-1]
-
-
-            super().__init__(cost_matrices, start_time,final_time,
-                integration_tol, nintegration_samples, tolsolve, params_values_fixed,
-                param_sens_bounds, external_volume, rc, lc, rm, ncells_per_metrecubed,
-                cellular_geometry, ds)
 
 directory = '/home/aarcher/Dropbox/PycharmProjects/MCP/WholeCell/DhaB_DhaT_Model/object_oriented/data/1:3'
-filename = 'kcatfDhaB_400_860_KmDhaBG_0,6_1,1_kcatfDhaT_40,0_100,0_KmDhaTH_0,1_1,0_KmDhaTN_0,0116_0,48_NADH_MCP_INIT_0,12_0,6_PermMCPPolar_-4_-2_NonPolarBias_-2_-1_PermCell_-9_-4_dPacking_0,3_0,64_nmcps_3,0_30,0'
+filename = 'log10/2021_05_04_19:41'
 #name_pkl = 'sampling_rsampling_N_100000_enzratio_1:18_2021_01_29_20:01'
-name_pkl = 'sampling_rsampling_N_10000_enzratio_1:3_2021_02_09_18:41'
+name_pkl = 'sampling_rsampling_N_10000'
 
+with open(directory + '/'+ filename+'/' +name_pkl + '.pkl', 'rb') as f:
+    pk_as = pickle.load(f)
+cost_matrices = pk_as["FUNCTION_RESULTS"]["FINAL_COST_MATRIX"]
 
-
-cost_fun_3HPA = pk_as['function results'][-1][0]
+cost_fun_3HPA = pk_as["FUNCTION_RESULTS"]["FINAL_COST_MATRIX"][QOI_NAMES[0]]
 
 
 eigvals, eigvecs = np.linalg.eigh(cost_fun_3HPA)
@@ -65,13 +43,12 @@ eigvecs = np.flip(eigvecs, axis=1)
 print(eigvals)
 print(100*np.cumsum(eigvals)/eigvals.sum())
 
-eig_ind =3
+eig_ind =np.argmax(np.cumsum(eigvals)/eigvals.sum() > 0.9)+1
 W1 = eigvecs[:,:eig_ind]
 W2 = eigvecs[:,eig_ind:]
 
-x = np.array([0.5,0.7,0.2,-0.5,-0.75,
-              0.1,-0.3,0.25,0.45,-0.6,
-              0.2])
+x = np.array([0.3084162660909806,-0.49136586580345176,0.5129415947320597,0.3979400086720375,0.7474986422705001,
+             0.4961407271748155,0.,0.3979400086720375,0.,0.,0.3979400086720375,0.34838396084692813,0.39794000867203794])
 y = np.dot(W1.T,x.T)
 z = np.dot(W2.T,x.T)
 
@@ -107,9 +84,11 @@ for i in range(z_dim):
     bounds_var = [(None,None) for _ in range(z_dim+1)]
 
     res_max = opt.linprog( max_c, A_ub=A_ineq, b_ub=b_ineq, A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
+    print(res_max.fun)
+
     if max_edge < -res_max.fun:
         max_edge = -res_max.fun
-
+print('\t')
 # cost function
 min_c = np.zeros(z_dim+1)
 min_c[0] = 1
@@ -131,6 +110,7 @@ for i in range(z_dim):
     bounds_var = [(None,None) for _ in range(z_dim+1)]
 
     res_min = opt.linprog( min_c, A_ub=A_ineq, b_ub=b_ineq, A_eq=A1_eq, b_eq=b1_eq, bounds=bounds_var)
+    print(res_min.fun)
     if  res_min.fun < min_edge:
         min_edge = res_min.fun
 
@@ -143,10 +123,10 @@ z_ineqs_b = np.concatenate((ub_constraint2,lb_constraint2))
 i=0
 
 # create model 
-ds = ''
+transform = 'log10'
 start_time = (10**(-15))
 final_time = 72*HRS_TO_SECS
-integration_tol = 1e-4
+integration_tol = 1e-3
 tolsolve = 1e-5
 nsamples = 500
 enz_ratio_name = "1:3"
@@ -159,58 +139,41 @@ params_values_fixed = {'NAD_MCP_INIT': 0.1,
                       'P_MCP_INIT': 0,
                       'G_CYTO_INIT': 0,
                       'H_CYTO_INIT': 0,
-                      'P_CYTO,INIT': 0 ,
+                      'P_CYTO_INIT': 0 ,
                       'G_EXT_INIT': 200,
                       'H_EXT_INIT': 0,
                       'P_EXT_INIT': 0}
 
-
-param_sens_bounds = {'kcatfDhaB': [400, 860], # /seconds Input
-                    'KmDhaBG': [0.6,1.1], # mM Input
-                    'kcatfDhaT': [40.,100.], # /seconds
-                    'KmDhaTH': [0.1,1.], # mM
-                    'KmDhaTN': [0.0116,0.48], # mM
-                    'NADH_MCP_INIT': [0.12,0.60],
-                    'PermMCPPolar': np.log10([10**-4, 10**-2]),
-                    'NonPolarBias': np.log10([10**-2, 10**-1]),
-                    'PermCell': np.log10([10**-9,10**-4]),
-                    'dPacking': [0.3,0.64],
-                    'nmcps': [3.,30.]}
-
-
-
 dhaB_dhaT_model_jacobian = DhaBDhaTModelJacAS(start_time, final_time, integration_tol, nsamples, tolsolve,
-                                              params_values_fixed,param_sens_bounds, ds = ds)
-
+                                              params_values_fixed,list(PARAM_SENS_LOG10_BOUNDS.keys()), transform = transform)
 
 j = 0
 def max_3hpa(z):
 
     # get uniform parameters
     params_unif = np.dot(W1,y) + np.dot(W2,z)
-    params_unif_dict = {key:val for key,val in zip(param_sens_bounds.keys(), params_unif)}
+    params_unif_dict = {key:val for key,val in zip(PARAM_SENS_LOG10_BOUNDS.keys(), params_unif)}
 
     # set differential equation and jacobian
     sdev = lambda t,x: dhaB_dhaT_model_jacobian._sderiv(t,x,params_unif_dict)
-    sdev_jac  = lambda t,x: dhaB_dhaT_model_jacobian.sderiv_jac_state_vars_sp_fun(t,x,params_unif_dict)
-    y0 = np.array(dhaB_dhaT_model_jacobian.y0(**params_unif_dict))
-
+    sdev_jac  = lambda t,x: dhaB_dhaT_model_jacobian.sderiv_jac_conc_fun(t,x,params_unif_dict.values())
+    x0 = np.array(dhaB_dhaT_model_jacobian.x0(**params_unif_dict))
     # event function
 
     tolsolve = dhaB_dhaT_model_jacobian.tolsolve
     def event_stop(t,y):
-        dSsample = np.array(sdev(t,y[:dhaB_dhaT_model_jacobian.nvars]))
+        dSsample = np.array(sdev(t,y))
         dSsample_dot = np.abs(dSsample).sum()
         return dSsample_dot - tolsolve 
     event_stop.terminal = True
 
     # solve ODE
     try:
-        sol = solve_ivp(sdev,[0, final_time+1], y0, method="BDF",jac=sdev_jac, 
-            t_eval=dhaB_dhaT_model_jacobian.time_orig, atol=dhaB_dhaT_model_jacobian.integration_tol,
-            rtol=dhaB_dhaT_model_jacobian.integration_tol, events=event_stop)
-    except:
-        return 
+        sol = solve_ivp(sdev,[0, final_time+1],x0, method="BDF",jac=sdev_jac, 
+                t_eval=dhaB_dhaT_model_jacobian.time_orig, atol=dhaB_dhaT_model_jacobian.integration_tol,
+                rtol=dhaB_dhaT_model_jacobian.integration_tol, events=event_stop)
+    except ValueError:
+        return
 
     status, time, sol_sample = [sol.status,sol.t,sol.y.T]
 
@@ -220,15 +183,14 @@ def max_3hpa(z):
     # check if derivative is 0 of 3-HPA otherwise integration stopped prematurely
     statevars_maxabs = sol_sample[index_3HPA_max,:]
     dev_3HPA = sdev(time[index_3HPA_max],statevars_maxabs)[dhaB_dhaT_model_jacobian.index_3HPA_cytosol]
-
     if abs(dev_3HPA) < 1e-2 and status == 0:
         volcell = dhaB_dhaT_model_jacobian.cell_volume
         volmcp = 4 * np.pi * (dhaB_dhaT_model_jacobian.rm ** 3) / 3
         external_volume = dhaB_dhaT_model_jacobian.external_volume 
 
-        ext_masses_org = y0[-3:]* external_volume
-        cell_masses_org = y0[5:8] * volcell 
-        mcp_masses_org = y0[:5] * volmcp
+        ext_masses_org = x0[-3:]* external_volume
+        cell_masses_org = x0[5:8] * volcell 
+        mcp_masses_org = x0[:5] * volmcp
 
         ext_masses_fin = np.abs(sol_sample[-1, -3:]) * external_volume
         cell_masses_fin = np.abs(sol_sample[-1,5:8]) * volcell
@@ -271,7 +233,6 @@ for _ in range(10):
 
     while(len(z_samples) != M):
         z_pot_sample = (max_edge-min_edge)*np.random.uniform(size= z_dim) + min_edge
-
         if (np.dot(z_ineqs_mat,z_pot_sample) - z_ineqs_b <= 0 ).all():
             max_3hpa_pot_sample = max_3hpa(z_pot_sample)
             if not max_3hpa_pot_sample is None:
@@ -279,6 +240,7 @@ for _ in range(10):
                 max_3hpa_samples.append(max_3hpa_pot_sample)
             else:
                 j += 1
+            print(len(max_3hpa_samples))
         i+=1
 
     cumsums.append(np.divide(np.cumsum(max_3hpa_samples),list(range(1,M+1))))

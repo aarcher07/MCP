@@ -34,9 +34,9 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 
-
 class ActiveSubspaces:
-    def __init__(self,jac, nfuncs,funcnames, nparams, niters=10**3, sampling = 'rsampling'):
+    def __init__(self,jac, nfuncs,funcnames, 
+                 nparams, niters=10**3, sampling = 'rsampling'):
         """
         Initializes a class that computes and ranks the average sensitivity matrix  
         of each function used to compute jac, the sensitivity matrix of the functions. 
@@ -65,9 +65,29 @@ class ActiveSubspaces:
         """
 
         if rank == 0:
-            niters_rank = self.niters//size + self.niters % size
-        else:
+            #do random sampling of a parameters
+            if self.sampling == "LHS":
+                lhs = Lhs(lhs_type="classic", criterion=None)
+                param_samples = lhs.generate(self.sample_space, self.niters)
+            elif self.sampling == "rsampling":
+                param_samples = self.sample_space.rvs(self.niters)
+            elif self.sampling == "Sobol":
+                sobol = Sobol()
+                param_samples = sobol.generate(self.sample_space.dimensions, self.niters)
+        
+            # generate param samples split
+            niters_rank0 = self.niters//size + self.niters % size
             niters_rank = self.niters//size
+            count_scatter = [niters_rank0]
+            count_scatter.extend((size-2)*[niters_rank])
+            count_scatter = np.cumsum(count_scatter)
+
+            param_samples_split = np.split(param_samples,count_scatter)
+        else:
+            param_samples_split = None
+            
+        #scatter parameter samples data
+        param_samps = comm.scatter(param_samples_split,root=0)
 
         # initialize data
         param_samples_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
@@ -75,18 +95,10 @@ class ActiveSubspaces:
         jac_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
         qoi_dict_rank = {qoi_name:[] for qoi_name in self.funcnames}
 
-        #do random sampling of a parameters
-        if self.sampling == "LHS":
-            lhs = Lhs(lhs_type="classic", criterion=None)
-            param_samples_unorganized = lhs.generate(self.sample_space, niters_rank)
-        elif self.sampling == "rsampling":
-            param_samples_unorganized = self.sample_space.rvs(niters_rank)
-        elif self.sampling == "Sobol":
-            sobol = Sobol()
-            param_samples_unorganized = sobol.generate(self.sample_space.dimensions, niters_rank)
+        
 
         # evaluate QoI at random sampling
-        for sample in param_samples_unorganized:  
+        for sample in param_samps:  
             qoi_sample, jac_sample = self.jac(sample).values()
             # store output
             for qoi_name in self.funcnames:

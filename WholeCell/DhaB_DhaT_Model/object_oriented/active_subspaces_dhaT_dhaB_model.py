@@ -23,6 +23,7 @@ import sys
 from dhaB_dhaT_model_jac import *
 from constants import *
 from misc import * 
+
 class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
     def __init__(self,start_time,final_time,
                 integration_tol, nsamples, tolsolve, params_values_fixed,
@@ -63,7 +64,6 @@ class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
         """
         # transform uniform parameters to associated log10,log2 or identity transform parameters
         params = unif_param_to_transform_params(params_sens,self.transform)
-
         return super()._sderiv(t,x,params)
 
 
