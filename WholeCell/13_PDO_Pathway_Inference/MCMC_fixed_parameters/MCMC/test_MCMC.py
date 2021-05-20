@@ -81,17 +81,17 @@ def test():
 
     # args for MCMC
     nsamples = 10**3
-    tmax = maxpostdensity(rprior,logpost,disp=False)
+    tmax = maxpostdensity(rprior,logpost,disp=True)
     initial_param = lambda: tmax
 
     #fixed MCMC
-    tdraws = postdraws(rprior,logpost, lbda=0.1, nsamp = nsamples, initial_param = initial_param)
+    tdraws = postdraws(logpost,rprior, initial_param,lbda=0.1, nsamp = nsamples)
     for i in range(tdraws.shape[1]):
         plt.plot(range(int(nsamples)),tdraws[:,i])
         plt.show()
 
     #adaptive MCMC
-    tdraws = adaptive_postdraws(rprior,logpost, lbda = 0.1, nsamp = nsamples, initial_param = tmax)
+    tdraws = adaptive_postdraws(logpost,initial_param, beta=0.05, lbda = 0.1, nsamp = nsamples)
     for i in range(tdraws.shape[1]):
         plt.plot(range(int(nsamples)),tdraws[:,i])
         plt.show()
