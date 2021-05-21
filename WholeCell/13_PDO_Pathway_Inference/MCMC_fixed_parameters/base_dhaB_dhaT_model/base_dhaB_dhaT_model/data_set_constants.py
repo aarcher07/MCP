@@ -9,15 +9,16 @@ Editing History:
 import numpy as np
 import pandas as pd
 import sys
-sys.path.insert(0, '.')
-from model_constants import QoI_PARAMETER_LIST
+from .model_constants import QoI_PARAMETER_LIST
+from os.path import dirname, abspath
+ROOT_PATH = dirname(dirname(dirname(abspath(__file__))))
 
 INIT_CONDS_GLY_PDO_DCW = {50:  [48.4239274209863, 0.861642364731331,0.060301507537688],
                          60: [57.3451166180758, 1.22448979591837, 0.100696991929568],
                          70: [72.2779071192256, 1.49001347874035, 0.057971014492754],
                          80: [80.9160305343512, 1.52671755725191, 0.07949305141638]} # QoI at time 0 for each experiment
 
-time_series_df = pd.read_csv("base_dhaB_dhaT_model/data/data_time_series.csv")
+time_series_df = pd.read_csv(ROOT_PATH + "/data/data_time_series.csv")
 TIME_EVALS = time_series_df["Time"].to_numpy()
 TIME_EVALS = np.sort(np.unique(TIME_EVALS)) # unique time evaluations
 DATA_COLUMNS = [3,5,6] # indices of QoI in the differential equation

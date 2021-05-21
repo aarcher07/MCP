@@ -12,20 +12,11 @@ Editing History:
 - 28/10/20
 '''
 
-
-import numpy as np
 from scipy.integrate import solve_ivp
-from scipy.optimize import fsolve
-import scipy.constants as constants
-import sympy as sp
-import scipy.sparse as sparse
-import pdb
-import time
 import matplotlib.pyplot as plt
 from misc_functions import *
-import sys
-from base_dhaB_dhaT_model.dhaB_dhaT_model import DhaBDhaTModel
-from base_dhaB_dhaT_model.model_constants import *
+from base_dhaB_dhaT_model import DhaBDhaTModel
+
 
 class DhaBDhaTModelMCMC(DhaBDhaTModel):
     def __init__(self, rc = 0.375e-6, lc = 2.47e-6,

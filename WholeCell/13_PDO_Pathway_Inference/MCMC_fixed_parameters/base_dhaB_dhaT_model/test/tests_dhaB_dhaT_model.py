@@ -2,10 +2,9 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import sys
-sys.path.insert(0, '.')
-from dhaB_dhaT_model import DhaBDhaTModel
-from data_set_constants import *
-from model_constants import *
+sys.path.insert(0, '..')
+from base_dhaB_dhaT_model import *
+
 def test_devs():
     external_volume = 0.002
 

@@ -1,11 +1,9 @@
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-import sys
-sys.path.insert(0, '.')
+from dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
 from base_dhaB_dhaT_model.model_constants import *
 from base_dhaB_dhaT_model.data_set_constants import *
 from base_dhaB_dhaT_model.misc_functions import *
-from dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
 from prior_constants import *
 
 def testdev():
@@ -126,7 +124,8 @@ def testdev():
 def testQoI():
     external_volume = 0.002
 
-    params_trans = {'cellperGlyMass': 10**(5.73158464),
+    params_trans = {'scalar' : 0.5,
+                'cellperGlyMass': 10**(5.73158464),
                 'PermCellGlycerol': 10**(-3.55285234),
                 'PermCellPDO': 10**(-3.85344833),
                 'PermCell3HPA': 10**(-2.34212333),
