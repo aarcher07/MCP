@@ -114,6 +114,7 @@ def adaptive_postdraws(logpost, initial_param, nsamp=2000, beta=0.05, lbda = 0.1
 		i+=1
 
 	# compute cov = Z^TZ
+	print('hiii')
 	cov_mat = np.cov(thetadraw[:i,:],rowvar=False)
 	if np.all(np.abs(cov_mat) < 1e-15):
 		sca = np.zeros((d,d))
@@ -123,6 +124,7 @@ def adaptive_postdraws(logpost, initial_param, nsamp=2000, beta=0.05, lbda = 0.1
 	lbda2 = 2.38/np.sqrt(d)
 	# start adaptive MCMC
 	while(i < nsamp):
+		print(i)
 		#proposal point
 		tprop = tcurr + np.dot(lbda2*(1-beta)*sca + beta*lbda1*np.identity(d),standard_normal(d))
 		try:

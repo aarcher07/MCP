@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.random import standard_normal,uniform,lognormal,exponential,gamma
+from numpy.random import standard_normal,uniform,normal,exponential,gamma
 from scipy.special import lambertw
 import matplotlib.pyplot as plt
 from MCMC import postdraws,adaptive_postdraws, maxpostdensity
@@ -23,9 +23,10 @@ def test_norm(m = 20):
     f = lambda n: standard_normal(n*m).reshape(n,m)
     rprior = lambda n: standard_normal(n*m).reshape(n,m) + mean_true[np.newaxis,:]
     initial_param = lambda: np.ones(m)
-    nsamples = 10**6
+    nsamples = 10**4
 
     #fixed MCMC
+    print('hi')
     tdraws = postdraws(loglik,rprior,initial_param, nsamp = nsamples)
     for i in range(m):
         n, bins, patches = plt.hist(x=tdraws[:,i], bins='auto', color='#0504aa',
@@ -35,7 +36,8 @@ def test_norm(m = 20):
         plt.show()
 
     #adaptive MCMC
-    tdraws = adaptive_postdraws(loglik, initial_param, beta=0.05, lbda = 0.1, nsamp = nsamples)
+    print('hi')
+    tdraws = adaptive_postdraws(loglik, initial_param, beta=0.01, lbda = 0.1, nsamp = nsamples)
     for i in range(m):
         n, bins, patches = plt.hist(x=tdraws[:,i], bins='auto', color='#0504aa',
                                 alpha=0.7,density=True, rwidth=0.85)
@@ -51,7 +53,8 @@ def test():
 
     # create model
     def hitf(vals):
-        g = vals[:,0]
+
+        g = np.exp(vals[:,0])
         m = vals[:,1]
         r = vals[:,2]
         coeff = vals[:,3]
@@ -65,12 +68,12 @@ def test():
 
     # create prior, likelihood and posterior
     def rprior(n):
-        return np.array([lognormal(2,0.25, size=n),
+        return np.array([normal(2*np.log(2) - (1/2)*np.log(0.25+2**2),-2*np.log(2) + np.log(0.25+2**2), size=n),
                          exponential(1,n),
                          gamma(5,20,n),
                          uniform(0.1,2,n)]).T
 
-    logprior=lambda theta: stats.lognorm.logpdf(theta[0],s=0.25,scale=np.exp(2))+stats.expon.logpdf(theta[1],scale=1) +stats.gamma.logpdf(theta[2],a=5,scale=1/20) +stats.uniform.logpdf(theta[3],loc=0.1,scale=2-0.1)
+    logprior=lambda theta: stats.norm.logpdf(theta[0],scale=-2*np.log(2) + np.log(0.25+2**2),loc=2*np.log(2) - (1/2)*np.log(0.25+2**2))+stats.expon.logpdf(theta[1],scale=1) +stats.gamma.logpdf(theta[2],a=5,scale=1/20) +stats.uniform.logpdf(theta[3],loc=0.1,scale=2-0.1)
 
     h = np.array([5,10,20,30,80])
     y = np.array([1.174, 1.576, 2.065, 2.715, 4.427])
@@ -80,22 +83,22 @@ def test():
     logpost =lambda theta: loglik(theta) + logprior(theta)
 
     # args for MCMC
-    nsamples = 10**3
+    nsamples = 3*10**4
     tmax = maxpostdensity(rprior,logpost,disp=True)
     initial_param = lambda: tmax
 
-    #fixed MCMC
-    tdraws = postdraws(logpost,rprior, initial_param,lbda=0.1, nsamp = nsamples)
-    for i in range(tdraws.shape[1]):
-        plt.plot(range(int(nsamples)),tdraws[:,i])
-        plt.show()
+    # #fixed MCMC
+    # tdraws = postdraws(logpost,rprior, initial_param,lbda=0.1, nsamp = nsamples)
+    # for i in range(tdraws.shape[1]):
+    #     plt.plot(range(int(nsamples)),tdraws[:,i])
+    #     plt.show()
 
     #adaptive MCMC
-    tdraws = adaptive_postdraws(logpost,initial_param, beta=0.05, lbda = 0.1, nsamp = nsamples)
+    tdraws = adaptive_postdraws(logpost,initial_param, beta=0.9, lbda = 0.1, nsamp = nsamples)
     for i in range(tdraws.shape[1]):
         plt.plot(range(int(nsamples)),tdraws[:,i])
         plt.show()
 
 if __name__ == '__main__':
-    test_norm()
+    #test_norm()
     test()
