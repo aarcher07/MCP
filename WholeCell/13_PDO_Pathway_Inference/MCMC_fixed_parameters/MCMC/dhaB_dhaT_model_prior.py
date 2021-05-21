@@ -15,6 +15,8 @@ import sys
 sys.path.insert(0, '.')
 from base_dhaB_dhaT_model.dhaB_dhaT_model import DhaBDhaTModel
 from base_dhaB_dhaT_model.misc_functions import *
+from base_dhaB_dhaT_model.data_set_constants import *
+from prior_constants import *
 
 class DhaBDhaTModelMCMC(DhaBDhaTModel):
     def __init__(self, rc = 0.375e-6, lc = 2.47e-6,
@@ -49,7 +51,7 @@ class DhaBDhaTModelMCMC(DhaBDhaTModel):
         """
         if log_params is None:
             print("Please set the parameter values")
-        params = transform_from_log_unif(log_params)
+        params = transform_from_log_unif(log_params,LOG_UNIF_PRIOR_PARAMETERS)
 
         return super()._sderiv(t,x,params)
 
@@ -66,4 +68,34 @@ class DhaBDhaTModelMCMC(DhaBDhaTModel):
         params = transform_from_log_norm(log_params)
 
         return super()._sderiv(t,x,params)
+
+    def QoI(self,params,init_conds,tsamples=TIME_EVALS,tol = 10**-5):
+        """
+        Integrates the DhaB-DhaT model with parameter values, param, and returns external glycerol
+         1,3-PDO and cell concentration time samples, tsamples
+        @param params: dictionary parameter values to run the model. keys of the dictionary are in model_constants.py
+        @param init_conds: dictionary initial conditions to run the model. keys of the dictionary are in model_constants
+        @param base_dhaB_dhaT_model: instance of the DhaBDhaTModel class
+        @param tsamples: time samples to collect external glycerol, external 1,3-PDO and DCW
+        @param tol: tolerance at which integrate the DhaBDhaTModel
+        @return: glycerol, external 1,3-PDO and DCW sampled at time samples, tsamples (3 x |tsamples| matrix)
+        """
+
+        dict_scalar_transformed = dict()
+        dict_scalar_transformed["scalar"] = params["scalar"]
+        if self.transform_name == "log_unif":
+            dict_scalar_transformed = transform_from_log_unif(dict_scalar_transformed,LOG_UNIF_PRIOR_PARAMETERS)
+        elif self.transform_name == "log_norm":
+            dict_scalar_transformed = transform_from_log_norm(dict_scalar_transformed)
+        elif self.transform_name == " ":
+            pass
+        else:
+            raise ValueError('Unknown transform')
+
+        for key, val in params.items():
+            if key != "scalar":
+                dict_scalar_transformed[key] = val
+        return super().QoI(dict_scalar_transformed,init_conds,tsamples=tsamples,tol = tol)
+
+
 

@@ -14,10 +14,9 @@ Editing History:
 
 
 import sys
-sys.path.insert(0, '.')
 import sympy as sp
-from model_constants import *
-from data_set_constants import *
+from .model_constants import *
+from .data_set_constants import *
 from scipy.integrate import solve_ivp
 
 class DhaBDhaTModel:

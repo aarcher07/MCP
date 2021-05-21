@@ -3,7 +3,6 @@ from scipy.optimize import minimize
 from numpy.random import standard_normal,uniform,lognormal,exponential,gamma
 from scipy.linalg import sqrtm
 
-
 def postdraws(logpost, rprior, initial_param, lbda = None,nsamp=2000):
 	"""
 	nsamps MCMC draws of a exp(logpost) distribution density. This MCMC assumes

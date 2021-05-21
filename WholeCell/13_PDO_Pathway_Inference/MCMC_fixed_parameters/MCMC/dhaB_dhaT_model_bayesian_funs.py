@@ -1,18 +1,14 @@
 import matplotlib.pyplot as plt
-from numpy.random import standard_normal
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
-from MCMC import postdraws,adaptive_postdraws, maxpostdensity
-from mpi4py import MPI
-import sys
-sys.path.insert(0, '.')
-from base_dhaB_dhaT_model.misc_functions import *
+from MCMC import postdraws,adaptive_postdraws
 from base_dhaB_dhaT_model.data_set_constants import *
+from base_dhaB_dhaT_model.model_constants import *
+from mpi4py import MPI
 from prior_constants import *
 import time
 from pathlib import Path
-from dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -42,9 +38,9 @@ def rprior(n,transform):
 def logprior(params,transform):
 	"""
 	Computes the loglikelihood of the prior distribution
-	@param params:
+	@param params: parameter values
 	@param transform: "log_unif"- log uniform distribution of parameters, "log_norm" - log normal distribution,
-						" " - uniform distributioon
+						" " - uniform distribution
 	@return: log likelihood
 	"""
 	logpdf = 0
@@ -54,9 +50,11 @@ def logprior(params,transform):
 	elif transform == "log_norm":
 		for i,(key,vals) in enumerate(LOG_NORM_PRIOR_PARAMETERS.items()):
 			logpdf += stats.norm.logpdf(params[i],loc=vals[0],scale=vals[1])				
-	else transform == " ":
+	elif transform == " ":
 		for i,(key,vals) in enumerate(PARAMETER_BOUNDS.items()):
 			logpdf += stats.loguniform.logpdf(params[i],a=vals[0],b=vals[1])
+	else:
+		raise ValueError('Unknown transform')
 	return logpdf
 
 def loglik(params,dhaB_dhaT_model,sigma=[2,2,0.1]):
@@ -73,8 +71,10 @@ def loglik(params,dhaB_dhaT_model,sigma=[2,2,0.1]):
 		scalar = 10**((bound_b - bound_a)*params[0] + bound_a) 
 	elif dhaB_dhaT_model.transform_name == 'log_norm':
 		scalar = 10**(params[0])
-	else:
+	elif dhaB_dhaT_model.transform_name == " ":
 		scalar= params[0]
+	else:
+		raise ValueError('Unknown transform')
 
 	# PARAMETERS FOR MODEL
 	params_to_dict = {}
@@ -97,7 +97,7 @@ def loglik(params,dhaB_dhaT_model,sigma=[2,2,0.1]):
 					  } # set initial conditions
 
 		tsamp = TIME_SAMPLES[gly_cond]
-		fvals = QoI(params_to_dict,init_conds,dhaB_dhaT_model,tsamp)
+		fvals = dhaB_dhaT_model.QoI(params_to_dict,init_conds,tsamp)
 		# compute difference for loglikelihood
 		fvals[:,2] = fvals[:,2]/(scalar*DCW_TO_COUNT_CONC)
 		sigma = np.array(sigma)
@@ -105,44 +105,7 @@ def loglik(params,dhaB_dhaT_model,sigma=[2,2,0.1]):
 		diff_f_data.extend(data_diff_matrix.ravel())
 	return -0.5*np.dot(diff_f_data,diff_f_data) 
 
-def test(sigma = [2,2,0.1],transform = "log_unif"):
-	dhaB_dhaT_model = DhaBDhaTModel(transform=transform)
 
-	file_name = 'MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_1000_sigma_[2,2,0,2]_date_2021_04_15_17_00_rank_2'
-	params= load_obj(file_name)[-1]
-	loglik_sigma = lambda param: loglik(param,dhaB_dhaT_model,sigma=sigma)
-	logpost = lambda param: loglik_sigma(param) + logprior(param, dhaB_dhaT_model.transform_name)
-
-	print(loglik_sigma(params))
-	print(logprior(params, dhaB_dhaT_model.transform_name))
-	print(logpost(params))
-
-def argmaxdensity(argv, arc):
-	"""
-	Computes the argmax of the log likelihood given the prior distribution
-	@param argv: argv[2:5] - standard deviation of external Glycerol, external 1,3-PDO and DCW, argv[5] - parameter distribution
-	@param arc: number of parameters
-	@return: argmax of the posterior density
-	"""
-	# get arguments 
-	sigma = [float(arg) for arg in argv[2:5]]
-	dhaB_dhaT_model = DhaBDhaTModelMCMC(transform=argv[5])
-
-	# set distributions
-	loglik_sigma = lambda params: loglik(params,dhaB_dhaT_model,sigma=sigma)
-	logpost = lambda params: loglik_sigma(params) + logprior(params, dhaB_dhaT_model.transform_name)
-	rprior_ds = lambda n: rprior(n, dhaB_dhaT_model.transform_name)
-
-	# set inital starting point
-	def initial_param():
-		file_name = 'MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_10_sigma_[2,2,0,2]_date_2021_04_12_21_28_rank_0'
-		param_start = load_obj(file_name)[-1]
-		param_start = param_start + 0.1 * standard_normal(len(param_start)) 
-		return param_start
-
-	param_max = maxpostdensity(rprior_ds,logpost,max_opt_iters = 1, initial_param = initial_param,
-						  maxiter = 10, jac=None, disp = True)
-	return param_max
 
 def main(argv, arc):
 	"""
@@ -220,5 +183,4 @@ def main(argv, arc):
 
 
 if __name__ == '__main__':
-	test(sigma=[float(arg) for arg in sys.argv[2:5]], transform=sys.argv[5])
 	main(sys.argv, len(sys.argv))
