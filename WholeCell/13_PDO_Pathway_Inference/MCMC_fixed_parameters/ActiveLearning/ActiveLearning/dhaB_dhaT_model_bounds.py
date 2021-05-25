@@ -12,10 +12,11 @@ Editing History:
 - 28/10/20
 '''
 
-from scipy.integrate import solve_ivp
-import matplotlib.pyplot as plt
-from misc_functions import *
-from base_dhaB_dhaT_model import DhaBDhaTModel
+from base_dhaB_dhaT_model.dhaB_dhaT_model import DhaBDhaTModel
+from base_dhaB_dhaT_model.misc_functions import *
+from base_dhaB_dhaT_model.data_set_constants import *
+from .constants import LOG_PARAMETERS_BOUNDS
+
 
 
 class DhaBDhaTModelMCMC(DhaBDhaTModel):
@@ -33,41 +34,26 @@ class DhaBDhaTModelMCMC(DhaBDhaTModel):
         self.transform_name = transform
         if transform == 'log_unif':
             self._sderiv = self._sderiv_log_unif
-        elif transform == 'log_norm':
-            self._sderiv = self._sderiv_log_norm
         elif transform == '':
             pass
         else:
             raise ValueError('Unknown transform')
         self._set_fun_sderiv_jac_statevars()
 
-    def _sderiv_log_unif_prior(self,t,x,log_params):
+    def _sderiv_log_unif(self,t,x,log_params):
         """
         Computes the spatial derivative of the system at time point, t, with the parameters
-        [-1,1] transformed by transforming parameters into their original values in LOG_UNIF_PRIOR_PARAMETERS
+        [-1,1] transformed by transforming parameters into their original values in LOG_PARAMETER_BOUNDS
         :param t: time
         :param x: state variables
         :param params_sens: [-1,1] transformed parameter list
         """
         if log_params is None:
             print("Please set the parameter values")
-        params = transform_from_log_unif(log_params)
+        params = transform_from_log_unif(log_params,LOG_PARAMETERS_BOUNDS)
 
-        return super()._sderiv(t,x,params)
+        return self._sderiv(t,x,params)
 
-    def _sderiv_log_norm_prior(self,t,x,log_params):
-        """
-        Computes the spatial derivative of the system at time point, t, with the parameters
-        [-1,1] transformed by transforming parameters into their original values in LOG_NORM_PRIOR_PARAMETERS
-        :param t: time
-        :param x: state variables
-        :param params_sens:  transformed normal parameter list
-        """
-        if log_params is None:
-            print("Please set the parameter values")
-        params = transform_from_log_norm(log_params)
-
-        return super()._sderiv(t,x,params)
 
     def generate_QoI_time_series(self,params,tsamples=TIME_EVALS,tol = 10**-5):
         """

@@ -12,7 +12,7 @@ Editing History:
 - 28/10/20
 '''
 import sys
-sys.path.insert(0, '.')
+sys.path.insert(0, '..')
 from base_dhaB_dhaT_model.dhaB_dhaT_model import DhaBDhaTModel
 from base_dhaB_dhaT_model.misc_functions import *
 from base_dhaB_dhaT_model.data_set_constants import *

@@ -3,8 +3,8 @@ import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 from MCMC import maxpostdensity
-from dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
-from dhaB_dhaT_model_bayesian_funs import loglik, logprior, rprior
+from MCMC.dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
+from MCMC.dhaB_dhaT_model_bayesian_funs import loglik, logprior, rprior
 from base_dhaB_dhaT_model.misc_functions import *
 
 def test(sigma = [2,2,0.1],transform = "log_unif"):
@@ -15,9 +15,7 @@ def test(sigma = [2,2,0.1],transform = "log_unif"):
     loglik_sigma = lambda param: loglik(param,dhaB_dhaT_model,sigma=sigma)
     logpost = lambda param: loglik_sigma(param) + logprior(param, dhaB_dhaT_model.transform_name)
 
-    print(loglik_sigma(params))
-    print(logprior(params, dhaB_dhaT_model.transform_name))
-    print(logpost(params))
+    return loglik_sigma(params), logprior(params, dhaB_dhaT_model.transform_name), logpost(params)
 
 def argmaxdensity(argv, arc):
     """
@@ -47,5 +45,5 @@ def argmaxdensity(argv, arc):
     return param_max
 
 if __name__ == '__main__':
-    test(sigma=[2,2,0.2], transform='log_norm')
+    print(test(sigma=[2,2,0.2], transform='log_norm'))
     print(argmaxdensity([2,2,0.2, 'log_norm'], 4))

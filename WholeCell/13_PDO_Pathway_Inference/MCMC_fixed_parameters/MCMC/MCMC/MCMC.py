@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import minimize
-from numpy.random import standard_normal,uniform,lognormal,exponential,gamma
+from numpy.random import standard_normal,uniform
 from scipy.linalg import sqrtm
 
 def postdraws(logpost, rprior, initial_param, lbda = None,nsamp=2000):
@@ -89,8 +89,6 @@ def adaptive_postdraws(logpost, initial_param, nsamp=2000, beta=0.05, lbda = 0.1
 	: beta          : weight of fixed metropolis walk (1-beta is the weight of the empirical adaptive walk)
 	: lbda          : perturbation magnitude
 	"""
-
-	optimizelp = lambda tcurr: -logpost(tcurr)
 	tcurr = initial_param()
 	d = len(tcurr)
 
@@ -168,7 +166,6 @@ def maxpostdensity(rprior,logpost,max_opt_iters = 10, initial_param = None,
 	optimizelp = lambda tcurr: -logpost(tcurr)
 	lb = np.quantile(rprior(10**6),0.001,axis=0)
 	ub = np.quantile(rprior(10**6),0.999,axis=0)
-
 	tmax = rprior(1).reshape(-1)
 	tmaxval = optimizelp(tmax)
 

@@ -1,14 +1,15 @@
-import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-import sys
-sys.path.insert(0, '..')
-from base_dhaB_dhaT_model import *
+from MCMC.dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
+from base_dhaB_dhaT_model.model_constants import *
+from base_dhaB_dhaT_model.data_set_constants import *
+from base_dhaB_dhaT_model.misc_functions import *
+from MCMC.prior_constants import *
 
-def test_devs():
+def testdev():
     external_volume = 0.002
 
-    params = {'cellperGlyMass': 10**(5.73158464),
+    params_trans = {'cellperGlyMass': 10**(5.73158464),
                 'PermCellGlycerol': 10**(-3.55285234),
                 'PermCellPDO': 10**(-3.85344833),
                 'PermCell3HPA': 10**(-2.34212333),
@@ -19,17 +20,26 @@ def test_devs():
                 'VmaxfGlpK':10**(1.99560497) ,
                 'KmGlpKG': 10**(-1.24867452)}
 
-    init_conds={'G_CYTO_INIT': 0.,
-                'H_CYTO_INIT': 0.,
+    init_conds={'G_CYTO_INIT': 0,
+                'H_CYTO_INIT': 0,
                 'P_CYTO_INIT': 0,
-                'G_EXT_INIT': 50.,
-                'H_EXT_INIT': 0.,
+                'G_EXT_INIT': INIT_CONDS_GLY_PDO_DCW[50][0],
+                'H_EXT_INIT': INIT_CONDS_GLY_PDO_DCW[50][1],
                 'P_EXT_INIT': 0,
-                'CELL_CONC_INIT': 10**8,
+                'CELL_CONC_INIT': INIT_CONDS_GLY_PDO_DCW[50][2]*0.5217871564671509*DCW_TO_COUNT_CONC
                 }
 
+    transform = 'log_norm'
 
-    dhaB_dhaT_model = DhaBDhaTModel(external_volume=external_volume)
+
+    if transform == 'log_unif':
+        params = transform_to_log_unif(params_trans,LOG_UNIF_PRIOR_PARAMETERS)
+    elif transform == 'log_norm':
+        params = transform_to_log_norm(params_trans)
+    else:
+        params = params_trans
+
+    dhaB_dhaT_model = DhaBDhaTModelMCMC(external_volume=external_volume, transform=transform)
 
     mintime = 10**(-15)
     fintime = 12*60*60
@@ -37,6 +47,7 @@ def test_devs():
     #################################################
     # Integrate with BDF
     #################################################
+
 
     # initial conditions
     n_compounds_cell = 3
@@ -47,12 +58,12 @@ def test_devs():
     tol = 1e-7
     nsamples = 500
     timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
-    dhaB_dhaT_model._set_symbolic_sderiv_conc_fun()
-    ds = lambda t,x: dhaB_dhaT_model._sderiv(t, x, params)
+
+    transform = lambda t, x: dhaB_dhaT_model._sderiv(t, x, params)
     ds_jac = lambda t,x: dhaB_dhaT_model._sderiv_jac_conc_fun(t,x,params)
 
-    sol = solve_ivp(ds,[0, fintime+1], y0, method = 'BDF', jac = ds_jac, t_eval=timeorig,
-                    atol=tol,rtol=tol)
+    sol = solve_ivp(transform, [0, fintime + 1], y0, method ='BDF', jac = ds_jac, t_eval=timeorig,
+                    atol=tol, rtol=tol)
 
     print(sol.message)
 
@@ -63,7 +74,10 @@ def test_devs():
     colour = ['b','r','y','c','m']
 
     # rescale the solutions
+    ncompounds = 3
     timeorighours = sol.t/HRS_TO_SECS
+    print(sol.message)
+
 
     # external solution
     for i in range(0,3):
@@ -94,19 +108,23 @@ def test_devs():
     plt.ylabel('concentration (cell per m^3)')
     plt.show()
 
+
     #check mass balance
     ext_masses_org = y0[3:6]* external_volume
     cell_masses_org = y0[:3] * volcell
+
+
     ext_masses_fin = sol.y[3:6, -1] * external_volume
     cell_masses_fin = sol.y[:3,-1] * volcell
+    print(ext_masses_fin)
     print(ext_masses_org.sum() + external_volume*y0[-1]*cell_masses_org.sum())
     print(ext_masses_fin.sum() + external_volume*sol.y[-1,-1]*cell_masses_fin.sum())
+    print(sol.y[-1,-1])
 
-
-def test_QoI():
+def testQoI():
     external_volume = 0.002
 
-    params = {'scalar': 0.5,
+    params_trans = {'scalar' : 0.5,
                 'cellperGlyMass': 10**(5.73158464),
                 'PermCellGlycerol': 10**(-3.55285234),
                 'PermCellPDO': 10**(-3.85344833),
@@ -115,20 +133,29 @@ def test_QoI():
                 'KmDhaBG': 10**(0.71152905) ,
                 'VmaxfDhaT': 10**(2.85561206),
                 'KmDhaTH': 10**(0.69665821),
-                'VmaxfGlpK':10**(1.99560497),
+                'VmaxfGlpK':10**(1.99560497) ,
                 'KmGlpKG': 10**(-1.24867452)}
 
-    init_conds={'G_CYTO_INIT': 0.,
-                'H_CYTO_INIT': 0.,
+    init_conds={'G_CYTO_INIT': 0,
+                'H_CYTO_INIT': 0,
                 'P_CYTO_INIT': 0,
-                'G_EXT_INIT': 50.,
-                'H_EXT_INIT': 0.,
+                'G_EXT_INIT': INIT_CONDS_GLY_PDO_DCW[50][0],
+                'H_EXT_INIT': INIT_CONDS_GLY_PDO_DCW[50][1],
                 'P_EXT_INIT': 0,
-                'CELL_CONC_INIT': 10**8,
+                'CELL_CONC_INIT': INIT_CONDS_GLY_PDO_DCW[50][2]*0.5217871564671509*DCW_TO_COUNT_CONC
                 }
 
+    transform = 'log_norm'
 
-    dhaB_dhaT_model = DhaBDhaTModel(external_volume=external_volume)
+
+    if transform == 'log_unif':
+        params = transform_to_log_unif(params_trans,LOG_UNIF_PRIOR_PARAMETERS)
+    elif transform == 'log_norm':
+        params = transform_to_log_norm(params_trans)
+    else:
+        params = params_trans
+
+    dhaB_dhaT_model = DhaBDhaTModelMCMC(external_volume=external_volume, transform=transform)
     qoi_vals = dhaB_dhaT_model.QoI(params,init_conds)
     print(qoi_vals)
 
@@ -151,5 +178,5 @@ def test_QoI():
     plt.show()
 
 if __name__ == '__main__':
-    test_devs()
-    test_QoI()
+    testdev()
+    testQoI()

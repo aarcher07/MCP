@@ -3,8 +3,13 @@ from skopt.space import Space
 from skopt.sampler import Lhs
 from sklearn.model_selection import train_test_split
 from mpi4py import MPI
-from data_gen_funs import *
-import sys
+from ActiveLearning.ActiveLearning.dhaB_dhaT_model_bounds import DhaBDhaTModelActiveLearning
+import numpy as np
+from base_dhaB_dhaT_model.data_set_constants import INIT_CONDS_GLY_PDO_DCW
+from base_dhaB_dhaT_model.model_constants import QoI_PARAMETER_LIST
+from base_dhaB_dhaT_model.misc_functions import save_obj
+from os.path import dirname, abspath
+ROOT_PATH = dirname(abspath(__file__))
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -22,7 +27,7 @@ def generate_training_data(ds, n_samples, tol=1e-7):
 	@return ftrain: QoI evaluations of Glycerol, 1,3-PDO, DCW for samples in input_train
 	@return ftest: QoI evaluations of Glycerol, 1,3-PDO, DCW for samples in input_test
 	"""
-    dhaB_dhaT_model = DhaBDhaTModel(transform=ds)
+    dhaB_dhaT_model = DhaBDhaTModelActiveLearning(transform=ds)
 
     if rank == 0:
         # generate initial parameters and evaluation data
@@ -62,15 +67,8 @@ def generate_training_data(ds, n_samples, tol=1e-7):
                                                             zip([input_train_rank, input_test_rank],
                                                                 [ftrain_rank, ftest_rank])):
         for unif_param in explan_set_prop:
-            # transform unif params
-            if ds == "log_norm":
-                param = unif_param_2_log_norm(unif_param)
-            else:
-                param = unif_param
-
-            # generate data
             try:
-                response_data.append(generate_data(param, dhaB_dhaT_model, tol=tol))
+                response_data.append(dhaB_dhaT_model.QoI_all_exp(unif_param, dhaB_dhaT_model, tol=tol))
                 explan_set.append(unif_param)
             except TypeError:
                 continue
@@ -101,7 +99,6 @@ def generate_training_data(ds, n_samples, tol=1e-7):
         input_test = np.array(input_test)
         return input_train, input_test, ftrain, ftest
 
-
 def main(argv, arc):
     # generate data
     ds = argv[1]
@@ -114,7 +111,7 @@ def main(argv, arc):
         print(data[1].shape)
         print(data[3].shape)
         # generate folder name
-        folder_name = "active_learning_data"
+        folder_name =ROOT_PATH + "/output/active_learning_data"
         date_string = time.strftime("%Y_%m_%d_%H:%M")
         file_name = "transform_" + ds + "_nsamples_" + str(n_samples) + "_tol_" + "{:1e}".format(
             tol) + "_date_" + date_string
@@ -125,3 +122,5 @@ def main(argv, arc):
 
 if __name__ == '__main__':
     main(sys.argv, len(sys.argv))
+
+
