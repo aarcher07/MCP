@@ -3,11 +3,12 @@ from skopt.space import Space
 from skopt.sampler import Lhs
 from sklearn.model_selection import train_test_split
 from mpi4py import MPI
-from ActiveLearning.ActiveLearning.dhaB_dhaT_model_bounds import DhaBDhaTModelActiveLearning
+from ActiveLearning import DhaBDhaTModelActiveLearning
 import numpy as np
 from base_dhaB_dhaT_model.data_set_constants import INIT_CONDS_GLY_PDO_DCW
 from base_dhaB_dhaT_model.model_constants import QoI_PARAMETER_LIST
 from base_dhaB_dhaT_model.misc_functions import save_obj
+import sys
 from os.path import dirname, abspath
 ROOT_PATH = dirname(abspath(__file__))
 
@@ -15,10 +16,10 @@ comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-def generate_training_data(ds, n_samples, tol=1e-7):
+def generate_training_data(transform, n_samples, tol=1e-7):
     """
     Generate the generate training and test set using latin hypercube for active learning
-	@param ds: parameter distribution -- log uniform and log normal
+	@param transform: parameter distribution -- log uniform and log normal
 	@param n_samples: number of parameter samples for generate training set
 	@param tol: integration tolerance
 
@@ -27,7 +28,7 @@ def generate_training_data(ds, n_samples, tol=1e-7):
 	@return ftrain: QoI evaluations of Glycerol, 1,3-PDO, DCW for samples in input_train
 	@return ftest: QoI evaluations of Glycerol, 1,3-PDO, DCW for samples in input_test
 	"""
-    dhaB_dhaT_model = DhaBDhaTModelActiveLearning(transform=ds)
+    dhaB_dhaT_model = DhaBDhaTModelActiveLearning(transform=transform)
 
     if rank == 0:
         # generate initial parameters and evaluation data
@@ -68,7 +69,7 @@ def generate_training_data(ds, n_samples, tol=1e-7):
                                                                 [ftrain_rank, ftest_rank])):
         for unif_param in explan_set_prop:
             try:
-                response_data.append(dhaB_dhaT_model.QoI_all_exp(unif_param, dhaB_dhaT_model, tol=tol))
+                response_data.append(dhaB_dhaT_model.QoI_all_exp(unif_param, tol=tol))
                 explan_set.append(unif_param)
             except TypeError:
                 continue
@@ -106,14 +107,10 @@ def main(argv, arc):
     tol = float(argv[3])
     data = generate_training_data(ds, n_samples, tol=1e-7)
     if rank == 0:
-        print(data[0].shape)
-        print(data[2].shape)
-        print(data[1].shape)
-        print(data[3].shape)
         # generate folder name
         folder_name =ROOT_PATH + "/output/active_learning_data"
         date_string = time.strftime("%Y_%m_%d_%H:%M")
-        file_name = "transform_" + ds + "_nsamples_" + str(n_samples) + "_tol_" + "{:1e}".format(
+        file_name = "transform_" + ds + "_nsamples_" + str(n_samples) + "_tol_" + "{:.0e}".format(
             tol) + "_date_" + date_string
 
         # save object

@@ -1,9 +1,8 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt 
-from constants import *
 import pickle
-from dhaB_dhaT_model import DhaBDhaTModel
+from base_dhaB_dhaT_model.data_set_constants import TIME_EVALS, NPARAMS
 import pandas as pd
 from scipy.integrate import solve_ivp
 from scipy.optimize import minimize

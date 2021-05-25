@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="SCOPE_TYPE" value="3" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="5ae65f53-ace1-4a48-9581-5bcf1d331803" name="Default Changelist" comment="completed packaging. to put on quest for Active Learning.">
+      <change afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/constants.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ActiveLearning/setup.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/MCMC/MCMC/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/MCMC/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/MCMC/setup.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/active_learning_generate_training_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/active_learning_generate_training_set.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/active_learning_train_GP.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/active_learning_train_GP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/build_separable_GP.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/build_separable_GP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/constants.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/data_gen_funs.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/data_time_series.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/data_time_series_cleaned.csv" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/dhaB_dhaT_model.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/dhaB_dhaT_model_prior.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/dhaB_dhaT_model_bounds.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ActiveLearning/misc_functions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/MCMC.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/MCMC.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/dhaB_dhaT_model_bayesian_funs.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/dhaB_dhaT_model_bayesian_funs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/dhaB_dhaT_model_prior.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/dhaB_dhaT_model_prior.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/prior_constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/prior_constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/test_MCMC.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/test/test_MCMC.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/test_MCMC_dhaB_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/test/test_dhaB_dhaT_model_bayesian_funs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MCMC/test_dhaB_dhaT_model_prior.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/test/test_dhaB_dhaT_model_prior.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base_dhaB_dhaT_model/base_dhaB_dhaT_model/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/base_dhaB_dhaT_model/base_dhaB_dhaT_model/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/base_dhaB_dhaT_model/test/tests_dhaB_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/base_dhaB_dhaT_model/test/test_dhaB_dhaT_model.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="ProjectId" id="1sPLDqqUlENjpgpmW1QVh8fiJbS" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/ActiveLearning" />
+    <property name="run.code.analysis.last.selected.profile" value="aDefault" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/ActiveLearning" />
+      <recent name="$PROJECT_DIR$/MCMC" />
+      <recent name="$PROJECT_DIR$/base_dhaB_dhaT_model" />
+      <recent name="$PROJECT_DIR$/dhaB_dhaT_model" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/ActiveLearning" />
+      <recent name="$PROJECT_DIR$/ActiveLearning/output" />
+      <recent name="$PROJECT_DIR$/ActiveLearning/ActiveLearning" />
+      <recent name="$PROJECT_DIR$/MCMC/output" />
+      <recent name="$PROJECT_DIR$/MCMC/MCMC" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="prior_constants" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="MCMC_fixed_parameters" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/MCMC/MCMC" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/MCMC/MCMC/prior_constants.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.prior_constants" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5ae65f53-ace1-4a48-9581-5bcf1d331803" name="Default Changelist" comment="" />
+      <created>1620769161731</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1620769161731</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="completed packaging. to put on quest for Active Learning." />
+    <option name="LAST_COMMIT_MESSAGE" value="completed packaging. to put on quest for Active Learning." />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/MCMC/MCMC/MCMC.py</url>
+          <line>123</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

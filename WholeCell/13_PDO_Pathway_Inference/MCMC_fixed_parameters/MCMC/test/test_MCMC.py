@@ -1,8 +1,11 @@
 import numpy as np
 from numpy.random import standard_normal,uniform,normal,exponential,gamma
 from scipy.special import lambertw
+import matplotlib as mpl
+mpl.rcParams['text.usetex'] = True
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
 import matplotlib.pyplot as plt
-from MCMC.MCMC import postdraws,adaptive_postdraws, maxpostdensity
+from MCMC import postdraws,adaptive_postdraws, maxpostdensity
 import scipy.stats as stats
 
 def test_norm(m = 20):

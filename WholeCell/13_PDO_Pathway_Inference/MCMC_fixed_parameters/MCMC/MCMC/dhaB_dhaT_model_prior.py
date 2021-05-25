@@ -11,12 +11,11 @@ Programme written by aarcher07
 Editing History:
 - 28/10/20
 '''
-import sys
-sys.path.insert(0, '..')
+
 from base_dhaB_dhaT_model.dhaB_dhaT_model import DhaBDhaTModel
-from base_dhaB_dhaT_model.misc_functions import *
-from base_dhaB_dhaT_model.data_set_constants import *
-from prior_constants import *
+from base_dhaB_dhaT_model.misc_functions import transform_from_log_unif, transform_from_log_norm
+from base_dhaB_dhaT_model.data_set_constants import TIME_EVALS
+from .prior_constants import LOG_UNIF_PRIOR_PARAMETERS
 
 class DhaBDhaTModelMCMC(DhaBDhaTModel):
     def __init__(self, rc = 0.375e-6, lc = 2.47e-6,
@@ -75,7 +74,7 @@ class DhaBDhaTModelMCMC(DhaBDhaTModel):
          1,3-PDO and cell concentration time samples, tsamples
         @param params: dictionary parameter values to run the model. keys of the dictionary are in model_constants.py
         @param init_conds: dictionary initial conditions to run the model. keys of the dictionary are in model_constants
-        @param base_dhaB_dhaT_model: instance of the DhaBDhaTModel class
+        @param base_dhaB_dhaT_model: instance of the DhaBDhaTModelMCMC class
         @param tsamples: time samples to collect external glycerol, external 1,3-PDO and DCW
         @param tol: tolerance at which integrate the DhaBDhaTModel
         @return: glycerol, external 1,3-PDO and DCW sampled at time samples, tsamples (3 x |tsamples| matrix)

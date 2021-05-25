@@ -22,7 +22,20 @@ LOG_UNIF_PRIOR_PARAMETERS = {'scalar': [-1., 1.],
                         'VmaxfDhaT': np.log10([5e-1,5e2]),
                         'KmDhaTH': np.log10([1e-2 , 1e2]),
                         'VmaxfGlpK': np.log10([1e-2,1e3]),
-                             'KmGlpKG': np.log10([1e-3,1e-1])}
+                        'KmGlpKG': np.log10([1e-3,1e-1])}
+
+UNIF_PRIOR_PARAMETERS = {'scalar': [1e-1, 1e1],
+                        'cellperGlyMass': [1e4, 1e12],
+                        'PermCellGlycerol': [1e-8, 1e-2],
+                        'PermCellPDO': [1e-6, 1e-2],
+                        'PermCell3HPA': [1e-3, 1e-2],
+                        'VmaxfDhaB': [5e0, 5e3],
+                        'KmDhaBG': [1e-1 , 1e1],
+                             # 'KmDhaBH': [1e-1 , 1e2],
+                        'VmaxfDhaT': [5e-1,5e2],
+                        'KmDhaTH': [1e-2 , 1e2],
+                        'VmaxfGlpK': [1e-2,1e3],
+                        'KmGlpKG': [1e-3,1e-1]}
 
 LOG_NORM_PRIOR_PARAMETERS = {'scalar': [np.log10(0.5), (1 / 8.) ** 2],
                             'cellperGlyMass': [8, 2**2],

@@ -2,15 +2,15 @@ from numpy.random import standard_normal
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
-from MCMC import maxpostdensity
-from MCMC.dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
-from MCMC.dhaB_dhaT_model_bayesian_funs import loglik, logprior, rprior
+from MCMC import *
 from base_dhaB_dhaT_model.misc_functions import *
+from os.path import dirname, abspath
+ROOT_PATH =dirname(dirname(abspath(__file__)))
 
 def test(sigma = [2,2,0.1],transform = "log_unif"):
     dhaB_dhaT_model = DhaBDhaTModelMCMC(transform=transform)
 
-    file_name = 'MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_1000_sigma_[2,2,0,2]_date_2021_04_15_17_00_rank_2'
+    file_name = ROOT_PATH+'/output/MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_1000_sigma_[2,2,0,2]_date_2021_04_15_17_00_rank_2'
     params= load_obj(file_name)[-1]
     loglik_sigma = lambda param: loglik(param,dhaB_dhaT_model,sigma=sigma)
     logpost = lambda param: loglik_sigma(param) + logprior(param, dhaB_dhaT_model.transform_name)
@@ -35,7 +35,7 @@ def argmaxdensity(argv, arc):
 
     # set inital starting point
     def initial_param():
-        file_name = 'MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_1000_sigma_[2,2,0,2]_date_2021_04_15_00_21_rank_0'
+        file_name = ROOT_PATH+'/output/MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_1000_sigma_[2,2,0,2]_date_2021_04_15_00_21_rank_0'
         param_start = load_obj(file_name)[-1]
         param_start = param_start + 0.1 * standard_normal(len(param_start))
         return param_start

@@ -1,10 +1,13 @@
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-from MCMC.dhaB_dhaT_model_prior import DhaBDhaTModelMCMC
 from base_dhaB_dhaT_model.model_constants import *
 from base_dhaB_dhaT_model.data_set_constants import *
 from base_dhaB_dhaT_model.misc_functions import *
-from MCMC.prior_constants import *
+from MCMC import DhaBDhaTModelMCMC, LOG_UNIF_PRIOR_PARAMETERS
+import matplotlib as mpl
+mpl.rcParams['text.usetex'] = True
+mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
+import matplotlib.pyplot as plt
 
 def testdev():
     external_volume = 0.002
@@ -29,7 +32,7 @@ def testdev():
                 'CELL_CONC_INIT': INIT_CONDS_GLY_PDO_DCW[50][2]*0.5217871564671509*DCW_TO_COUNT_CONC
                 }
 
-    transform = 'log_norm'
+    transform = 'log_unif'
 
 
     if transform == 'log_unif':
@@ -105,7 +108,7 @@ def testdev():
     plt.plot(timeorighours,sol.y[-1,:].T/((10**-0.3531)*DCW_TO_COUNT_CONC), colour[i])
     plt.title('Plot of cell concentration')
     plt.xlabel('time (hr)')
-    plt.ylabel('concentration (cell per m^3)')
+    plt.ylabel('concentration (cell per $m^3$)')
     plt.show()
 
 
@@ -174,7 +177,7 @@ def testQoI():
     plt.plot(TIME_EVALS,qoi_vals[:,2])
     plt.title('Plot of dry cell weight')
     plt.xlabel('time (hr)')
-    plt.ylabel('concentration (g per m^3)')
+    plt.ylabel('concentration (g per $m^3$)')
     plt.show()
 
 if __name__ == '__main__':

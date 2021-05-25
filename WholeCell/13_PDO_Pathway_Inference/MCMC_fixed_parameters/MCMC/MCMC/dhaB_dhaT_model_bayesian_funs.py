@@ -1,18 +1,11 @@
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-mpl.rcParams['text.usetex'] = True
-mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}'
-from MCMC import postdraws,adaptive_postdraws
-from base_dhaB_dhaT_model.data_set_constants import *
-from base_dhaB_dhaT_model.model_constants import *
-from mpi4py import MPI
-from prior_constants import *
+from .MCMC import postdraws,adaptive_postdraws
+from base_dhaB_dhaT_model.data_set_constants import TIME_SAMPLES, DATA_SAMPLES
+from base_dhaB_dhaT_model.model_constants import MODEL_PARAMETER_LIST,DCW_TO_COUNT_CONC
+from .prior_constants import LOG_UNIF_PRIOR_PARAMETERS,LOG_NORM_PRIOR_PARAMETERS,UNIF_PRIOR_PARAMETERS
 import time
+import numpy as np
+import scipy.stats as stats
 from pathlib import Path
-
-comm = MPI.COMM_WORLD
-size = comm.Get_size()
-rank = comm.Get_rank()
 
 def rprior(n,transform):
 	"""
@@ -30,7 +23,7 @@ def rprior(n,transform):
 		for key,vals in LOG_NORM_PRIOR_PARAMETERS.items():
 			samples.append(stats.norm.rvs(loc=vals[0],scale=vals[1],size=n))			
 	else:
-		for key,vals in PARAMETER_BOUNDS.items():
+		for key,vals in UNIF_PRIOR_PARAMETERS.items():
 			samples.append(stats.loguniform.rvs(a=vals[0],b=vals[1],size=n))		
 	return np.array(samples).T
 
@@ -51,7 +44,7 @@ def logprior(params,transform):
 		for i,(key,vals) in enumerate(LOG_NORM_PRIOR_PARAMETERS.items()):
 			logpdf += stats.norm.logpdf(params[i],loc=vals[0],scale=vals[1])				
 	elif transform == " ":
-		for i,(key,vals) in enumerate(PARAMETER_BOUNDS.items()):
+		for i,(key,vals) in enumerate(UNIF_PRIOR_PARAMETERS.items()):
 			logpdf += stats.loguniform.logpdf(params[i],a=vals[0],b=vals[1])
 	else:
 		raise ValueError('Unknown transform')
@@ -107,80 +100,4 @@ def loglik(params,dhaB_dhaT_model,sigma=[2,2,0.1]):
 
 
 
-def main(argv, arc):
-	"""
 
-	@param argv:
-	@param arc:
-	@return:
-	"""
-	# get arguments 
-	nsamps = int(float(argv[1]))
-	sigma = [float(arg) for arg in argv[2:5]]
-	transform =argv[5]
-	dhaB_dhaT_model = DhaBDhaTModel(transform=transform)
-	lbda = float(argv[6])
-	adaptive = int(argv[7])
-	if adaptive:
-		beta = float(argv[8])
-
-	# set distributions
-	loglik_sigma = lambda params: loglik(params,dhaB_dhaT_model,sigma=sigma)
-	logpost = lambda params: loglik_sigma(params) + logprior(params, transform)
-	rprior_ds = lambda n: rprior(n, transform)
-
-	# set inital starting point
-	def initial_param():
-		file_name = 'MCMC_results_data/old_files/adaptive_lambda_0,01_beta_0,05_norm_nsamples_1000_sigma_[2,2,0,2]_date_2021_04_15_00_21_rank_0'
-		param_start = load_obj(file_name)[-1]
-		return param_start
-
- 	# if adaptive or fixed MCMC
-	if adaptive:
-		time_start = time.time()
-		tdraws = adaptive_postdraws(logpost, initial_param, nsamp=nsamps,beta=beta, lbda = lbda)
-		time_end = time.time()
-		print((time_end-time_start)/float(nsamps))
-	else:
-		time_start = time.time()
-		tdraws = postdraws(logpost, rprior_ds,initial_param,  nsamp=nsamps,lbda = lbda)
-		time_end = time.time()
-		print((time_end-time_start)/float(2*nsamps))
-	# store results
-	date_string = time.strftime("%Y_%m_%d_%H_%M")
-
-	# store images
-	for i,param_name in enumerate(VARS_TO_TEX.keys()):
-		plt.plot(range(int(nsamps)),tdraws[:,i])
-		plt.title('Plot of MCMC distribution of ' + r'$\log(' + VARS_TO_TEX[param_name][1:-1] + ')$')
-		plt.xlabel('iterations index')
-		plt.ylabel(r'$\log(' + VARS_TO_TEX[param_name][1:-1] + ')$')
-		if adaptive:
-			adapt_name = "adaptive"
-			folder_name = 'MCMC_results_plots/'+ adapt_name + "/sigma_"  + str(np.round(sigma,decimals=3)).replace('.',',').replace(' ','') +  "/" + "lambda_" + str(lbda).replace('.',',') + "_beta_" +  str(beta).replace('.',',') 
-		else:
-			adapt_name = "fixed"
-			folder_name = 'MCMC_results_plots/'+ adapt_name + "/sigma_"  + str(np.round(sigma,decimals=3)).replace('.',',').replace(' ','') +  "/" + "lambda_" + str(lbda).replace('.',',') 
-
-		folder_name += "/nsamples_" + str(nsamps) +"/" + transform[4:] + "/param_" + param_name
-		Path(folder_name).mkdir(parents=True, exist_ok=True)
-		file_name = folder_name +'/date_'+date_string  + "_rank_" + str(rank)+ '.png'
-		plt.savefig(file_name,bbox_inches='tight')
-		plt.close()
-
-	# save pickle data
-	if adaptive:
-		adapt_name = "adaptive"
-		folder_name = 'MCMC_results_data/' + adapt_name + "/sigma_"  + str(np.round(sigma,decimals=3)).replace('.',',').replace(' ','') +  "/" + "lambda_" + str(lbda).replace('.',',') + "_beta_" +  str(beta).replace('.',',') 
-	else:
-		adapt_name = "fixed"
-		folder_name ='MCMC_results_data/' + adapt_name + "/sigma_"  + str(np.round(sigma,decimals=3)).replace('.',',').replace(' ','') + "/"+  "lambda_" + str(lbda).replace('.',',')
-	
-	folder_name += "/nsamples_" + str(nsamps) +"/" + transform[4:]
-	Path(folder_name).mkdir(parents=True, exist_ok=True)
-	file_name = folder_name + "/date_" +date_string  + "_rank_" + str(rank)
-	save_obj(tdraws,file_name)
-
-
-if __name__ == '__main__':
-	main(sys.argv, len(sys.argv))

@@ -1,22 +1,27 @@
 import time
 from skopt.space import Space
 from skopt.sampler import Lhs
-from build_separable_GP import *
 from mpi4py import MPI
-from data_gen_funs import *
-from active_learning_generate_training_set import unif_param_2_log_norm
+from ActiveLearning import DhaBDhaTModelActiveLearning
+from ActiveLearning.build_separable_GP import *
+from base_dhaB_dhaT_model.data_set_constants import NPARAMS, INIT_CONDS_GLY_PDO_DCW
+from base_dhaB_dhaT_model.model_constants import QoI_PARAMETER_LIST
+from base_dhaB_dhaT_model.misc_functions import load_obj,save_obj
 import sys
+from os.path import dirname, abspath
+ROOT_PATH = dirname(abspath(__file__))
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
 
-def active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,max_training_length,ninitial = 100,tol=1e-7):
+def active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,
+                             max_training_length,ninitial = 100,tol=1e-7):
 
     ######################################################################################################
     ######################################### DO INITIAL FIT #############################################
     ######################################################################################################
-    dhaB_dhaT_model = DhaBDhaTModel(transform="log_unif")
+    dhaB_dhaT_model = DhaBDhaTModelActiveLearning(transform="log_unif")
     if rank == 0:
         fitted_info = fitGP(explan_train, respon_train, init_logeta=0*np.ones(NPARAMS+2),
                             lowerb=-np.ones(NPARAMS+2), upperb=np.ones(NPARAMS+2))
@@ -94,15 +99,9 @@ def active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,m
             explan_train_prop = np.concatenate((explan_train,unif_param_prop_full))
 
 
-            # transform unif parameter to generate response data
-            if ds == "log_norm":
-                param_prop = unif_param_2_log_norm(unif_param_prop)
-            else:
-                param_prop = unif_param_prop
-
             # generate data
             try:
-                y_prop = generate_data(param_prop,dhaB_dhaT_model,tol = tol)
+                y_prop = dhaB_dhaT_model.QoI_all_exp(unif_param_prop,tol = tol)
             except TypeError:
                 continue
 
@@ -148,28 +147,29 @@ def active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,m
 
 def main(argv, arc):
     #load file name
-    ds = argv[1]
-    data_file_name = argv[2]
-    max_training_length = int(float(argv[3]))
+    data_file_name = argv[1]
+    max_training_length = int(float(argv[2]))
 
     if len(argv) > 4:
-        ninitial = int(argv[4])
+        ninitial = int(argv[3])
     else:
         ninitial = 100
 
-    explan_train,explan_test,respon_train,respon_test = load_obj("active_learning_data/" + data_file_name)
+    explan_train,explan_test,respon_train,respon_test = load_obj(ROOT_PATH+"/output/active_learning_data/"
+                                                                 + data_file_name)
 
     # train GP
     time1 = time.time()
-    learnt_GP = active_learning_train_GP(ds,explan_train,respon_train,explan_test,respon_test,max_training_length,ninitial)
+    learnt_GP = active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,
+                                         max_training_length,ninitial)
     time2 = time.time()
     if rank == 0:
         print(time2-time1)
         date_string = time.strftime("%Y_%m_%d_%H:%M")
         file_name= 'separableGPtraining' + '_nsamples_'+ str(max_training_length) + '_date_'+date_string
         plt.scatter(range(len(learnt_GP['rmse_array'])),learnt_GP['rmse_array'])
-        plt.savefig('active_learning_results/rsme_' + file_name + '.jpg',bbox_inches='tight')
-        save_obj(learnt_GP,'active_learning_results/'+ file_name)
+        plt.savefig(ROOT_PATH+'/output/active_learning_results/rsme_' + file_name + '.jpg',bbox_inches='tight')
+        save_obj(learnt_GP,ROOT_PATH+'/output/active_learning_results/'+ file_name)
 
 if __name__ == '__main__':
     main(sys.argv, len(sys.argv))
