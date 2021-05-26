@@ -7,5 +7,5 @@ WholeCell/13_PDO_Pathway_Inference/MCMC/output/MCMC_results_data/
 WholeCell/13_PDO_Pathway_Inference/MCMC/output/MCMC_results_plots/
 WholeCell/13_PDO_Pathway_Inference/MCMC/output/MCMC_results_data_quest/
 WholeCell/13_PDO_Pathway_Inference/MCMC/output/MCMC_results_plots_quest/
-WholeCell/13_PDO_Pathway_Inference/ActiveLearning/output/active_learning_data/
+#WholeCell/13_PDO_Pathway_Inference/ActiveLearning/output/active_learning_data/
 WholeCell/13_PDO_Pathway_Inference/ActiveLearning/output/active_learning_results/
