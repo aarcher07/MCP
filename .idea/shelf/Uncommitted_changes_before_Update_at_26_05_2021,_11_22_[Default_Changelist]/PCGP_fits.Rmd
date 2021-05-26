@@ -1,0 +1,57 @@
+```{r}
+library(readr)
+source("/home/aarcher/Downloads/MVGP.R")
+
+directory <- '~/Dropbox/PycharmProjects/MCP/WholeCell/13_PDO_Pathway_Inference/MCMC_fixed_parameters/data/'
+```
+
+```{r}
+filename_list = c('unif_sample_paramspace_len_50_date_2021_03_17_16:57.csv',
+				 'unif_sample_paramspace_len_100_date_2021_03_17_19:58.csv',
+				 'norm_sample_paramspace_len_50_date_2021_03_17_16:11.csv',
+				 'norm_sample_paramspace_len_100_date_2021_03_17_15:48.csv')
+
+for(i in 1:length(filename_list)){
+output  <- as.data.frame(read_csv(paste(directory,"cleaned_params_init_params_",filename_list[i],sep=''), col_names = FALSE))
+input <-  as.data.frame(read_csv(paste(directory,"PCGP_synthetic_data_",filename_list[i],sep=''), col_names = FALSE))
+
+
+smp_size <- floor(0.7 * nrow(output))
+train_ind <- sample.int(n = nrow(output), size = smp_size)
+
+inputtrain = as.matrix(input[train_ind,])
+ftrain = as.matrix(output[train_ind,])
+
+inputtest = as.matrix(input[-train_ind,])
+ftest = as.matrix(output[-train_ind,])
+
+MVGPmodelnorm = MVGPbuild(inputtrain,ftrain)
+
+predmean = matrix(rep(0,ncol(ftest)*nrow(ftest)),ncol=ncol(ftest))
+predLB =  matrix(rep(0,ncol(ftest)*nrow(ftest)),ncol=ncol(ftest))
+predUB =  matrix(rep(0,ncol(ftest)*nrow(ftest)),ncol=ncol(ftest))
+
+for(k in 1:nrow(inputtest)){
+  predinfo = MVGPpred(MVGPmodelnorm50,matrix(inputtest[k,],ncol=ncol(inputtest)))
+  predmean[k,] = predinfo$mean
+  predLB[k,] = predmean[k,]- qnorm(1-0.05/2)*sqrt(predinfo$var)
+  predUB[k,] = predmean[k,]+ qnorm(1-0.05/2)*sqrt(predinfo$var)
+  }
+print(paste('PCGPMethod: Test MSE:',round(mean((predmean-ftest)^2),3),', Coverage:',100*round(mean((predLB<ftest)*(predUB>ftest)),3),'%',sep =''))
+
+
+predmean = matrix(rep(0,ncol(ftrain)*nrow(ftrain)),ncol=ncol(ftrain))
+predLB =  matrix(rep(0,ncol(ftrain)*nrow(ftrain)),ncol=ncol(ftrain))
+predUB =  matrix(rep(0,ncol(ftrain)*nrow(ftrain)),ncol=ncol(ftrain))
+
+for(k in 1:length(inputtrain)){
+  predinfo = MVGPpred(MVGPmodel,as.matrix(inputtrain[k,],ncol=ncol(inputtrain)))
+  predmean[k,] = predinfo$mean
+  predLB[k,] = predmean[k,]- qnorm(1-0.05/2)*sqrt(predinfo$var)
+  predUB[k,] = predmean[k,]+ qnorm(1-0.05/2)*sqrt(predinfo$var)
+}
+
+print(paste('PCGPMethod: Test MSE:',round(mean((predmean-ftrain)^2),3),', Coverage:',100*round(mean((predLB<ftrain)*(predUB>ftrain)),3),'%',sep =''))
+
+}
+```
