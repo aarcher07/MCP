@@ -17,6 +17,19 @@ rank = comm.Get_rank()
 
 def active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,
                              max_training_length,ninitial = 100,tol=1e-7):
+    """
+    Identifies points that minimizes the entropy of the GP and addes the points to the
+    training set
+
+    :param explan_train: Initial explanatory training set of the GP
+    :param respon_train: Initial response training set of the GP
+    :param explan_test: explanatory test set of the GP
+    :param respon_test: response test set of the GP
+    :param max_training_length: maximum size of the trianing set
+    :param ninitial: Number of initial points to seed the optimization to find the minimizing entropy point
+    :param tol: integration tolerance
+    :return: dictionary of training set, response set, final GP, rmse test error over the active learning process
+    """
 
     ######################################################################################################
     ######################################### DO INITIAL FIT #############################################
@@ -141,16 +154,24 @@ def active_learning_train_GP(explan_train,respon_train,explan_test,respon_test,
     if rank == 0:
         dict_data = {'explan_training_set': explan_train,
                      'respon_train': respon_train,
-                     'fitted_info': fitted_info,
+                     'c': fitted_info,
                      'rmse_array': rmse_array}
         return dict_data
 
 def main(argv, arc):
+    """
+    Trains GP with pickle file containing training and test set
+    :param argv[1]: file pickle addressm
+    :param argv[2]: maximum training length
+    :param argv[3]: seed size of optimization search
+    :param arc: number of arguments
+    :return:
+    """
     #load file name
     data_file_name = argv[1]
     max_training_length = int(float(argv[2]))
 
-    if len(argv) > 4:
+    if arc > 4:
         ninitial = int(argv[3])
     else:
         ninitial = 100

@@ -5,31 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="5ae65f53-ace1-4a48-9581-5bcf1d331803" name="Default Changelist" comment="completed packaging. to put on quest for Active Learning.">
-      <change afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/constants.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ActiveLearning/setup.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MCMC/MCMC/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MCMC/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/MCMC/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/active_learning_generate_training_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/active_learning_generate_training_set.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ActiveLearning/active_learning_train_GP.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/active_learning_train_GP.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/build_separable_GP.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/build_separable_GP.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/constants.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/data_gen_funs.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/data_time_series.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/data_time_series_cleaned.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/dhaB_dhaT_model.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/dhaB_dhaT_model_prior.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/dhaB_dhaT_model_bounds.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ActiveLearning/misc_functions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/MCMC.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/MCMC.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/ActiveLearning/ActiveLearning/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/dhaB_dhaT_model_bayesian_funs.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/dhaB_dhaT_model_bayesian_funs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/dhaB_dhaT_model_prior.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/dhaB_dhaT_model_prior.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/prior_constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/MCMC/prior_constants.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/test_MCMC.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/test/test_MCMC.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/test_MCMC_dhaB_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/test/test_dhaB_dhaT_model_bayesian_funs.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MCMC/test_dhaB_dhaT_model_prior.py" beforeDir="false" afterPath="$PROJECT_DIR$/MCMC/test/test_dhaB_dhaT_model_prior.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base_dhaB_dhaT_model/base_dhaB_dhaT_model/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/base_dhaB_dhaT_model/base_dhaB_dhaT_model/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/base_dhaB_dhaT_model/test/tests_dhaB_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/base_dhaB_dhaT_model/test/test_dhaB_dhaT_model.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
