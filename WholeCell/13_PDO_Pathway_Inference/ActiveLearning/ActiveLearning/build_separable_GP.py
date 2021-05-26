@@ -1,20 +1,15 @@
 import numpy as np
-import math
-import matplotlib.pyplot as plt 
-import pickle
 from base_dhaB_dhaT_model.data_set_constants import TIME_EVALS, NPARAMS
-import pandas as pd
-from scipy.integrate import solve_ivp
 from scipy.optimize import minimize
 
 
 def corr(pv1,pv2, eta1):
 	"""
-
-	@param pv1:
-	@param pv2:
-	@param eta1:
-	@return:
+	Parameter correlation matrix (Gaussian kernel)
+	@param pv1: 1st parameter argument n_1 x d matrix. n_1 parameter samples that live in R^d
+	@param pv2: 2nd parameter argument n_2 x d matrix. n_2 parameter samples that live in R^d
+	@param eta1: parameterization of the correlation matrix (lives in R^d)
+	@return: d x d matrix
 	"""
 	K = np.ones((pv1.shape[0],pv2.shape[0]))
 	for dlcv in range(pv1.shape[1]):
@@ -23,9 +18,9 @@ def corr(pv1,pv2, eta1):
 
 def timeSigma(eta2):
 	"""
-
-	@param eta2:
-	@return:
+	Time correlation matrix (Gaussian kernel)
+	@param eta2: parameterization of the correlation matrix (lives in R)
+	@return: |TIME_EVALS| x |TIME_EVALS| matrix
 	"""
 	sigma_f = np.exp(-eta2*np.abs(np.subtract.outer(TIME_EVALS, TIME_EVALS)))
 	return sigma_f
@@ -33,9 +28,9 @@ def timeSigma(eta2):
 
 def varSigma(eta3):
 	"""
-
-	@param eta3:
-	@return:
+	QoI correlation matrix (Gaussian kernel)
+	@param eta3: parameterization of the correlation matrix (lives in R)
+	@return: 3 x 3 matrix
 	"""
 	indices = [1,2,3]
 	sigma_f = np.exp(-eta3*np.abs(np.subtract.outer(indices, indices)))
@@ -43,11 +38,11 @@ def varSigma(eta3):
 
 def MLE(logeta, to, fo):
 	"""
-
-	@param logeta:
-	@param to:
-	@param fo:
-	@return:
+	Generates the MLE hyperparameters of the GP
+	@param logeta: length d + 2 vector
+	@param to: parameter training set (R^{n_1 \times d})
+	@param fo: QoI training set (R^{d*n_1*|TIME_EVALS| })
+	@return: gammahat, sigmahat hyperparameters
 	"""
 	logeta1 = logeta[:NPARAMS]
 	logeta2 = logeta[NPARAMS]
@@ -69,11 +64,11 @@ def MLE(logeta, to, fo):
 
 def negloglik(logeta, t0, f0):
 	"""
-
-	@param logeta:
-	@param t0:
-	@param f0:
-	@return:
+	Computes the likelihood function of the GP
+	@param logeta: length d + 2 vector
+	@param to: parameter training set (R^{n_1 \times d})
+	@param fo: QoI training set (R^{d*n_1*|TIME_EVALS| })
+	@return: gammahat, sigmahat hyperparameters
 	"""
 	n = len(f0)# obtain sigmahat for a given eta
 	logeta1 = logeta[:NPARAMS]
@@ -95,14 +90,15 @@ def fitGP(t_tr, f_tr, init_logeta=0*np.ones(NPARAMS+2),
 		  lowerb=-np.ones(NPARAMS+2), upperb=np.ones(NPARAMS+2),
 		  maxiter = int(10**3)):
 	"""
-
-	@param t_tr:
-	@param f_tr:
-	@param init_logeta:
-	@param lowerb:
-	@param upperb:
-	@param maxiter:
-	@return:
+	Runs the optimization of the GP to optimal parameters, eta1,eta2 and eta3 given the response training and response
+	set
+	@param t_tr: parameter training set (R^{n_1 \times d})
+	@param f_tr: QoI training set (R^{d*n_1*|TIME_EVALS|})
+	@param init_logeta: initial logeta parameters. length d + 2 vector
+	@param lowerb: logeta lower bound for the optimization
+	@param upperb: logeta upper bound for the optimization
+	@param maxiter: maximum number for the optimization
+	@return: dictionary with GP parameters, etahat, and hyperparameters, 'sigmahat', 'gammahat'
 	"""
 	negloglik_log_eta = lambda log_eta: negloglik(log_eta,t_tr, f_tr)
 	log_eta_hat = minimize(negloglik_log_eta, init_logeta, method="L-BFGS-B",
@@ -115,11 +111,11 @@ def fitGP(t_tr, f_tr, init_logeta=0*np.ones(NPARAMS+2),
 def predictGP(fitted_info, t_test, t_tr, f_tr):# obtain the fitted info
 	"""
 
-	@param fitted_info:
-	@param t_test:
-	@param t_tr:
-	@param f_tr:
-	@return:
+	@param fitted_info: dictionary with GP parameters, etahat, and hyperparameters, 'sigmahat', 'gammahat'
+	@param t_test: parameter test set (R^{n_3 \times d})
+	@param t_tr: parameter training set (R^{n_1 \times d})
+	@param f_tr: QoI training set (R^{d*n_1*|TIME_EVALS|})
+	@return: dictionary of predicted mean and variance for t_test
 	"""
 
 	etahat = fitted_info['etahat']
