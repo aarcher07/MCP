@@ -62,10 +62,10 @@ def testdev():
     nsamples = 500
     timeorig = np.logspace(np.log10(mintime), np.log10(fintime), nsamples)
 
-    transform = lambda t, x: dhaB_dhaT_model._sderiv(t, x, params)
+    ds_dev = lambda t, x: dhaB_dhaT_model._sderiv(t, x, params)
     ds_jac = lambda t,x: dhaB_dhaT_model._sderiv_jac_conc_fun(t,x,params)
 
-    sol = solve_ivp(transform, [0, fintime + 1], y0, method ='BDF', jac = ds_jac, t_eval=timeorig,
+    sol = solve_ivp(ds_dev, [0, fintime + 1], y0, method ='BDF', jac = ds_jac, t_eval=timeorig,
                     atol=tol, rtol=tol)
 
     print(sol.message)
