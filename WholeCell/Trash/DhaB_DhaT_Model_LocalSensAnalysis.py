@@ -9,19 +9,7 @@ Editing History:
 - 26/10/20
 '''
 
-import numpy as np
-from scipy.integrate import solve_ivp
 from scipy.constants import *
-import sys
-import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import matplotlib
-import math
-import sympy as sp
-import scipy.sparse as sparse
-import time
-import math
-from numpy.linalg import LinAlgError
 import DhaB_DhaT_Model
 eps = 10**(-5)
 
