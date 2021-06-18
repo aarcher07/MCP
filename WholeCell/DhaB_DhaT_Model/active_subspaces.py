@@ -6,33 +6,18 @@ Editing History:
 - 9/11/20
 """
 
-import numpy as np
 from numpy.linalg import LinAlgError
-from scipy.integrate import solve_ivp
-import time
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-from mpi4py import MPI
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
-import warnings
-import sympy as sp
-import scipy.sparse as sparse
-import os
-import sys
-import pickle
-from skopt.space import Space
-from dhaB_dhaT_model_jac import *
 from active_subspaces_dhaT_dhaB_model import *
 from misc import *
-
 from skopt.sampler import Lhs, Sobol
 from skopt.space import Space
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
 rank = comm.Get_rank()
-
 
 class ActiveSubspaces:
     def __init__(self,jac, nfuncs,funcnames, 

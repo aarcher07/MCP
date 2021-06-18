@@ -48,8 +48,8 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-/WholeCell/DhaB_DhaT_Model/object_oriented/data/
-/WholeCell/DhaB_DhaT_Model/object_oriented/plot/
+/WholeCell/DhaB_DhaT_Model/data/
+/WholeCell/DhaB_DhaT_Model/plot/
 /WholeCell/13_PDO_Pathway_Inference/trash/emulator_MCMC_results_data/
 /WholeCell/13_PDO_Pathway_Inference/trash/emulator_MCMC_results_plots/
 /WholeCell/13_PDO_Pathway_Inference/trash/emulator_data/

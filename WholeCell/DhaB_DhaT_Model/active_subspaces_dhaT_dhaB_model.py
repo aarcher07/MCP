@@ -7,22 +7,11 @@ Editing History:
 - 25/11/20
 """
 
-import numpy as np
-from numpy.linalg import LinAlgError
-from scipy.integrate import solve_ivp
-from mpi4py import MPI
 import matplotlib as mpl
 mpl.rc('text', usetex = True)
 from skopt.space import Space
-import matplotlib.pyplot as plt
-import warnings
-import sympy as sp
-import scipy.sparse as sparse
-import os
-import sys
 from dhaB_dhaT_model_jac import *
-from constants import *
-from misc import * 
+from misc import *
 
 class DhaBDhaTModelJacAS(DhaBDhaTModelJac):
     def __init__(self,start_time,final_time,

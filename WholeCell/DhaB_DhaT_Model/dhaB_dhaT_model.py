@@ -15,14 +15,11 @@ Editing History:
 
 import numpy as np
 from scipy.integrate import solve_ivp
-from scipy.optimize import fsolve
 import scipy.constants as constants
 import sympy as sp
 import scipy.sparse as sparse
-import pdb
 import time
 import matplotlib.pyplot as plt
-from sklearn.metrics import auc
 from constants import HRS_TO_SECS
 
 class DhaBDhaTModel:

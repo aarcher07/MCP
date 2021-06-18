@@ -1,7 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e7fff84e-f103-48f5-a2df-c60418a0856d" name="Default Changelist" comment="" />
+    <list default="true" id="e7fff84e-f103-48f5-a2df-c60418a0856d" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_Ratio_Simulations_Parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_Ratio_Simulations_Parallel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/ReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/ReadMe.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Active_Subspaces_Parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Active_Subspaces_Parallel.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/active_subspaces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces_dhaT_dhaB_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/active_subspaces_dhaT_dhaB_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/as_eigenvalue_plot.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/as_eigenvalue_plot.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/class_inheritance_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/class_inheritance_tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/constants.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_jac.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_jac.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_local_sens_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_local_sens_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/misc.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/misc.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/mpi4pitest.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/mpi4pitest.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/qoi_dhab_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/qoi_dhab_dhaT_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/reduced_qoi.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/reduced_qoi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/step_3_as.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/step_3_as.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/subscript.sh" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/subscript.sh" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,6 +76,12 @@
     <property name="last_opened_file_path" value="$USER_HOME$" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/WholeCell/Trash" />
+      <recent name="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model" />
+    </key>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -31,5 +92,17 @@
       <updated>1622051866216</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
 </project>

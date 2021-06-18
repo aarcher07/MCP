@@ -1,30 +1,11 @@
-import numpy as np
-from numpy.linalg import LinAlgError
-from scipy.integrate import solve_ivp
-import time
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-from mpi4py import MPI
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
-import warnings
-import sympy as sp
-import scipy.sparse as sparse
 import scipy.optimize as opt
-import os
-import sys
-import pickle
-from skopt.space import Space
-from dhaB_dhaT_model_jac import *
-from active_subspaces_dhaT_dhaB_model import *
-from constants import QOI_NAMES
-from misc import generate_folder_name
 from qoi_dhab_dhaT_model import *
-
-from active_subspaces import FUNCS_TO_FILENAMES,FUNCS_TO_NAMES
+from active_subspaces import FUNCS_TO_NAMES
 import seaborn as sns
 import scipy.stats as stats
-from sklearn.utils import resample
 
 class ReducedQoI(QoI):
     def __init__(self, cost_matrices, n_inactive_samples, 

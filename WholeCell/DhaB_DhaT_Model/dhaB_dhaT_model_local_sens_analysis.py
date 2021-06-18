@@ -9,22 +9,17 @@ Editing History:
 - 26/10/20
 '''
 
-import numpy as np
 from scipy.integrate import solve_ivp
-from scipy.constants import *
 import sys
 from constants import *
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
-import math
 import sympy as sp
 import scipy.sparse as sparse
 import time
 import math
-from numpy.linalg import LinAlgError
 from dhaB_dhaT_model import DhaBDhaTModel
 
 

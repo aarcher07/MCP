@@ -6,21 +6,13 @@ Editing History:
 - 1/3/21
 """
 
-import numpy as np
 from numpy.linalg import LinAlgError
-from scipy.integrate import solve_ivp
-import time
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from mpi4py import MPI
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
-import warnings
-import sympy as sp
-import scipy.sparse as sparse
 import os
 import sys
-import pickle
 from constants import *
 
 def generate_folder_name(param_sens_bounds):

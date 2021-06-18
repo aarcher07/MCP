@@ -7,20 +7,10 @@ Editing History:
 - 9/11/20
 """
 
-import numpy as np
-from numpy.linalg import LinAlgError
-from scipy.integrate import solve_ivp
-import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
-import warnings
-import sympy as sp
-import scipy.sparse as sparse
-import os
-import sys
 import pandas as pd
-from constants import VARS_TO_TEX, VARS_TO_UNITS,QOI_NAMES
 from dhaB_dhaT_model_local_sens_analysis import *
 from dhaB_dhaT_model import HRS_TO_SECS
 
