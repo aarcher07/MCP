@@ -27,12 +27,12 @@ class DhaBDhaTModel:
                 cellular_geometry = "rod"):
         """
         Initializes parameters to be used numerial scheme
-        :param params:
-        :param external_volume:
+        :param params: None or dictionary of parameters with keys, PARAMETER_LIST in constants.py
+        :param external_volume: external volume amount
         :param rc: Radius of cell in metres
         :param lc: length of the cell in metres (needed if assuming cells are rods)
         :param rm: Radius of MCP in metres
-        :param ncells: number of cells
+        :param ncells_per_metrecubed: number of cells per m^3
         :param cellular geometry: "sphere" or "rod" (cylinders with hemispherical ends)
         """
         # Integration Parameters
@@ -40,9 +40,8 @@ class DhaBDhaTModel:
         self.rc = rc
         self.lc = lc
         self.rm = rm
-        self.mcp_surface_area =  4*np.pi*(self.rm**2)
-        self.mcp_volume =  (4./3.)*np.pi*(self.rm**3)
-
+        self.mcp_surface_area = 4*np.pi*(self.rm**2)
+        self.mcp_volume = (4./3.)*np.pi*(self.rm**3)
         self.ncells = ncells_per_metrecubed*external_volume
         self.cellular_geometry = cellular_geometry
         self.nvars = 3*3
