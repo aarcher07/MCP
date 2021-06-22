@@ -17,10 +17,14 @@ Edits made by Andre Archer. The edits were taken from maximinLHS Robert Carnell 
 
 import numpy as np
 import matplotlib.pyplot as plt
+from misc import load_obj
+from constants import QOI_NAMES
+from mpl_toolkits.mplot3d import Axes3D
+
 __all__ = ['lhs']
 
 
-def lhs(n, samples=None, criterion=None, weight_matrix = None, iterations=None):
+def lhs(n, bounds= None, samples=None, criterion=None, weight_matrix = None, iterations=None):
     """
     Generate a latin-hypercube design
 
@@ -99,36 +103,39 @@ def lhs(n, samples=None, criterion=None, weight_matrix = None, iterations=None):
 
     if iterations is None:
         iterations = 5
+    if bounds is None:
+        bounds = np.zeros((n,2))
+        bounds[:,1]= 1.
 
     if criterion is not None:
         assert criterion.lower() in ('center', 'c', 'maximin', 'm',
                                      'centermaximin', 'cm'), 'Invalid value for "criterion": {}'.format(criterion)
 
         if criterion.lower() in ('center', 'c'):
-            H = _lhscentered(n, samples)
+            H = _lhscentered(n, bounds, samples)
         elif criterion.lower() in ('maximin', 'm'):
-            H = _lhsmaximin(n, samples, iterations, weight_matrix, 'maximin')
+            H = _lhsmaximin(n, bounds, samples, iterations, weight_matrix, 'maximin')
         elif criterion.lower() in ('centermaximin', 'cm'):
-            H = _lhsmaximin(n, samples, iterations, weight_matrix, 'centermaximin')
+            H = _lhsmaximin(n, bounds, samples, iterations, weight_matrix, 'centermaximin')
+
 
     else:
-        H = _lhsclassic(n, samples)
+        H = _lhsclassic(n, bounds, samples)
 
     return H
 
 
 ################################################################################
 
-def _lhsclassic(n, samples):
-    # Generate the intervals
-    cut = np.linspace(0, 1, samples + 1)
-
+def _lhsclassic(n, bounds, samples):
     # Fill points uniformly in each interval
     u = np.random.rand(samples, n)
-    a = cut[:samples]
-    b = cut[1:samples + 1]
     rdpoints = np.zeros_like(u)
     for j in range(n):
+        # Generate the intervals
+        cut = np.linspace(bounds[j,0], bounds[j,1], samples + 1)
+        a = cut[:samples]
+        b = cut[1:samples + 1]
         rdpoints[:, j] = u[:, j] * (b - a) + a
 
     # Make the random pairings
@@ -142,85 +149,88 @@ def _lhsclassic(n, samples):
 
 ################################################################################
 
-def _lhscentered(n, samples):
-    # Generate the intervals
-    cut = np.linspace(0, 1, samples + 1)
-
+def _lhscentered(n, bounds, samples):
     # Fill points uniformly in each interval
     u = np.random.rand(samples, n)
-    a = cut[:samples]
-    b = cut[1:samples + 1]
-    _center = (a + b) / 2
-
     # Make the random pairings
     H = np.zeros_like(u)
     for j in range(n):
+        # Generate the intervals
+        cut = np.linspace(bounds[j,0], bounds[j,1], samples + 1)
+        a = cut[:samples]
+        b = cut[1:samples + 1]
+        _center = (a + b) / 2
         H[:, j] = np.random.permutation(_center)
-
     return H
 
 
 ################################################################################
 
-def _lhsmaximin(n, samples, iterations, weight_matrix, lhstype,eps=0.001):
+def _lhsmaximin(n, bounds, samples, iterations, weight_matrix, lhstype,t0=0.05,FAC=0.95):
     #initial sample
     if lhstype == 'maximin':
-        Hcandidate = _lhsclassic(n, samples)
+        Hcandidate = _lhsclassic(n, bounds, samples)
     else:
-        Hcandidate = _lhscentered(n, samples)
+        Hcandidate = _lhscentered(n, bounds, samples)
 
     if weight_matrix is None:
         weight_matrix = np.eye(n)
-
-    temp = Hcandidate.copy()
-    minDist = np.min(_pdist(Hcandidate,weight_matrix))
+    min_dist = np.min(_pdist(Hcandidate,weight_matrix))
 
     # Maximize the minimum distance between points using point exchange
+    min_dist_array = []
+    t = t0
     for iter in range(iterations):
-        for j in range(n):
-            res = np.zeros((int(samples * (samples - 1) / 2), 4))
-            counter = 0
-            for i in range(samples-1):
-                for m in range(i+1,samples):
-                    # swap
-                    temp[i,j] = Hcandidate[m, j]
-                    temp[m,j] = Hcandidate[i, j]
-                    res[counter, 0] = i
-                    res[counter, 1] = m
-                    res[counter, 2] = j
-                    res[counter, 3] = np.min(_pdist(temp,weight_matrix))
+        # random sample
+        j = np.random.randint(0,n)
+        i,m = np.random.choice(range(samples),size=2,replace=False)
 
-                    #swap back
-                    temp[i,j] = Hcandidate[i, j]
-                    temp[m,j] = Hcandidate[m, j]
-                    counter = counter + 1
-            indmax = np.argmax(res[:,3])
-            #make the swap
-            temp[int(res[indmax, 0]), int(res[indmax, 2])] = Hcandidate[int(res[indmax, 1]), int(res[indmax, 2])]
-            temp[int(res[indmax, 1]), int(res[indmax, 2])] = Hcandidate[int(res[indmax, 0]), int(res[indmax, 2])]
-            if j < 2:
-                plt.scatter(Hcandidate[:,0],Hcandidate[:,1],c="black")
-                plt.scatter(Hcandidate[int(res[indmax, 1]),:][0], Hcandidate[int(res[indmax, 1]),:][1],c="blue")
-                plt.scatter(Hcandidate[int(res[indmax, 0]),:][0], Hcandidate[int(res[indmax, 0]),:][1],c="blue")
-                plt.scatter(temp[int(res[indmax, 0]),:][0],temp[int(res[indmax, 0]),:][1],c="red", marker="^")
-                plt.scatter(temp[int(res[indmax, 1]),:][0],temp[int(res[indmax, 1]),:][1],c="red", marker="^")
-                plt.show()
+        # swap
+        temp_m_j = Hcandidate[m, j]
+        temp_i_j = Hcandidate[i, j]
+        Hcandidate[i,j] = temp_m_j
+        Hcandidate[m,j] = temp_i_j
+
+        #calculate new min distance
+        temp_min_dist = np.min(_pdist(Hcandidate,weight_matrix))
+        # calculate acceptance probability
+        u = min(np.exp(-(min_dist-temp_min_dist)/t),1)
+
+        print(temp_min_dist)
+        print(min_dist)
+        print(u)
+
+        # acceptance or rejection
+        # temp update
+        if u > np.random.uniform(size=1)[0]:
+            min_dist = temp_min_dist
+            t = t*FAC
+        else:
+            Hcandidate[i, j] = temp_i_j
+            Hcandidate[m, j] = temp_m_j
+        min_dist_array.append(min_dist)
 
         print(iter)
-        print(minDist)
-        temp_min_dist = np.min(_pdist(temp,weight_matrix))
-        print(temp_min_dist)
+    if Hcandidate.shape[1] >= 2:
+        plt.scatter(Hcandidate[:,0],Hcandidate[:,1])
+        plt.show()
 
-        #break conditions
-        if temp_min_dist < minDist:
-            print("\tstopped because no changes improved minimum distance\n")
-            return Hcandidate
-        if temp_min_dist < (1 + eps) * minDist:
-            print("\tstopped because the minimum improvement was not reached\n")
-            return temp
-        else:
-            minDist = temp_min_dist
-            Hcandidate = temp.copy()
+    y = np.matmul(weight_matrix.T, Hcandidate.T).T
+    print(y.shape)
+    if y.shape[1] == 1:
+        plt.scatter(y[:, 0], [0]*y.shape[0])
+        plt.show()
+    elif y.shape[1] == 2:
+        plt.scatter(y[:,0],y[:,1])
+        plt.show()
+    elif y.shape[1] == 3:
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.scatter(y[:,0],y[:,1],y[:,2])
+        plt.show()
+
+    plt.plot(min_dist_array)
+    plt.show()
     return Hcandidate
 
 
@@ -275,4 +285,19 @@ def _pdist(x,weight_matrix):
     return np.array(d)
 
 if __name__ == '__main__':
-    print(lhs(10,100,'maximin', iterations=100).shape)
+    print(lhs(2,samples=20,criterion='maximin', iterations=int(1e3),
+              weight_matrix=np.array([[0.7,0.3]]).T).shape)
+
+    print(lhs(3,samples=100,criterion='maximin', iterations=int(1e3),
+              weight_matrix=np.array([[0.7,0.3,0.1],[0.1,0.0,-0.7]]).T).shape)
+
+    # try with the active subspace matrix
+    pickle_data = load_obj("data/1:3/log10/2021_05_07_10:55/sampling_rsampling_N_1000")
+    cost_mat = pickle_data['FUNCTION_RESULTS']['FINAL_COST_MATRIX'][QOI_NAMES[0]]
+    eigs, eigvals = np.linalg.eigh(cost_mat)
+    eigenvalues_QoI = np.flip(eigs)
+    eigenvectors_QoI = np.flip(eigvals, axis=1)
+    print(100*np.cumsum(eigenvalues_QoI)/np.sum(eigenvalues_QoI))
+    W1 = eigenvectors_QoI[:, :3]
+    print(lhs(W1.shape[0],bounds = np.array([[-1,1] for i in range(W1.shape[0])]), samples=100,criterion='maximin',
+              iterations=int(1e4),weight_matrix=W1).shape)

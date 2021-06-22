@@ -14,6 +14,7 @@ mpl.rcParams['text.latex.preamble'] = r'\usepackage{amsmath}' #for \text command
 import os
 import sys
 from constants import *
+import pickle
 
 def generate_folder_name(param_sens_bounds):
     params_names = param_sens_bounds.keys()
@@ -169,4 +170,24 @@ def unif_param_to_transform_params(params_sens,transform):
         params[param_name] = param_trans
     return params
 
+def load_obj(name):
+    """
+    Load a pickle file. Taken from
+    https://stackoverflow.com/questions/19201290/how-to-save-a-dictionary-to-a-file
+    :param name: Name of file
+    :return: the file inside the pickle
+    """
+    with open(name + '.pkl', 'rb') as f:
+        return pickle.load(f)
 
+
+def save_obj(obj, name):
+    """
+    Save a pickle file. Taken from
+    https://stackoverflow.com/questions/19201290/how-to-save-a-dictionary-to-a-file
+
+    :param  obj: object to save
+            name: Name of file
+    """
+    with open(name + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
