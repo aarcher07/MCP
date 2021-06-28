@@ -17,7 +17,7 @@ def test_devs():
                 'KmDhaBG': 10**(0.71152905) ,
                 'VmaxfDhaT': 10**(2.85561206),
                 'KmDhaTH': 10**(0.69665821),
-                'VmaxfGlpK':10**(1.99560497) ,
+                'VmaxfGlpK': 10**(1.99560497) ,
                 'KmGlpKG': 10**(-1.24867452)}
 
     init_conds={'G_CYTO_INIT': 0.,
@@ -153,4 +153,4 @@ def test_QoI():
 
 if __name__ == '__main__':
     test_devs()
-    test_QoI()
+    #test_QoI()
