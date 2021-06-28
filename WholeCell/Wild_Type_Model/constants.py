@@ -13,9 +13,12 @@ HRS_TO_SECS = 60*60
 MODEL_PARAMETER_LIST = ['PermMCPPropanediol','PermMCPPropionaldehyde','PermMCPPropanol','PermMCPPropionyl','PermMCPPropionate',
                         'nmcps',
                         'PermCellPropanediol', 'PermCellPropionaldehyde', 'PermCellPropanol', 'PermCellPropionyl','PermCellPropionate'
-                        'VmaxfCDE', 'KmCDEPropanediol',
-                        'VmaxfPQf', 'KmPQfPropionaldehyde',
-                        'VmaxfPQr', 'KmPQfPropanol', 'KmPQfPropionyl']
+                        'VmaxCDEf', 'KmCDEPropanediol',
+                        'VmaxPf', 'KmPfPropionaldehyde',
+                        'VmaxPr', 'KmPrPropionyl',
+                        'VmaxQf', 'KmPfPropionaldehyde',
+                        'VmaxQr', 'KmPfPropanol',
+                        'VmaxQf', 'KmLPropionyl']
 
 
 
