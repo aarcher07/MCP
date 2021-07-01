@@ -62,7 +62,7 @@ def main(argv, arc):
     enz_ratio_name = argv[1]
     
     # initialize variables
-    transform = 'mixed'
+    transform = argv[1]
     start_time = (10**(-15))
     final_time = 72*HRS_TO_SECS
     integration_tol = 1e-6
@@ -81,8 +81,6 @@ def main(argv, arc):
                           'G_EXT_INIT': 200,
                           'H_EXT_INIT': 0,
                           'P_EXT_INIT': 0}
-
-
 
     sample_space = Space([(-1.,1.) for _ in range(len(PARAM_SENS_MIXED_BOUNDS))])
     params_unif = {key:val for key,val in zip(PARAM_SENS_MIXED_BOUNDS.keys(), sample_space.rvs(1)[0])}

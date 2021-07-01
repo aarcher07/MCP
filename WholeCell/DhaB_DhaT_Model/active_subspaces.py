@@ -14,6 +14,7 @@ from active_subspaces_dhaT_dhaB_model import *
 from misc import *
 from skopt.sampler import Lhs, Sobol
 from skopt.space import Space
+from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
 size = comm.Get_size()
@@ -172,7 +173,7 @@ def dhaB_dhaT_model(argv, arc):
     # get inputs
     enz_ratio_name = argv[1]
     niters = int(float(argv[2]))
-    sampling =  argv[3]
+    sampling = argv[3]
     threshold = float(argv[4])
     # initialize variables
     transform = 'log10'
@@ -205,7 +206,8 @@ def dhaB_dhaT_model(argv, arc):
         return dhaB_dhaT_model_jacobian_as.jac_subset(param_sens_dict) 
 
     # create object to run active subspaces
-    as_dhaB_dhaT_mod = ActiveSubspaces(dhaB_dhaT_jac, 3, QOI_NAMES, len(param_sens_list),niters=niters, sampling = sampling)
+    as_dhaB_dhaT_mod = ActiveSubspaces(dhaB_dhaT_jac, 3, QOI_NAMES, len(param_sens_list),
+                                       niters=niters, sampling = sampling)
 
     # run integration
     start_time = time.time()

@@ -24,141 +24,194 @@ from mpl_toolkits.mplot3d import Axes3D
 __all__ = ['lhs']
 
 
-def lhs(n, bounds= None, samples=None, criterion=None, weight_matrix = None, iterations=None):
+def lhs(n, nsamples, **kwargs):
     """
     Generate a latin-hypercube design
 
-    Parameters
-    ----------
-    n : int
-        The number of factors to generate samples for
-
-    Optional
-    --------
-    samples : int
-        The number of samples to generate for each factor (Default: n)
-    criterion : str
+    @param n : int
+        The number of factors to generate nsamples for
+    @param nsamples:
+        the number of samples
+    @param criterion : str
         Allowable values are "center" or "c", "maximin" or "m",
         "centermaximin" or "cm", and "correlation" or "corr". If no value
         given, the design is simply randomized.
-    weight_matrix : n x n numpy array
+    @param niters: int
+        number of iterations until FLAG check
+        (Default: 10^2)
+    @param bounds: n x 2 numpy array
+        end points for each factor
+        (Default: [0,1]^n)
+    @param weight_matrix : n x k numpy array
         Weighs the factors appropriately in the maximin optimization
-    iterations : int
-        The number of iterations in the maximin and correlations algorithms
+        (Default: identity matrix)
+    @param t0: float
+        initial temperature
+        (Default: 0.9).
+    @param FAC: float
+        multiplicative factor to reduce temperature
         (Default: 5).
-
-    Returns
-    -------
-    H : 2d-array
-        An n-by-samples design matrix that has been normalized so factor values
+    @param plot: bool
+        boolean to generate plots
+        (Default: False).
+    @param maxtotaliters : int
+        Maximum number of iterations
+        (Default: 10^4).
+    @return H : 2d-array
+        An n-by-nsamples design matrix that has been normalized so factor values
         are uniformly spaced between zero and one.
-
-    Example
-    -------
-    A 3-factor design (defaults to 3 samples)::
-
-        >>> lhs(3)
-        array([[ 0.40069325,  0.08118402,  0.69763298],
-               [ 0.19524568,  0.41383587,  0.29947106],
-               [ 0.85341601,  0.75460699,  0.360024  ]])
-
-    A 4-factor design with 6 samples::
-
-        >>> lhs(4, samples=6)
-        array([[ 0.27226812,  0.02811327,  0.62792445,  0.91988196],
-               [ 0.76945538,  0.43501682,  0.01107457,  0.09583358],
-               [ 0.45702981,  0.76073773,  0.90245401,  0.18773015],
-               [ 0.99342115,  0.85814198,  0.16996665,  0.65069309],
-               [ 0.63092013,  0.22148567,  0.33616859,  0.36332478],
-               [ 0.05276917,  0.5819198 ,  0.67194243,  0.78703262]])
-
-    A 2-factor design with 5 centered samples::
-
-        >>> lhs(2, samples=5, criterion='center')
-        array([[ 0.3,  0.5],
-               [ 0.7,  0.9],
-               [ 0.1,  0.3],
-               [ 0.9,  0.1],
-               [ 0.5,  0.7]])
-
-    A 3-factor design with 4 samples where the minimum distance between
-    all samples has been maximized::
-
-        >>> lhs(3, samples=4, criterion='maximin')
-        array([[ 0.02642564,  0.55576963,  0.50261649],
-               [ 0.51606589,  0.88933259,  0.34040838],
-               [ 0.98431735,  0.0380364 ,  0.01621717],
-               [ 0.40414671,  0.33339132,  0.84845707]])
-
-    A 4-factor design with 5 samples where the samples are as uncorrelated
-    as possible (within 10 iterations)::
-
-        >>> lhs(4, samples=5, criterion='correlate', iterations=10)
-
     """
     H = None
 
-    if samples is None:
-        samples = n
+    if 'criterion' in kwargs.keys():
+        criterion = kwargs['criterion']
+    else:
+        criterion = None
 
-    if iterations is None:
-        iterations = 5
-    if bounds is None:
+    if 'niters' in kwargs.keys():
+        niters = kwargs['niters']
+    else:
+        niters = 1e2
+
+    if 'bounds' in kwargs.keys():
+        bounds = kwargs['bounds']
+    else:
         bounds = np.zeros((n,2))
         bounds[:,1]= 1.
+
+    if 'weight_matrix' in kwargs.keys():
+        weight_matrix = kwargs['weight_matrix']
+    else:
+        weight_matrix = np.eye(n)
+
+    if criterion.lower() in ('maximin', 'm','centermaximin', 'cm'):
+        if 't0' in kwargs.keys():
+            t0 = kwargs['t0']
+        else:
+            t0 = 0.9
+
+        if 'FAC' in kwargs.keys():
+            FAC = kwargs['FAC']
+        else:
+            FAC = 0.95
+
+        if 'plot' in kwargs.keys():
+            plot = kwargs['plot']
+        else:
+            plot = False
+
+        if 'maxtotaliters' in kwargs.keys():
+            maxtotaliters = kwargs['maxtotaliters']
+        else:
+            maxtotaliters = 1e4
 
     if criterion is not None:
         assert criterion.lower() in ('center', 'c', 'maximin', 'm',
                                      'centermaximin', 'cm'), 'Invalid value for "criterion": {}'.format(criterion)
 
         if criterion.lower() in ('center', 'c'):
-            H = _lhscentered(n, bounds, samples)
+            H = _lhscentered(n, nsamples, bounds)
         elif criterion.lower() in ('maximin', 'm'):
-            H = _lhsmaximin(n, bounds, samples, iterations, weight_matrix, 'maximin')
+            H = _lhsmaximin(n, nsamples, bounds, niters, weight_matrix, 'maximin',t0, FAC, maxtotaliters,plot)
         elif criterion.lower() in ('centermaximin', 'cm'):
-            H = _lhsmaximin(n, bounds, samples, iterations, weight_matrix, 'centermaximin')
-
-
+            H = _lhsmaximin(n, nsamples, bounds, niters, weight_matrix, 'centermaximin',t0, FAC, maxtotaliters,plot)
     else:
-        H = _lhsclassic(n, bounds, samples)
+        H = _lhsclassic(n, nsamples, bounds)
 
+    if plot:
+        if H.shape[1] == 2:
+            plt.scatter(H[:, 0], H[:, 1])
+            plt.title("Plot of the two dimensional input space")
+            plt.xlabel("x1")
+            plt.ylabel("x2")
+            plt.show()
+        elif H.shape[1] == 3:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+            ax.scatter(H[:, 0], H[:, 1], H[:, 2])
+            plt.title("Plot of the three dimensional input space")
+            ax.set_xlabel("x1")
+            ax.set_ylabel("x2")
+            ax.set_zlabel("x3")
+            plt.show()
+
+        y = np.matmul(weight_matrix.T, H.T).T
+        if y.shape[1] == 1:
+            plt.scatter(y[:, 0], [0] * y.shape[0])
+            plt.title("Plot of the coordinate points in the one dimensional active subspace")
+            plt.xlabel("y1")
+            plt.show()
+        elif y.shape[1] == 2:
+            plt.scatter(y[:, 0], y[:, 1])
+            plt.title("Plot of the coordinate points in the two dimensional active subspace")
+            plt.xlabel("y1")
+            plt.ylabel("y2")
+            plt.show()
+        elif y.shape[1] == 3:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+            ax.scatter(y[:, 0], y[:, 1], y[:, 2])
+            plt.title("Plot of the coordinate points in the three dimensional active subspace")
+            ax.set_xlabel("y1")
+            ax.set_ylabel("y2")
+            ax.set_zlabel("y3")
+            plt.show()
     return H
 
 
 ################################################################################
 
-def _lhsclassic(n, bounds, samples):
+def _lhsclassic(n, nsamples, bounds):
+    """
+    Generates Latin hypercube nsamples of R^n points
+    @param n: int
+        dimensions of points
+    @param nsamples: int
+        number of points
+    @param bounds: n x 2 numpy array
+        bounds of region
+    @return H: nsamples x n matrix of points
+    """
     # Fill points uniformly in each interval
-    u = np.random.rand(samples, n)
+    u = np.random.rand(nsamples, n)
     rdpoints = np.zeros_like(u)
     for j in range(n):
         # Generate the intervals
-        cut = np.linspace(bounds[j,0], bounds[j,1], samples + 1)
-        a = cut[:samples]
-        b = cut[1:samples + 1]
+        cut = np.linspace(bounds[j,0], bounds[j,1], nsamples + 1)
+        a = cut[:nsamples]
+        b = cut[1:nsamples + 1]
         rdpoints[:, j] = u[:, j] * (b - a) + a
 
     # Make the random pairings
     H = np.zeros_like(rdpoints)
     for j in range(n):
-        order = np.random.permutation(range(samples))
+        order = np.random.permutation(range(nsamples))
         H[:, j] = rdpoints[order, j]
-
     return H
 
 
 ################################################################################
 
-def _lhscentered(n, bounds, samples):
+def _lhscentered(n, nsamples, bounds):
+    """
+    Generates Latin hypercube nsamples of R^n points without random noise
+    @param n: int
+        dimensions of points
+    @param nsamples: int
+        number of points
+    @param bounds: n x 2 numpy array
+        bounds of region
+    @return H: nsamples x n matrix of points
+    """
     # Fill points uniformly in each interval
-    u = np.random.rand(samples, n)
+    u = np.random.rand(nsamples, n)
     # Make the random pairings
     H = np.zeros_like(u)
     for j in range(n):
         # Generate the intervals
-        cut = np.linspace(bounds[j,0], bounds[j,1], samples + 1)
-        a = cut[:samples]
-        b = cut[1:samples + 1]
+        cut = np.linspace(bounds[j,0], bounds[j,1], nsamples + 1)
+        a = cut[:nsamples]
+        b = cut[1:nsamples + 1]
         _center = (a + b) / 2
         H[:, j] = np.random.permutation(_center)
     return H
@@ -166,24 +219,58 @@ def _lhscentered(n, bounds, samples):
 
 ################################################################################
 
-def _lhsmaximin(n, bounds, samples, iterations, weight_matrix, lhstype,t0=0.05,FAC=0.95):
+def _lhsmaximin(n, nsamples, bounds, niters, weight_matrix, lhstype='maximin',
+                t0=0.05,FAC=0.95,maxiters = 1e5, plot=False):
+    """
+    Generates Latin hypercube nsamples of R^n points without random noise
+    @param n: int
+        dimensions of the points
+    @param nsamples: int
+        number of points
+    @param bounds: n x 2 numpy array
+        end points for each factor
+    @param niters: int
+        number of iterations until FLAG check
+    @param weight_matrix:
+        Weighs the factors appropriately in the maximin optimization
+    @param lhstype: str
+        'maximin' or 'centermaximin'
+    @param t0: float
+        initial temperature
+        (Default: 0.9).
+    @param FAC: float
+        multiplicative factor to reduce temperature
+        (Default: 5).
+    @param plot: bool
+        boolean to generate plots
+        (Default: 5).
+    @param maxtotaliters: int
+        Maximum number of iterations
+        (Default: 5).
+    @return:
+    """
     #initial sample
     if lhstype == 'maximin':
-        Hcandidate = _lhsclassic(n, bounds, samples)
+        Hcandidate = _lhsclassic(n, nsamples, bounds)
     else:
-        Hcandidate = _lhscentered(n, bounds, samples)
+        Hcandidate = _lhscentered(n, nsamples, bounds)
 
-    if weight_matrix is None:
-        weight_matrix = np.eye(n)
     min_dist = np.min(_pdist(Hcandidate,weight_matrix))
+    curr_dist = min_dist
 
     # Maximize the minimum distance between points using point exchange
+    Hbest = Hcandidate
     min_dist_array = []
+    trans_dist_array = []
+
     t = t0
-    for iter in range(iterations):
+    FLAG = 0
+    iter = 0
+    totaliters = 0
+    while( iter < niters):
         # random sample
         j = np.random.randint(0,n)
-        i,m = np.random.choice(range(samples),size=2,replace=False)
+        i,m = np.random.choice(range(nsamples),size=2,replace=False)
 
         # swap
         temp_m_j = Hcandidate[m, j]
@@ -194,44 +281,45 @@ def _lhsmaximin(n, bounds, samples, iterations, weight_matrix, lhstype,t0=0.05,F
         #calculate new min distance
         temp_min_dist = np.min(_pdist(Hcandidate,weight_matrix))
         # calculate acceptance probability
-        u = min(np.exp(-(min_dist-temp_min_dist)/t),1)
+        u = min(np.exp(-(curr_dist-temp_min_dist)/t),1)
 
-        print(temp_min_dist)
-        print(min_dist)
-        print(u)
-
-        # acceptance or rejection
-        # temp update
+        # acceptance or rejection update
         if u > np.random.uniform(size=1)[0]:
-            min_dist = temp_min_dist
-            t = t*FAC
+            FLAG = 1
+            t = t * FAC
+            curr_dist = temp_min_dist
         else:
             Hcandidate[i, j] = temp_i_j
             Hcandidate[m, j] = temp_m_j
+
+        if min_dist < temp_min_dist:
+            Hbest = Hcandidate
+            min_dist = temp_min_dist
+            iter = 1
+        else:
+            iter += 1
+
+        # check FLAG and number of iterations
+        # temp update -- possibly successful but stagnated walk
+        if iter == niters and FLAG:
+            t = t*FAC
+            iter = 1
+            FLAG = 0
+
+        trans_dist_array.append(curr_dist)
         min_dist_array.append(min_dist)
+        totaliters +=1
+        if maxiters < totaliters:
+            break
 
-        print(iter)
-    if Hcandidate.shape[1] >= 2:
-        plt.scatter(Hcandidate[:,0],Hcandidate[:,1])
-        plt.show()
 
-    y = np.matmul(weight_matrix.T, Hcandidate.T).T
-    print(y.shape)
-    if y.shape[1] == 1:
-        plt.scatter(y[:, 0], [0]*y.shape[0])
+    if plot:
+        plt.plot(min_dist_array)
+        plt.title("Maximum minimum distance during random walk")
+        plt.ylabel("Minimum distance between points")
+        plt.xlabel("Step index")
         plt.show()
-    elif y.shape[1] == 2:
-        plt.scatter(y[:,0],y[:,1])
-        plt.show()
-    elif y.shape[1] == 3:
-        fig = plt.figure()
-        ax = Axes3D(fig)
-        ax.scatter(y[:,0],y[:,1],y[:,2])
-        plt.show()
-
-    plt.plot(min_dist_array)
-    plt.show()
-    return Hcandidate
+    return Hbest
 
 
 ################################################################################
@@ -239,33 +327,14 @@ def _lhsmaximin(n, bounds, samples, iterations, weight_matrix, lhstype,t0=0.05,F
 def _pdist(x,weight_matrix):
     """
     Calculate the pair-wise point distances of a matrix
-
-    Parameters
-    ----------
-    x : 2d-array
+    @param x: 2d-array
         An m-by-n array of scalars, where there are m points in n dimensions.
-    weight_matrix : 2d-array
+    @param weight_matrix : 2d-array
         An n-by-k matrix
-    Returns
-    -------
-    d : array
+    @return d: array
         A 1-by-b array of scalars, where b = m*(m - 1)/2. This array contains
         all the pair-wise point distances, arranged in the order (1, 0),
         (2, 0), ..., (m-1, 0), (2, 1), ..., (m-1, 1), ..., (m-1, m-2).
-
-    Examples
-    --------
-    ::
-
-        >>> x = np.array([[0.1629447, 0.8616334],
-        ...               [0.5811584, 0.3826752],
-        ...               [0.2270954, 0.4442068],
-        ...               [0.7670017, 0.7264718],
-        ...               [0.8253975, 0.1937736]])
-        >>> _pdist(x)
-        array([ 0.6358488,  0.4223272,  0.6189940,  0.9406808,  0.3593699,
-                0.3908118,  0.3087661,  0.6092392,  0.6486001,  0.5358894])
-
     """
 
     x = np.atleast_2d(x)
@@ -285,19 +354,36 @@ def _pdist(x,weight_matrix):
     return np.array(d)
 
 if __name__ == '__main__':
-    print(lhs(2,samples=20,criterion='maximin', iterations=int(1e3),
-              weight_matrix=np.array([[0.7,0.3]]).T).shape)
+    lhs(2,100,criterion='maximin', niters=int(1e2), FAC=0.9, plot=True,maxtotaliters=1e4)
+    lhs(3,100,criterion='maximin', iterations=int(1e2), FAC=0.9, plot=True)
 
-    print(lhs(3,samples=100,criterion='maximin', iterations=int(1e3),
-              weight_matrix=np.array([[0.7,0.3,0.1],[0.1,0.0,-0.7]]).T).shape)
+
+    lhs(2,20,criterion='maximin', iterations=int(5e2),weight_matrix=np.array([[0.7,0.3]]).T, plot=True)
+
+    lhs(3,100,criterion='maximin', iterations=int(5e2),
+        weight_matrix=np.array([[0.7,0.3,0.1],[0.1,0.0,-0.7]]).T, plot=True)
 
     # try with the active subspace matrix
     pickle_data = load_obj("data/1:3/log10/2021_05_07_10:55/sampling_rsampling_N_1000")
+
+    # glycerol after 5 hrs
+    cost_mat = pickle_data['FUNCTION_RESULTS']['FINAL_COST_MATRIX'][QOI_NAMES[1]]
+    eigs, eigvals = np.linalg.eigh(cost_mat)
+    eigenvalues_QoI = np.flip(eigs)
+    eigenvectors_QoI = np.flip(eigvals, axis=1)
+    print(100*np.cumsum(eigenvalues_QoI)/np.sum(eigenvalues_QoI))
+    W1 = eigenvectors_QoI[:, :2]
+
+    lhs(W1.shape[0], 100, bounds = np.array([[-1,1] for i in range(W1.shape[0])]), criterion='maximin',
+        niters=int(1e2),weight_matrix=W1, plot=True)
+
+    # maximum 3-HPA
     cost_mat = pickle_data['FUNCTION_RESULTS']['FINAL_COST_MATRIX'][QOI_NAMES[0]]
     eigs, eigvals = np.linalg.eigh(cost_mat)
     eigenvalues_QoI = np.flip(eigs)
     eigenvectors_QoI = np.flip(eigvals, axis=1)
     print(100*np.cumsum(eigenvalues_QoI)/np.sum(eigenvalues_QoI))
     W1 = eigenvectors_QoI[:, :3]
-    print(lhs(W1.shape[0],bounds = np.array([[-1,1] for i in range(W1.shape[0])]), samples=100,criterion='maximin',
-              iterations=int(1e4),weight_matrix=W1).shape)
+
+    lhs(W1.shape[0],100,bounds = np.array([[-1,1] for i in range(W1.shape[0])]),criterion='maximin',
+        niters=int(1e2),weight_matrix=W1, plot=True)

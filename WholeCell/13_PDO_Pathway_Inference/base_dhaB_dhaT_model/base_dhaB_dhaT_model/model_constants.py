@@ -6,6 +6,7 @@ Editing History:
 - 1/3/21
 """
 
+
 import numpy as np
 import pandas as pd
 
@@ -16,7 +17,7 @@ MODEL_PARAMETER_LIST = ['cellperGlyMass',
                   'PermCellGlycerol','PermCellPDO','PermCell3HPA',
                   'VmaxfDhaB', 'KmDhaBG', #'KmDhaBH',
                   'VmaxfDhaT','KmDhaTH',
-                  'VmaxfGlpK','KmGlpKG']
+                  'VmaxfGlpK','KmGlpKG', "ncells"]
 
 QoI_PARAMETER_LIST = ['scalar', 'cellperGlyMass',
                         'PermCellGlycerol','PermCellPDO','PermCell3HPA',
@@ -54,4 +55,3 @@ VARS_TO_UNITS = {'scalar': '',
                 'KmDhaTH': 'mM',
                 'VmaxfGlpK': 'mM/s',
                 'KmGlpKG': 'mM'}
-

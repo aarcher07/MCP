@@ -37,6 +37,7 @@ class DhaBDhaTModel:
         self.cell_volume = (4*np.pi/3)*(self.rc)**3 + (np.pi)*(self.lc - 2*self.rc)*((self.rc)**2)
         self.cell_surface_area = 2*np.pi*self.rc*self.lc
         self.nparams_sens = len(MODEL_PARAMETER_LIST)
+        self.t_prev = 0
 
         # differential equation parameters
         self._set_param_sp_symbols()
@@ -89,8 +90,10 @@ class DhaBDhaTModel:
         #cell growth
         d[6] =  (-params['KmGlpKG']*x[6] - x[6]*x[0] + sp.sqrt(4*params['KmGlpKG']*params['VmaxfGlpK']*params['cellperGlyMass']*x[6]*x[0] +(params['KmGlpKG']*x[6]+x[6]*x[0])**2 ))/(2*params['KmGlpKG'])
         #params['VmaxfGlpK']*ratio*x[0]/(params['KmGlpKG'] + ratio*x[0]) #params['maxGrowthRate'] * x[3] /(params['saturationConstant'] + x[3])
-        ratio = 1/(1+d[6]/x[6])
-        
+        ratio = 1/(1+ d[6]*(t-self.t_prev)/x[6])
+        print(ratio)
+        print(self.t_prev)
+        self.t_prev = t
 
         ###################################################################################
         ################################# cytosol reactions ###############################
@@ -118,7 +121,7 @@ class DhaBDhaTModel:
         #####################################################################################
         d[3] = x[-1] * self.cell_surface_area * PermCellGlycerol * (ratio*x[3 - n_compounds_cell] - x[3]) 
         d[4] = x[-1] * self.cell_surface_area * PermCell3HPA * (ratio*x[4 - n_compounds_cell] - x[4]) 
-        d[5] = x[-1] * self.cell_surface_area * PermCellPDO * (ratio*x[5 - n_compounds_cell] - x[5]) 
+        d[5] = x[-1] * self.cell_surface_area * PermCellPDO * (ratio*x[5 - n_compounds_cell] - x[5])
         return d
 
     def _set_symbolic_sderiv(self):

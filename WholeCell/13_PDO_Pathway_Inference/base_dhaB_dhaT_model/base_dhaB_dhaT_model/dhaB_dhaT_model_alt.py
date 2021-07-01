@@ -19,11 +19,12 @@ from .model_constants import *
 from .data_set_constants import *
 from scipy.integrate import solve_ivp
 
-class DhaBDhaTModel:
+class DhaBDhaTModelAlt:
 
     def __init__(self, rc = 0.375e-6, lc = 2.47e-6, external_volume = 0.002):
         """
         Initializes parameters to be used numerial scheme
+        :param ncells_per_metrecubed: number of cells per metrecubed at any given time during experiment
         :param rc: Radius of cell in metres
         :param lc: length of the cell in metres (needed if assuming cells are rods)
         :param external_volume: external volume containing cells in metres^3
@@ -32,12 +33,11 @@ class DhaBDhaTModel:
         self.rc = rc
         self.lc = lc
         self.external_volume = external_volume
-        self.nvars = 2*3 + 1
+        self.nvars = 2*3
 
         self.cell_volume = (4*np.pi/3)*(self.rc)**3 + (np.pi)*(self.lc - 2*self.rc)*((self.rc)**2)
         self.cell_surface_area = 2*np.pi*self.rc*self.lc
         self.nparams_sens = len(MODEL_PARAMETER_LIST)
-        self.t_prev = 0
 
         # differential equation parameters
         self._set_param_sp_symbols()
@@ -87,11 +87,11 @@ class DhaBDhaTModel:
         d = np.zeros((len(x))).tolist()  # convert to list to allow use of symbolic derivatives
         n_compounds_cell = 3
 
-        #cell growth
-        d[6] =  (-params['KmGlpKG']*x[6] - x[6]*x[0] + sp.sqrt(4*params['KmGlpKG']*params['VmaxfGlpK']*params['cellperGlyMass']*x[6]*x[0] +(params['KmGlpKG']*x[6]+x[6]*x[0])**2 ))/(2*params['KmGlpKG'])
-        #params['VmaxfGlpK']*ratio*x[0]/(params['KmGlpKG'] + ratio*x[0]) #params['maxGrowthRate'] * x[3] /(params['saturationConstant'] + x[3])
-        ratio = 1/(1+ d[6]*(t-self.t_prev)/x[6])
-        self.t_prev = t
+        # cell growth
+        # differential equation parameters
+        ncells = params['ncells']
+        ratio = 1
+
 
         ###################################################################################
         ################################# cytosol reactions ###############################
@@ -117,9 +117,10 @@ class DhaBDhaTModel:
         #####################################################################################
         ######################### external volume equations #################################
         #####################################################################################
-        d[3] = x[-1] * self.cell_surface_area * PermCellGlycerol * (ratio*x[3 - n_compounds_cell] - x[3]) 
-        d[4] = x[-1] * self.cell_surface_area * PermCell3HPA * (ratio*x[4 - n_compounds_cell] - x[4]) 
-        d[5] = x[-1] * self.cell_surface_area * PermCellPDO * (ratio*x[5 - n_compounds_cell] - x[5])
+        d[3] = ncells * self.cell_surface_area * PermCellGlycerol * (ratio*x[3 - n_compounds_cell] - x[3])
+        d[4] = ncells * self.cell_surface_area * PermCell3HPA * (ratio*x[4 - n_compounds_cell] - x[4])
+        d[5] = ncells * self.cell_surface_area * PermCellPDO * (ratio*x[5 - n_compounds_cell] - x[5])
+
         return d
 
     def _set_symbolic_sderiv(self):
@@ -130,7 +131,6 @@ class DhaBDhaTModel:
         if x_sp is None:
             self._set_symbolic_state_vars()
         self.sderiv_symbolic = self._sderiv(0, self.x_sp, self.params_sens_sp_dict)
-
 
     def _set_symbolic_sderiv_conc_fun(self):
         """

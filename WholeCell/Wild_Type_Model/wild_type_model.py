@@ -89,12 +89,12 @@ class WildType:
         ################################## MCP reactions ##################################
         ###################################################################################
 
-        R_CDE =
-        R_Pf =
-        R_Pr =
-        R_Qf =
-        R_Qr =
-        R_Lf =
+        R_CDE = params["VmaxCDEf"]*x[0]/(x[0] + params["KmCDEPropanediol"])
+        R_Pf = params["VmaxPf"]*x[1]/(x[1] + params["KmPfPropionaldehyde"])
+        R_Pr = params["VmaxPr"]*x[3]/(x[3] + params["KmPrPropionyl"])
+        R_Qf = params["VmaxQf"]*x[1]/(x[1] + params["KmPfPropionaldehyde"])
+        R_Qr = params["VmaxQr"]*x[2]/(x[2] + params["KmPfPropanol"])
+        R_Lf = params["VmaxLf"]*x[8]/(x[8] + params["KmLPropionyl"])
 
         MCP_geo_fac = self.mcp_surface_area/self.mcp_volume
 

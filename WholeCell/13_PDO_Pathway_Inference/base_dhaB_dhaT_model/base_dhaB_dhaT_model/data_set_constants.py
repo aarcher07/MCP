@@ -32,3 +32,4 @@ for gly_cond in [50,60,70,80]:
 	rows_bool = time_series_df.loc[:,"Glycerol Init"] == gly_cond
 	TIME_SAMPLES[gly_cond] = time_series_df.loc[rows_bool,"Time"]
 	DATA_SAMPLES[gly_cond] = time_series_df[["Glycerol","PDO","DCW"]][rows_bool].to_numpy()
+

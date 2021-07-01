@@ -181,9 +181,9 @@ def main(argv, arc):
         bound_a,bound_b = PARAM_SENS_LOG10_BOUNDS[param_name]
         params_unif[param_name] = 2*(param_val - bound_a)/(bound_b - bound_a) - 1
     print(params_unif)
-    directory = '/home/aarcher/Dropbox/PycharmProjects/MCP/WholeCell/DhaB_DhaT_Model/object_oriented/data/1:3'
-    filename = 'log10/2021_05_04_19:41'
-    name_pkl = 'sampling_rsampling_N_10000'
+    directory = '/home/aarcher/Dropbox/PycharmProjects/MCP/WholeCell/DhaB_DhaT_Model/data/1:18'
+    filename = 'log10/2021_06_29_10:00'
+    name_pkl = 'sampling_rsampling_N_100000'
     with open(directory + '/'+ filename+'/' +name_pkl + '.pkl', 'rb') as f:
         pk_as = pickle.load(f)
                                 
@@ -193,8 +193,13 @@ def main(argv, arc):
     print(qoi_ob.generate_QoI_vals(params_unif))
 
     for func_name in QOI_NAMES:
-       eig_plots(qoi_ob.eigenvalues_QoI[func_name], qoi_ob.eigenvectors_QoI[func_name],params_sens_dict.keys(),
-                filename,'rsampling',func_name,enz_ratio_name,10000, threshold = 0, save=False)
+        cum_dist = np.cumsum(qoi_ob.eigenvalues_QoI[func_name]) / np.sum(qoi_ob.eigenvalues_QoI[func_name])
+        plt.step(range(13),cum_dist)
+        plt.show()
+        eig_max_ind = np.argmax( cum_dist > 0.9) + 1
+        print(eig_max_ind)
+        eig_plots(qoi_ob.eigenvalues_QoI[func_name], qoi_ob.eigenvectors_QoI[func_name],params_sens_dict.keys(),
+                    filename,'rsampling',func_name,enz_ratio_name,10000, threshold = 0, save=False)
 
 if __name__ == '__main__':
     main(sys.argv, len(sys.argv))

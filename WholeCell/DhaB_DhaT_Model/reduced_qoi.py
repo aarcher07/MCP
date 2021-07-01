@@ -1,4 +1,6 @@
 import matplotlib as mpl
+import numpy as np
+
 mpl.rcParams['text.usetex'] = True
 mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
 import scipy.optimize as opt
@@ -16,17 +18,17 @@ class ReducedQoI(QoI):
                 ncells_per_metrecubed =8e14, cellular_geometry = "rod", transform = "identity"):
         """
         :params cost_matrices: dictionary of cost matrices associated with Active Subspaces for each QoI
-        :params max_eig_inds: index of the eigenvalue partition
         :params n_inactive_samples:  number of samples to average over the z direction
 
         :params start_time: initial time of the system -- cannot be 0
         :params final_time: final time of the system 
         :params integration_tol: integration tolerance
         :params nintegration_samples: number of samples of time samples
-        :params nintegration_samples: number of samples of time samples
+        :params tolsolve: tolerance for break condition
         :params params_values_fixed: dictionary parameters whose senstivities are not being studied and 
                                      their values
         :params param_sens_name: bounds of parameters whose sensitivities are being studied
+        :params max_eig_inds: index of the eigenvalue partition
         :params external_volume: external volume of the system
         :params rc: radius of system
         :params lc: length of the cylindrical component of cellular_geometry = 'rod'
@@ -58,6 +60,9 @@ class ReducedQoI(QoI):
         self._generate_optimization_parameters()
 
     def _partition_eigenvectors(self):
+        """
+        Partitions eigenspace by the number of active directions for each QoI
+        """
         W1 = {}
         W2 = {}
         for func_name in QOI_NAMES:
@@ -69,6 +74,10 @@ class ReducedQoI(QoI):
 
 
     def _generate_optimization_parameters(self):
+        """
+        generates optimization vectors and matrices to find the inactive coordinate bounds
+        given an active coordinate
+        """
         # cost fun
         max_c = {}
         min_c = {}
@@ -105,18 +114,23 @@ class ReducedQoI(QoI):
         self.inactive_constraint_matrix = inactive_constraint_matrix
 
     def _generate_inactive_bounds(self,active_vals):
+        """
+        Generates the inactive bounds given the active coordinates, active_vals
+        @param active_vals: dictionary of active coordinates with each QoI
+        @return: dictionary of inactive coordinates bounds for each QoI
+        """
         inactive_bounds = {func_name: [np.inf,-np.inf] for func_name in QOI_NAMES}
 
-        for func_name in QOI_NAMES: 
+        for func_name in active_vals.keys():
 
             inactive_dim = self.inactive_param_dims[func_name]
 
             #generate active component of x
             W1 = self.W1[func_name]
-            active_in_param = np.dot(W1,active_vals[func_name])
+            active_in_param = np.dot(W1.T,active_vals[func_name])
 
             # upper and lower bound in actove constraint matrix
-            inactive_ub_constraint =  np.ones(self.param_dim)- active_in_param
+            inactive_ub_constraint = np.ones(self.param_dim) - active_in_param
             inactive_lb_constraint = np.ones(self.param_dim) + active_in_param
             for j in range(inactive_dim):
                 #set equality constraint
@@ -153,57 +167,167 @@ class ReducedQoI(QoI):
                 res_min = opt.linprog( self.min_c[func_name], A_ub=mat_ineq, b_ub=ub_ineq,
                                         A_eq=slack_constraint_matrix_eq, b_eq=slack_constraint_eq, 
                                         bounds=bounds_var)
-                # inactive lower bound 
+                # inactive lower bound
                 if res_min.status == 0:
                     if res_min.fun < inactive_bounds[func_name][0]:
                         inactive_bounds[func_name][0] = res_min.fun
         return inactive_bounds
 
-    def _inactive_sampler(self,active_vals):
-        
+    def _generate_chebyshev_center(active_vals, self):
+        """
+        Generates the Chebyshev center of inactive coordinate space given an active coordinate
+        for each QoI
+        @param active_vals: dictionary of active coordinates with each QoI
+        @return: dictionary of Chebyshev center for each QoI
+        """
+        #TODO: Check if this does what i would like it to do
+        chebyshev_centers = {}
+        for func_name in active_vals.keys():
+
+            inactive_dim = self.inactive_param_dims[func_name]
+
+            # cost function
+            c_chebyshev = np.zeros(inactive_dim + 1)
+            c_chebyshev[1] = -1
+
+            # create bounds for z space
+            inactive_constraint_matrix = self.inactive_constraint_matrix[func_name]
+            W1 = self.W1[func_name]
+            active_in_param = np.dot(W1.T,active_vals[func_name])
+
+            # upper and lower bound in active constraint matrix
+            inactive_ub_constraint = np.ones(self.param_dim) - active_in_param
+            inactive_lb_constraint = np.ones(self.param_dim) + active_in_param
+            inactive_ineqs_b = np.concatenate((inactive_ub_constraint, inactive_lb_constraint))
+
+            # generate chebyshev inequality matrix
+            row_norm_inactive_constraint_matrix = np.linalg.norm(inactive_constraint_matrix[:, 1:], axis=1)
+            row_norm_inactive_constraint_matrix = np.array([np.concatenate((row_norm_inactive_constraint_matrix,
+                                                                            row_norm_inactive_constraint_matrix))]).T
+            inactive_ineqs_mat = np.concatenate((inactive_constraint_matrix[:, 1:], -inactive_constraint_matrix[:, 1:]))
+            chebyshev_ineqs_mat = np.concatenate((inactive_ineqs_mat,row_norm_inactive_constraint_matrix),axis=1)
+
+            # bounds
+            bounds_var = [(None, None) for _ in range(inactive_dim + 1)]
+            res = opt.linprog(c_chebyshev, A_ub=chebyshev_ineqs_mat, b_ub=inactive_ineqs_b,bounds=bounds_var)
+            chebyshev_centers = res.x[:-1]
+        return chebyshev_centers
+
+    def _inactive_sampler_rejection(self,active_vals,method="rejection"):
+        """
+        Generates samples of the inactive coordinate samples given an active coordinate
+        @param active_vals: dictionary of active coordinates with each QoI
+        @return: dictionary of inactive coordinates samples for each QoI
+        """
         #generate bounds of hypercube that contains z|y
         inactive_given_active_bounds = self._generate_inactive_bounds(active_vals)
         inactive_samples_dict = {}
         
-        for func_name in QOI_NAMES:
+        for func_name in active_vals.keys():
             inactive_dim = self.inactive_param_dims[func_name]
             min_edge,max_edge = inactive_given_active_bounds[func_name]
             inactive_samples = []
             if not (max_edge == -np.inf) and  not (min_edge == np.inf):
                 # create bounds for z space
                 inactive_constraint_matrix = self.inactive_constraint_matrix[func_name]
-                active_in_param = np.dot(self.W1[func_name],active_vals[func_name])
+                active_in_param = np.dot(self.W1[func_name].T, active_vals[func_name])
                 # upper and lower bound in actove constraint matrix
-                inactive_ub_constraint =  np.ones(self.param_dim)- active_in_param
+                inactive_ub_constraint = np.ones(self.param_dim) - active_in_param
                 inactive_lb_constraint = np.ones(self.param_dim) + active_in_param
 
                 inactive_ineqs_mat = np.concatenate((inactive_constraint_matrix[:,1:], -inactive_constraint_matrix[:,1:]))
                 inactive_ineqs_b = np.concatenate((inactive_ub_constraint,inactive_lb_constraint))
-                        
+
                 while(len(inactive_samples) < self.n_inactive_samples):
                     inactive_pot_sample = (max_edge-min_edge)*np.random.uniform(size= inactive_dim) + min_edge
                     if (np.dot(inactive_ineqs_mat,inactive_pot_sample) - inactive_ineqs_b <= 0 ).all():
                         inactive_samples.append(inactive_pot_sample)
+            inactive_samples_dict[func_name] = inactive_samples
+
+        return inactive_samples_dict
+
+    def _inactive_sampler_hitandrun(self, active_vals):
+        """
+        Generates samples of the inactive coordinate samples given an active coordinate
+        @param active_vals: dictionary of active coordinates with each QoI
+        @return: dictionary of inactive coordinates samples for each QoI
+        """
+        # generate bounds of hypercube that contains z|y
+        inactive_given_active_bounds = self._generate_inactive_bounds(active_vals)
+        inactive_samples_dict = {}
+
+        for func_name in active_vals.keys():
+            inactive_dim = self.inactive_param_dims[func_name]
+
+            # create bounds for z space
+            inactive_constraint_matrix = self.inactive_constraint_matrix[func_name]
+            active_in_param = np.dot(self.W1[func_name].T, active_vals[func_name])
+            # upper and lower bound in actove constraint matrix
+            inactive_ub_constraint = np.ones(self.param_dim) - active_in_param
+            inactive_lb_constraint = np.ones(self.param_dim) + active_in_param
+
+            inactive_ineqs_mat = np.concatenate(
+                (inactive_constraint_matrix[:, 1:], -inactive_constraint_matrix[:, 1:]))
+            inactive_ineqs_b = np.concatenate((inactive_ub_constraint, inactive_lb_constraint))
+
+            #MCMC walk parameters
+            samples = []
+            maxsamps = 1e4
+
+            # TODO generate inactive current value
+            samples.append(inactive_curr)
+            # hit and run algorithm
+            while (len(samples) < maxsamps):
+
+                # generate direction
+                v = np.array([0, 0, 0])
+                while np.linalg.norm(v) < 0.001:
+                    v = np.random.normal(size=inactive_dim)
+                v = v / np.linalg.norm(v)
+
+                # find max chord distance check
+                #TODO: check it seems wrong
+                chord_max_param_curr = np.inf
+                for i in range(2 * inactive_dim):
+                    chord_max_param = (inactive_ineqs_b[i] - np.dot(inactive_ineqs_mat[:, i],
+                                                                    inactive_curr)) / np.dot(
+                        inactive_ineqs_mat[:, i], v)
+
+                    if chord_max_param < chord_max_param_curr:
+                        chord_max_param_curr = chord_max_param
+
+                #take step on chord
+                random_chord_dist_param = np.random.uniform() * (
+                            2 * chord_max_param_curr) - chord_max_param_curr
+                inactive_curr = inactive_curr + random_chord_dist_param * v
+                samples.append(inactive_curr)
+
+            #sample from list
+            inactive_samples = np.random.sample(samples, self.n_inactive_samples)
+
             # store inactive samples
             inactive_samples_dict[func_name] = inactive_samples
         return inactive_samples_dict
 
-
     def generate_reduced_QoI_vals(self,active_vals,gen_histogram=False):
-
+        """
+        Generates samples of the QoIs coordinate samples given an active coordinate
+        @param active_vals: dictionary of active coordinates with each QoI
+        @return: dictionary of  samples of each QoI
+        """
         inactive_samples_dict = self._inactive_sampler(active_vals)
         red_qoi_samples_dict = {}
         mean_dict = {}
         std_dict = {}
         skew_dict = {}
         mode_dict = {}
-        for func_name in QOI_NAMES:
+        for func_name in active_vals.keys():
             n_sucessful_solves = 0
             red_qoi_sample_vals = [] 
             inactive_samples = inactive_samples_dict[func_name]
             if len(inactive_samples) != 0:
                 for inactive_vals in inactive_samples:
-                    param_unif = np.dot(self.W1[func_name],active_vals[func_name]) + np.dot(self.W2[func_name],inactive_vals)
+                    param_unif = np.dot(self.W1[func_name].T,active_vals[func_name]) + np.dot(self.W2[func_name],inactive_vals)
                     param_dict = {param_name:param_val for param_name, param_val  in zip(self.params_sens_list,param_unif)}
                     sol_vals = self.generate_QoI_vals(param_dict)
                     if sol_vals[func_name]:
