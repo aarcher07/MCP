@@ -1,0 +1,1408 @@
+Index: .gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+># Byte-compiled / optimized / DLL files\n__pycache__/\n\n# C extensions\n*.so\n\n# Distribution / packaging\nbin/\nbuild/\ndevelop-eggs/\ndist/\neggs/\nlib/\nlib64/\nparts/\nsdist/\nvar/\n*.egg-info/\n.installed.cfg\n*.egg\n\n# Installer logs\npip-log.txt\npip-delete-this-directory.txt\n\n# Unit test / coverage reports\n.tox/\n.coverage\n.cache\nnosetests.xml\ncoverage.xml\n\n# Translations\n*.mo\n\n# Mr Developer\n.mr.developer.cfg\n.project\n.pydevproject\n\n# Rope\n.ropeproject\n\n# Django stuff:\n*.log\n*.pot\n\n# Sphinx documentation\ndocs/_build/\n\n/WholeCell/DhaB_DhaT_Model/object_oriented/data/\n/WholeCell/DhaB_DhaT_Model/object_oriented/plot/\n/WholeCell/13_PDO_Pathway_Inference/trash/emulator_MCMC_results_data/\n/WholeCell/13_PDO_Pathway_Inference/trash/emulator_MCMC_results_plots/\n/WholeCell/13_PDO_Pathway_Inference/trash/emulator_data/\n/WholeCell/13_PDO_Pathway_Inference/MCMC/output/MCMC_results_data/\n/WholeCell/13_PDO_Pathway_Inference/MCMC/output/MCMC_results_plots/\n/WholeCell/13_PDO_Pathway_Inference/ActiveLearning/output/active_learning_results/\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.gitignore b/.gitignore
+--- a/.gitignore	(revision 7db24911fcb5db64f45af41dab45f53268cdd955)
++++ b/.gitignore	(date 1625155075036)
+@@ -48,8 +48,8 @@
+ # Sphinx documentation
+ docs/_build/
+ 
+-/WholeCell/DhaB_DhaT_Model/object_oriented/data/
+-/WholeCell/DhaB_DhaT_Model/object_oriented/plot/
++/WholeCell/Trash/object_oriented/data/
++/WholeCell/Trash/object_oriented/plot/
+ /WholeCell/13_PDO_Pathway_Inference/trash/emulator_MCMC_results_data/
+ /WholeCell/13_PDO_Pathway_Inference/trash/emulator_MCMC_results_plots/
+ /WholeCell/13_PDO_Pathway_Inference/trash/emulator_data/
+Index: .idea/MCP.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<module type=\"PYTHON_MODULE\" version=\"4\">\n  <component name=\"NewModuleRootManager\">\n    <content url=\"file://$MODULE_DIR$\" />\n    <orderEntry type=\"jdk\" jdkName=\"Python 3.7 (MCP)\" jdkType=\"Python SDK\" />\n    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n  </component>\n  <component name=\"PyDocumentationSettings\">\n    <option name=\"format\" value=\"PLAIN\" />\n    <option name=\"myDocStringFormat\" value=\"Plain\" />\n  </component>\n</module>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/MCP.iml b/.idea/MCP.iml
+--- a/.idea/MCP.iml	(revision befa1688ad107af537b478cbc969abb9e815beef)
++++ b/.idea/MCP.iml	(date 1625155075028)
+@@ -2,11 +2,14 @@
+ <module type="PYTHON_MODULE" version="4">
+   <component name="NewModuleRootManager">
+     <content url="file://$MODULE_DIR$" />
+-    <orderEntry type="jdk" jdkName="Python 3.7 (MCP)" jdkType="Python SDK" />
++    <orderEntry type="inheritedJdk" />
+     <orderEntry type="sourceFolder" forTests="false" />
+   </component>
++  <component name="PackageRequirementsSettings">
++    <option name="requirementsPath" value="" />
++  </component>
+   <component name="PyDocumentationSettings">
+-    <option name="format" value="PLAIN" />
+-    <option name="myDocStringFormat" value="Plain" />
++    <option name="format" value="EPYTEXT" />
++    <option name="myDocStringFormat" value="Epytext" />
+   </component>
+ </module>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ProjectRootManager\" version=\"2\" project-jdk-name=\"Python 3.7 (MCP)\" project-jdk-type=\"Python SDK\" />\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision befa1688ad107af537b478cbc969abb9e815beef)
++++ b/.idea/misc.xml	(date 1623970863403)
+@@ -1,4 +1,4 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.7 (MCP)" project-jdk-type="Python SDK" />
++  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.8 (MCP)" project-jdk-type="Python SDK" />
+ </project>
+\ No newline at end of file
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"e7fff84e-f103-48f5-a2df-c60418a0856d\" name=\"Default Changelist\" comment=\"\" />\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n  </component>\n  <component name=\"ProjectId\" id=\"1t5H7mck88Okez9KPOVb5QJFbCY\" />\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\">\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\n    <property name=\"RunOnceActivity.ShowReadmeOnStart\" value=\"true\" />\n    <property name=\"last_opened_file_path\" value=\"$USER_HOME$\" />\n    <property name=\"settings.editor.selected.configurable\" value=\"com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable\" />\n  </component>\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\n      <changelist id=\"e7fff84e-f103-48f5-a2df-c60418a0856d\" name=\"Default Changelist\" comment=\"\" />\n      <created>1622051866216</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1622051866216</updated>\n    </task>\n    <servers />\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision befa1688ad107af537b478cbc969abb9e815beef)
++++ b/.idea/workspace.xml	(date 1625155075024)
+@@ -1,16 +1,79 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ChangeListManager">
+-    <list default="true" id="e7fff84e-f103-48f5-a2df-c60418a0856d" name="Default Changelist" comment="" />
++    <list default="true" id="5460faa4-7d79-4f0f-9254-b3b5b97a97db" name="Default Changelist" comment="">
++      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_Ratio_Simulations_Parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_Ratio_Simulations_Parallel.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/ReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Deprecated_SingleMCP_Model/ReadMe.md" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Active_Subspaces_Parallel.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Active_Subspaces_Parallel.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Model.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/active_subspaces.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces_dhaT_dhaB_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/active_subspaces_dhaT_dhaB_model.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/as_eigenvalue_plot.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/as_eigenvalue_plot.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/class_inheritance_tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/class_inheritance_tests.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/constants.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/constants.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_jac.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_jac.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_local_sens_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_local_sens_analysis.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/misc.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/misc.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/mpi4pitest.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/mpi4pitest.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/qoi_dhab_dhaT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/qoi_dhab_dhaT_model.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/reduced_qoi.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/reduced_qoi.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/step_3_as.py" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/Trash/step_3_as.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/object_oriented/subscript.sh" beforeDir="false" afterPath="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model/subscript.sh" afterDir="false" />
++    </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+     <option name="LAST_RESOLUTION" value="IGNORE" />
++  </component>
++  <component name="FileTemplateManagerImpl">
++    <option name="RECENT_TEMPLATES">
++      <list>
++        <option value="Python Script" />
++      </list>
++    </option>
+   </component>
+   <component name="Git.Settings">
+     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+   </component>
+-  <component name="ProjectId" id="1t5H7mck88Okez9KPOVb5QJFbCY" />
++  <component name="ProjectId" id="1t2PXrHaoMaETfaeObEBulu8DDY" />
++  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+   <component name="ProjectViewState">
+     <option name="hideEmptyMiddlePackages" value="true" />
+     <option name="showLibraryContents" value="true" />
+@@ -18,18 +81,42 @@
+   <component name="PropertiesComponent">
+     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+-    <property name="last_opened_file_path" value="$USER_HOME$" />
+-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
++    <property name="WebServerToolWindowFactoryState" value="false" />
++  </component>
++  <component name="RecentsManager">
++    <key name="MoveFile.RECENT_KEYS">
++      <recent name="$PROJECT_DIR$/WholeCell/Trash" />
++      <recent name="$PROJECT_DIR$/WholeCell/DhaB_DhaT_Model" />
++      <recent name="$PROJECT_DIR$/WholeCell/13_PDO_Pathway_Inference/ActiveLearning/output" />
++      <recent name="$PROJECT_DIR$/WholeCell/13_PDO_Pathway_Inference" />
++    </key>
+   </component>
+   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+   <component name="TaskManager">
+     <task active="true" id="Default" summary="Default task">
+-      <changelist id="e7fff84e-f103-48f5-a2df-c60418a0856d" name="Default Changelist" comment="" />
+-      <created>1622051866216</created>
++      <changelist id="5460faa4-7d79-4f0f-9254-b3b5b97a97db" name="Default Changelist" comment="" />
++      <created>1621964255922</created>
+       <option name="number" value="Default" />
+       <option name="presentableId" value="Default" />
+-      <updated>1622051866216</updated>
++      <updated>1621964255922</updated>
++      <workItem from="1621964265303" duration="7762000" />
++      <workItem from="1623963838477" duration="1125000" />
+     </task>
+     <servers />
+   </component>
++  <component name="TypeScriptGeneratedFilesManager">
++    <option name="version" value="3" />
++  </component>
++  <component name="Vcs.Log.Tabs.Properties">
++    <option name="TAB_STATES">
++      <map>
++        <entry key="MAIN">
++          <value>
++            <State />
++          </value>
++        </entry>
++      </map>
++    </option>
++    <option name="oldMeFiltersMigrated" value="true" />
++  </component>
+ </project>
+\ No newline at end of file
+Index: WholeCell/Wild_Type_Model/wild_type_model.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/WholeCell/Wild_Type_Model/wild_type_model.py b/WholeCell/Wild_Type_Model/wild_type_model.py
+new file mode 100644
+--- /dev/null	(date 1625155074996)
++++ b/WholeCell/Wild_Type_Model/wild_type_model.py	(date 1625155074996)
+@@ -0,0 +1,205 @@
++'''
++The wild-type model contains native reaction pathway
++in the MCP; diffusion in the cell; diffusion from the cell 
++in the external volume.
++
++This model is currently in use. The DhaB-DhaT model assumes that there 
++are M identical MCPs within the cytosol and N identical growing cells within the
++external volume. From time scale analysis, gradients in the cell are removed.
++
++Programme written by aarcher07
++Editing History: See github history
++'''
++
++
++import numpy as np
++from scipy.integrate import solve_ivp
++import scipy.constants as constants
++import sympy as sp
++import scipy.sparse as sparse
++import time
++import matplotlib.pyplot as plt
++from constants import HRS_TO_SECS
++
++class WildType:
++    def __init__(self,params, ncells_per_metrecubed, dncells_per_metrecubed, external_volume = 9e-6,
++                 mcp_volume, mcp_surface_area, cell_volume, cell_surface_area):
++        """
++        Initializes parameters to be used numerial scheme
++        :param params: None or dictionary of parameters with keys, PARAMETER_LIST in constants.py
++        :param ncells_per_metrecubed: number of cells per metrecubed at any given time during experiment
++        :param external_volume: external volume amount in metres^3
++        :param rc: Radius of cell in metres
++        :param lc: length of the cell in metres (needed if assuming cells are rods)
++        :param rm: Radius of MCP in metres
++        :param cellular geometry: "sphere" or "rod" (cylinders with hemispherical ends)
++        """
++        # geometric parameters
++        self.external_volume = external_volume
++        self.mcp_surface_area = mcp_surface_area
++        self.mcp_volume = mcp_volume
++        self.cell_volume = cell_volume
++        self.cell_surface_area = cell_surface_area
++        self.vratio = self.cell_surface_area/external_volume 
++
++        # differential equation parameters
++        self.nvars = 5*3
++        self.ncells = lambda t: ncells_per_metrecubed(t)*external_volume
++        self.dncells = lambda t: dncells_per_metrecubed(t)*external_volume
++        self.params = params
++
++        # set integration
++        self._set_symbolic_state_vars()
++        if params:
++            self._set_symbolic_sderiv_conc_fun()
++
++
++    def _sderiv(self,t,x,params=None):
++        """
++        Computes the spatial derivative of the system at time point, t
++        :param t: time
++        :param x: state variables
++        :param params: parameter list
++        """
++
++        if params is None:
++            if self.params is None:
++                print("Parameters have not been set.")
++                return
++            params = self.params
++
++        ###################################################################################
++        ################################# Initialization ##################################
++        ###################################################################################
++     
++
++        # Integration Parameters
++        assert len(x) == self.nvars
++        n_compounds_cell = 5
++        # differential equation parameters
++        ncells = self.ncells(t)
++        dncells = self.dncells(t)
++
++        fac_change_conc = 1 / (1 + dncells/ncells)
++
++        nmcps = params['nmcps']
++        d = np.zeros((len(x))).tolist()  # convert to list to allow use of symbolic derivatives
++
++        ###################################################################################
++        ################################## MCP reactions ##################################
++        ###################################################################################
++
++        R_CDE = params["VmaxCDEf"]*x[0]/(x[0] + params["KmCDEPropanediol"])
++        R_Pf = params["VmaxPf"]*x[1]/(x[1] + params["KmPfPropionaldehyde"])
++        R_Pr = params["VmaxPr"]*x[3]/(x[3] + params["KmPrPropionyl"])
++        R_Qf = params["VmaxQf"]*x[1]/(x[1] + params["KmPfPropionaldehyde"])
++        R_Qr = params["VmaxQr"]*x[2]/(x[2] + params["KmPfPropanol"])
++        R_Lf = params["VmaxLf"]*x[8]/(x[8] + params["KmLPropionyl"])
++
++        MCP_geo_fac = self.mcp_surface_area/self.mcp_volume
++
++        d[0] = -R_CDE + MCP_geo_fac*params['PermMCPPropanediol']*(x[0 + n_compounds_cell] - x[0])*fac_change_conc  # microcompartment equation for G
++        d[1] =  R_CDE -  R_Pf - R_Qf + R_Pr + R_Qr +MCP_geo_fac*params['PermMCPPropionaldehyde']*(x[1 + n_compounds_cell] - x[1])*fac_change_conc  # microcompartment equation for H
++        d[2] = R_Qf - R_Qr + MCP_geo_fac*params['PermMCPPropanol']*(x[2 + n_compounds_cell] - x[2])*fac_change_conc  # microcompartment equation for P
++        d[3] = R_Pf - R_Pr + MCP_geo_fac*params['PermMCPPropionyl']*(x[3 + n_compounds_cell] - x[3])*fac_change_conc  # microcompartment equation for P
++        d[4] = MCP_geo_fac*params['PermMCPPropionate']*(x[4 + n_compounds_cell] - x[4])*fac_change_conc  # microcompartment equation for P
++
++        ####################################################################################
++        ##################################### cytosol of cell ##############################
++        ####################################################################################
++
++        index = 4
++
++        for i in range(index, index + n_compounds_cell):
++            # cell equations for ith compound in the cell
++            if i % n_compounds_cell == 0:
++                Pm = params['PermMCPPropanediol']
++            elif i % n_compounds_cell == 1:
++                Pm = params['PermMCPPropionaldehyde']
++            elif i % n_compounds_cell == 2:
++                Pm = params['PermMCPlPropanol']
++            elif i % n_compounds_cell == 3:
++                Pm = params['PermMCPPropionyl']
++            else:
++                Pm = params['PermMCPPropionate']
++
++            if i % n_compounds_cell == 0:
++                Pc = params['PermCellPropanediol']
++            elif i % n_compounds_cell == 1:
++                Pc = params['PermCellPropionaldehyde']
++            elif i % n_compounds_cell == 2:
++                Pc = params['PermCellPropanol']
++            elif i % n_compounds_cell == 3:
++                Pc = params['PermCellPropionyl']
++            else:
++                Pc = params['PermCellPropionate']
++
++            d[i] = -Pc*(self.cell_surface_area/self.cell_volume) * (fac_change_conc*x[i] - x[i + n_compounds_cell]) - nmcps*Pm*(self.mcp_surface_area/self.cell_volume)*(x[i] - x[i- n_compounds_cell])*fac_change_conc
++            if i % n_compounds_cell == 4:
++                d[i] + = R_Lf
++
++        #####################################################################################
++        ######################### external volume equations #################################
++        #####################################################################################
++        for i in reversed(range(-1, -1-n_compounds_cell, -1)):
++            if i % n_compounds_cell == 0:
++                Pc = params['PermCellPropanediol']
++            elif i % n_compounds_cell == 1:
++                Pc = params['PermCellPropionaldehyde']
++            elif i % n_compounds_cell == 2:
++                Pc = params['PermCellPropanol']
++            elif i % n_compounds_cell == 3:
++                Pc = params['PermCellPropionyl']
++            else:
++                Pc = params['PermCellPropionate']
++
++            d[i] = self.vratio* Pc * ncells * (fac_change_conc*x[i - n_compounds_cell] - x[i])  # external equation for concentration
++        return d
++
++
++    def _reset_t_prev(self):
++        """
++        Resets t_prev to 0
++        """
++        self.t_prev = 0
++
++    def _set_symbolic_state_vars(self):
++        """
++        Generates the symbol state variables for the model
++        """
++        self.x_sp = np.array(sp.symbols('x:' + str(self.nvars)))
++
++
++    def _set_symbolic_sderiv(self):
++        """
++        Generates the symbol differential equation
++        """
++        x_sp = getattr(self, 'x_sp', None)
++        if x_sp is None:
++            self._set_symbolic_state_vars()
++        self.sderiv_symbolic = self._sderiv(0,self.x_sp)
++        
++
++    def _set_symbolic_sderiv_conc_sp(self):
++        """
++        Generates the symbol jacobian of the differential equation 
++        wrt state variables
++        """
++        sderiv_symbolic = getattr(self, 'sderiv_symbolic', None)
++        if sderiv_symbolic is None:
++            self._set_symbolic_sderiv()
++            sderiv_symbolic = self.sderiv_symbolic
++        self.sderiv_jac_conc_sp = sp.Matrix(sderiv_symbolic).jacobian(self.x_sp)
++        
++    def _set_symbolic_sderiv_conc_fun(self):
++        """
++        Generates the jacobian function of the differential equation 
++        wrt state variables
++        """
++
++        sderiv_jac_conc_sp = getattr(self, 'sderiv_jac_sp', None)
++        if sderiv_jac_conc_sp is None:
++            self._set_symbolic_sderiv_conc_sp()
++            sderiv_jac_conc_sp = self.sderiv_jac_conc_sp
++        sderiv_jac_conc_lam = sp.lambdify(self.x_sp, sderiv_jac_conc_sp, 'numpy')
++        self.sderiv_jac_conc_fun = lambda t,x: sparse.csr_matrix(sderiv_jac_conc_lam(*x))
+\ No newline at end of file
+Index: WholeCell/Wild_Type_Model/constants.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/WholeCell/Wild_Type_Model/constants.py b/WholeCell/Wild_Type_Model/constants.py
+new file mode 100644
+--- /dev/null	(date 1625155074992)
++++ b/WholeCell/Wild_Type_Model/constants.py	(date 1625155074992)
+@@ -0,0 +1,28 @@
++"""
++Constants parameters 
++
++Programme written by aarcher07
++Editing History:
++- 1/3/21
++"""
++
++import numpy as np
++
++HRS_TO_SECS = 60*60
++
++MODEL_PARAMETER_LIST = ['PermMCPPropanediol','PermMCPPropionaldehyde','PermMCPPropanol','PermMCPPropionyl','PermMCPPropionate',
++                        'nmcps',
++                        'PermCellPropanediol', 'PermCellPropionaldehyde', 'PermCellPropanol', 'PermCellPropionyl','PermCellPropionate'
++                        'VmaxCDEf', 'KmCDEPropanediol',
++                        'VmaxPf', 'KmPfPropionaldehyde',
++                        'VmaxPr', 'KmPrPropionyl',
++                        'VmaxQf', 'KmPfPropionaldehyde',
++                        'VmaxQr', 'KmPfPropanol',
++                        'VmaxLf', 'KmLPropionyl']
++
++
++
++VARIABLE_INIT_NAMES = ['PROPANEDIOL_MCP_INIT', 'PROPIONALDEHYDE_MCP_INIT', 'PROPANOL_MCP_INIT', 'PROPIONYL_MCP_INIT', 'PROPANOL_MCP_INIT',
++                       'PROPANEDIOL_CYTO_INIT', 'PROPIONALDEHYDE_CYTO_INIT', 'PROPANOL_CYTO_INIT', 'PROPIONYL_CYTO_INIT', 'PROPANOL_CYTO_INIT',
++                       'PROPANEDIOL_EXT_INIT', 'PROPIONALDEHYDE_EXT_INIT', 'PROPANOL_EXT_INIT', 'PROPIONYL_EXT_INIT', 'PROPANOL_EXT_INIT']
++
+Index: WholeCell/DhaB_DhaT_Model/active_sampler_qoi.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/WholeCell/DhaB_DhaT_Model/active_sampler_qoi.py b/WholeCell/DhaB_DhaT_Model/active_sampler_qoi.py
+new file mode 100644
+--- /dev/null	(date 1625155074912)
++++ b/WholeCell/DhaB_DhaT_Model/active_sampler_qoi.py	(date 1625155074912)
+@@ -0,0 +1,52 @@
++from reduced_qoi import ReducedQoI
++import pickle
++from constants import PARAM_SENS_LOG10_BOUNDS, HRS_TO_SECS
++
++directory = '/home/aarcher/Dropbox/PycharmProjects/MCP/WholeCell/DhaB_DhaT_Model/data/1:18/'
++filename = 'log10/2021_06_29_10:00/'
++data_name_pkl = 'sampling_rsampling_N_100000'
++active_samples_pkl = 'active_coords_maximin_sampling_rsampling_N_1000'
++
++with open(directory + filename + data_name_pkl + '.pkl', 'rb') as f:
++    data_pkl_as = pickle.load(f)
++
++with open(directory + filename + active_samples_pkl + '.pkl', 'rb') as f:
++    active_samples_as = pickle.load(f)
++
++cost_matrices = data_pkl_as["FUNCTION_RESULTS"]["FINAL_COST_MATRIX"]
++eig_max, active_coordinates = active_samples_as
++
++n_inactive_samples = 1e1
++transform = 'log10'
++
++start_time = (10 ** (-15))
++final_time = 72 * HRS_TO_SECS
++integration_tol = 1e-4
++tolsolve = 1e-5
++nintegration_samples = 500
++enz_ratio_name = "1:18"
++enz_ratio_name_split = enz_ratio_name.split(":")
++enz_ratio = float(enz_ratio_name_split[0]) / float(enz_ratio_name_split[1])
++
++params_values_fixed = {'NAD_MCP_INIT': 0.1,
++                       'enz_ratio': enz_ratio,
++                       'G_MCP_INIT': 0,
++                       'H_MCP_INIT': 0,
++                       'P_MCP_INIT': 0,
++                       'G_CYTO_INIT': 0,
++                       'H_CYTO_INIT': 0,
++                       'P_CYTO_INIT': 0,
++                       'G_EXT_INIT': 200,
++                       'H_EXT_INIT': 0,
++                       'P_EXT_INIT': 0}
++
++red_qoi = ReducedQoI(cost_matrices, n_inactive_samples,
++                     start_time, final_time, integration_tol, nintegration_samples, tolsolve,
++                     params_values_fixed, list(PARAM_SENS_LOG10_BOUNDS.keys()),
++                     transform="log10")
++
++for QoI_keys in active_coordinates.keys():
++    for val in active_coordinates[QoI_keys]:
++        active_params = {QoI_keys: val}
++        print(active_params)
++        print(red_qoi.generate_reduced_QoI_vals(active_params, gen_histogram=True))
+Index: WholeCell/DhaB_DhaT_Model/doe_lhs.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/WholeCell/DhaB_DhaT_Model/doe_lhs.py b/WholeCell/DhaB_DhaT_Model/doe_lhs.py
+new file mode 100644
+--- /dev/null	(date 1625155074956)
++++ b/WholeCell/DhaB_DhaT_Model/doe_lhs.py	(date 1625155074956)
+@@ -0,0 +1,389 @@
++"""
++This code was originally published by the following individuals for use with
++Scilab:
++    Copyright (C) 2012 - 2013 - Michael Baudin
++    Copyright (C) 2012 - Maria Christopoulou
++    Copyright (C) 2010 - 2011 - INRIA - Michael Baudin
++    Copyright (C) 2009 - Yann Collette
++    Copyright (C) 2009 - CEA - Jean-Marc Martinez
++
++    website: forge.scilab.org/index.php/p/scidoe/sourcetree/master/macros
++Much thanks goes to these individuals. It has been converted to Python by
++Abraham Lee.
++
++Edits made by Andre Archer. The edits were taken from maximinLHS Robert Carnell in R
++
++"""
++
++import numpy as np
++import matplotlib.pyplot as plt
++from misc import load_obj
++from constants import QOI_NAMES
++from mpl_toolkits.mplot3d import Axes3D
++
++__all__ = ['lhs']
++
++
++def lhs(n, nsamples, **kwargs):
++    """
++    Generate a latin-hypercube design
++
++    @param n : int
++        The number of factors to generate nsamples for
++    @param nsamples:
++        the number of samples
++    @param criterion : str
++        Allowable values are "center" or "c", "maximin" or "m",
++        "centermaximin" or "cm", and "correlation" or "corr". If no value
++        given, the design is simply randomized.
++    @param niters: int
++        number of iterations until FLAG check
++        (Default: 10^2)
++    @param bounds: n x 2 numpy array
++        end points for each factor
++        (Default: [0,1]^n)
++    @param weight_matrix : n x k numpy array
++        Weighs the factors appropriately in the maximin optimization
++        (Default: identity matrix)
++    @param t0: float
++        initial temperature
++        (Default: 0.9).
++    @param FAC: float
++        multiplicative factor to reduce temperature
++        (Default: 5).
++    @param plot: bool
++        boolean to generate plots
++        (Default: False).
++    @param maxtotaliters : int
++        Maximum number of iterations
++        (Default: 10^4).
++    @return H : 2d-array
++        An n-by-nsamples design matrix that has been normalized so factor values
++        are uniformly spaced between zero and one.
++    """
++    H = None
++
++    if 'criterion' in kwargs.keys():
++        criterion = kwargs['criterion']
++    else:
++        criterion = None
++
++    if 'niters' in kwargs.keys():
++        niters = kwargs['niters']
++    else:
++        niters = 1e2
++
++    if 'bounds' in kwargs.keys():
++        bounds = kwargs['bounds']
++    else:
++        bounds = np.zeros((n,2))
++        bounds[:,1]= 1.
++
++    if 'weight_matrix' in kwargs.keys():
++        weight_matrix = kwargs['weight_matrix']
++    else:
++        weight_matrix = np.eye(n)
++
++    if criterion.lower() in ('maximin', 'm','centermaximin', 'cm'):
++        if 't0' in kwargs.keys():
++            t0 = kwargs['t0']
++        else:
++            t0 = 0.9
++
++        if 'FAC' in kwargs.keys():
++            FAC = kwargs['FAC']
++        else:
++            FAC = 0.95
++
++        if 'plot' in kwargs.keys():
++            plot = kwargs['plot']
++        else:
++            plot = False
++
++        if 'maxtotaliters' in kwargs.keys():
++            maxtotaliters = kwargs['maxtotaliters']
++        else:
++            maxtotaliters = 1e4
++
++    if criterion is not None:
++        assert criterion.lower() in ('center', 'c', 'maximin', 'm',
++                                     'centermaximin', 'cm'), 'Invalid value for "criterion": {}'.format(criterion)
++
++        if criterion.lower() in ('center', 'c'):
++            H = _lhscentered(n, nsamples, bounds)
++        elif criterion.lower() in ('maximin', 'm'):
++            H = _lhsmaximin(n, nsamples, bounds, niters, weight_matrix, 'maximin',t0, FAC, maxtotaliters,plot)
++        elif criterion.lower() in ('centermaximin', 'cm'):
++            H = _lhsmaximin(n, nsamples, bounds, niters, weight_matrix, 'centermaximin',t0, FAC, maxtotaliters,plot)
++    else:
++        H = _lhsclassic(n, nsamples, bounds)
++
++    if plot:
++        if H.shape[1] == 2:
++            plt.scatter(H[:, 0], H[:, 1])
++            plt.title("Plot of the two dimensional input space")
++            plt.xlabel("x1")
++            plt.ylabel("x2")
++            plt.show()
++        elif H.shape[1] == 3:
++            fig = plt.figure()
++            ax = Axes3D(fig)
++            ax.scatter(H[:, 0], H[:, 1], H[:, 2])
++            plt.title("Plot of the three dimensional input space")
++            ax.set_xlabel("x1")
++            ax.set_ylabel("x2")
++            ax.set_zlabel("x3")
++            plt.show()
++
++        y = np.matmul(weight_matrix.T, H.T).T
++        if y.shape[1] == 1:
++            plt.scatter(y[:, 0], [0] * y.shape[0])
++            plt.title("Plot of the coordinate points in the one dimensional active subspace")
++            plt.xlabel("y1")
++            plt.show()
++        elif y.shape[1] == 2:
++            plt.scatter(y[:, 0], y[:, 1])
++            plt.title("Plot of the coordinate points in the two dimensional active subspace")
++            plt.xlabel("y1")
++            plt.ylabel("y2")
++            plt.show()
++        elif y.shape[1] == 3:
++            fig = plt.figure()
++            ax = Axes3D(fig)
++            ax.scatter(y[:, 0], y[:, 1], y[:, 2])
++            plt.title("Plot of the coordinate points in the three dimensional active subspace")
++            ax.set_xlabel("y1")
++            ax.set_ylabel("y2")
++            ax.set_zlabel("y3")
++            plt.show()
++    return H
++
++
++################################################################################
++
++def _lhsclassic(n, nsamples, bounds):
++    """
++    Generates Latin hypercube nsamples of R^n points
++    @param n: int
++        dimensions of points
++    @param nsamples: int
++        number of points
++    @param bounds: n x 2 numpy array
++        bounds of region
++    @return H: nsamples x n matrix of points
++    """
++    # Fill points uniformly in each interval
++    u = np.random.rand(nsamples, n)
++    rdpoints = np.zeros_like(u)
++    for j in range(n):
++        # Generate the intervals
++        cut = np.linspace(bounds[j,0], bounds[j,1], nsamples + 1)
++        a = cut[:nsamples]
++        b = cut[1:nsamples + 1]
++        rdpoints[:, j] = u[:, j] * (b - a) + a
++
++    # Make the random pairings
++    H = np.zeros_like(rdpoints)
++    for j in range(n):
++        order = np.random.permutation(range(nsamples))
++        H[:, j] = rdpoints[order, j]
++    return H
++
++
++################################################################################
++
++def _lhscentered(n, nsamples, bounds):
++    """
++    Generates Latin hypercube nsamples of R^n points without random noise
++    @param n: int
++        dimensions of points
++    @param nsamples: int
++        number of points
++    @param bounds: n x 2 numpy array
++        bounds of region
++    @return H: nsamples x n matrix of points
++    """
++    # Fill points uniformly in each interval
++    u = np.random.rand(nsamples, n)
++    # Make the random pairings
++    H = np.zeros_like(u)
++    for j in range(n):
++        # Generate the intervals
++        cut = np.linspace(bounds[j,0], bounds[j,1], nsamples + 1)
++        a = cut[:nsamples]
++        b = cut[1:nsamples + 1]
++        _center = (a + b) / 2
++        H[:, j] = np.random.permutation(_center)
++    return H
++
++
++################################################################################
++
++def _lhsmaximin(n, nsamples, bounds, niters, weight_matrix, lhstype='maximin',
++                t0=0.05,FAC=0.95,maxiters = 1e5, plot=False):
++    """
++    Generates Latin hypercube nsamples of R^n points without random noise
++    @param n: int
++        dimensions of the points
++    @param nsamples: int
++        number of points
++    @param bounds: n x 2 numpy array
++        end points for each factor
++    @param niters: int
++        number of iterations until FLAG check
++    @param weight_matrix:
++        Weighs the factors appropriately in the maximin optimization
++    @param lhstype: str
++        'maximin' or 'centermaximin'
++    @param t0: float
++        initial temperature
++        (Default: 0.9).
++    @param FAC: float
++        multiplicative factor to reduce temperature
++        (Default: 5).
++    @param plot: bool
++        boolean to generate plots
++        (Default: 5).
++    @param maxtotaliters: int
++        Maximum number of iterations
++        (Default: 5).
++    @return:
++    """
++    #initial sample
++    if lhstype == 'maximin':
++        Hcandidate = _lhsclassic(n, nsamples, bounds)
++    else:
++        Hcandidate = _lhscentered(n, nsamples, bounds)
++
++    min_dist = np.min(_pdist(Hcandidate,weight_matrix))
++    curr_dist = min_dist
++
++    # Maximize the minimum distance between points using point exchange
++    Hbest = Hcandidate
++    min_dist_array = []
++    trans_dist_array = []
++
++    t = t0
++    FLAG = 0
++    iter = 0
++    totaliters = 0
++    while( iter < niters):
++        # random sample
++        j = np.random.randint(0,n)
++        i,m = np.random.choice(range(nsamples),size=2,replace=False)
++
++        # swap
++        temp_m_j = Hcandidate[m, j]
++        temp_i_j = Hcandidate[i, j]
++        Hcandidate[i,j] = temp_m_j
++        Hcandidate[m,j] = temp_i_j
++
++        #calculate new min distance
++        temp_min_dist = np.min(_pdist(Hcandidate,weight_matrix))
++        # calculate acceptance probability
++        u = min(np.exp(-(curr_dist-temp_min_dist)/t),1)
++
++        # acceptance or rejection update
++        if u > np.random.uniform(size=1)[0]:
++            FLAG = 1
++            t = t * FAC
++            curr_dist = temp_min_dist
++        else:
++            Hcandidate[i, j] = temp_i_j
++            Hcandidate[m, j] = temp_m_j
++
++        if min_dist < temp_min_dist:
++            Hbest = Hcandidate
++            min_dist = temp_min_dist
++            iter = 1
++        else:
++            iter += 1
++
++        # check FLAG and number of iterations
++        # temp update -- possibly successful but stagnated walk
++        if iter == niters and FLAG:
++            t = t*FAC
++            iter = 1
++            FLAG = 0
++
++        trans_dist_array.append(curr_dist)
++        min_dist_array.append(min_dist)
++        totaliters +=1
++        if maxiters < totaliters:
++            break
++
++
++    if plot:
++        plt.plot(min_dist_array)
++        plt.title("Maximum minimum distance during random walk")
++        plt.ylabel("Minimum distance between points")
++        plt.xlabel("Step index")
++        plt.show()
++    return Hbest
++
++
++################################################################################
++
++def _pdist(x,weight_matrix):
++    """
++    Calculate the pair-wise point distances of a matrix
++    @param x: 2d-array
++        An m-by-n array of scalars, where there are m points in n dimensions.
++    @param weight_matrix : 2d-array
++        An n-by-k matrix
++    @return d: array
++        A 1-by-b array of scalars, where b = m*(m - 1)/2. This array contains
++        all the pair-wise point distances, arranged in the order (1, 0),
++        (2, 0), ..., (m-1, 0), (2, 1), ..., (m-1, 1), ..., (m-1, m-2).
++    """
++
++    x = np.atleast_2d(x)
++    assert len(x.shape) == 2, 'Input array must be 2d-dimensional'
++
++    y = np.matmul(weight_matrix.T,x.T).T
++    m, n = y.shape
++
++    if m < 2:
++        return []
++
++    d = []
++    for i in range(m - 1):
++        for j in range(i + 1, m):
++            d.append((sum((y[j, :] - y[i, :]) ** 2)) ** 0.5)
++
++    return np.array(d)
++
++if __name__ == '__main__':
++    lhs(2,100,criterion='maximin', niters=int(1e2), FAC=0.9, plot=True,maxtotaliters=1e4)
++    lhs(3,100,criterion='maximin', iterations=int(1e2), FAC=0.9, plot=True)
++
++
++    lhs(2,20,criterion='maximin', iterations=int(5e2),weight_matrix=np.array([[0.7,0.3]]).T, plot=True)
++
++    lhs(3,100,criterion='maximin', iterations=int(5e2),
++        weight_matrix=np.array([[0.7,0.3,0.1],[0.1,0.0,-0.7]]).T, plot=True)
++
++    # try with the active subspace matrix
++    pickle_data = load_obj("data/1:3/log10/2021_05_07_10:55/sampling_rsampling_N_1000")
++
++    # glycerol after 5 hrs
++    cost_mat = pickle_data['FUNCTION_RESULTS']['FINAL_COST_MATRIX'][QOI_NAMES[1]]
++    eigs, eigvals = np.linalg.eigh(cost_mat)
++    eigenvalues_QoI = np.flip(eigs)
++    eigenvectors_QoI = np.flip(eigvals, axis=1)
++    print(100*np.cumsum(eigenvalues_QoI)/np.sum(eigenvalues_QoI))
++    W1 = eigenvectors_QoI[:, :2]
++
++    lhs(W1.shape[0], 100, bounds = np.array([[-1,1] for i in range(W1.shape[0])]), criterion='maximin',
++        niters=int(1e2),weight_matrix=W1, plot=True)
++
++    # maximum 3-HPA
++    cost_mat = pickle_data['FUNCTION_RESULTS']['FINAL_COST_MATRIX'][QOI_NAMES[0]]
++    eigs, eigvals = np.linalg.eigh(cost_mat)
++    eigenvalues_QoI = np.flip(eigs)
++    eigenvectors_QoI = np.flip(eigvals, axis=1)
++    print(100*np.cumsum(eigenvalues_QoI)/np.sum(eigenvalues_QoI))
++    W1 = eigenvectors_QoI[:, :3]
++
++    lhs(W1.shape[0],100,bounds = np.array([[-1,1] for i in range(W1.shape[0])]),criterion='maximin',
++        niters=int(1e2),weight_matrix=W1, plot=True)
+\ No newline at end of file
+Index: WholeCell/DhaB_DhaT_Model/doe_maximin.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/WholeCell/DhaB_DhaT_Model/doe_maximin.py b/WholeCell/DhaB_DhaT_Model/doe_maximin.py
+new file mode 100644
+--- /dev/null	(date 1625155074960)
++++ b/WholeCell/DhaB_DhaT_Model/doe_maximin.py	(date 1625155074960)
+@@ -0,0 +1,317 @@
++"""
++This code was originally published by the following individuals for use with
++Scilab:
++    Copyright (C) 2012 - 2013 - Michael Baudin
++    Copyright (C) 2012 - Maria Christopoulou
++    Copyright (C) 2010 - 2011 - INRIA - Michael Baudin
++    Copyright (C) 2009 - Yann Collette
++    Copyright (C) 2009 - CEA - Jean-Marc Martinez
++
++    website: forge.scilab.org/index.php/p/scidoe/sourcetree/master/macros
++Much thanks goes to these individuals. It has been converted to Python by
++Abraham Lee.
++
++Edits made by Andre Archer. The edits were taken from maximinLHS Robert Carnell in R
++
++"""
++
++import numpy as np
++import matplotlib.pyplot as plt
++from misc import load_obj,save_obj
++from constants import QOI_NAMES
++from mpl_toolkits.mplot3d import Axes3D
++
++__all__ = ['maximin']
++
++def maximin(n, nsamples, **kwargs):
++    """
++    Generate a latin-hypercube design
++
++    @param n : int
++        The number of factors to generate nsamples for
++    @param nsamples:
++        the number of samples
++    @param criterion : str
++        Allowable values are "center" or "c", "maximin" or "m",
++        "centermaximin" or "cm", and "correlation" or "corr". If no value
++        given, the design is simply randomized.
++    @param niters: int
++        number of iterations until FLAG check
++        (Default: 10^2)
++    @param bounds: n x 2 numpy array
++        end points for each factor
++        (Default: [0,1]^n)
++    @param weight_matrix : n x k numpy array
++        Weighs the factors appropriately in the maximin optimization
++        (Default: identity matrix)
++    @param t0: float
++        initial temperature
++        (Default: 0.9).
++    @param FAC: float
++        multiplicative factor to reduce temperature
++        (Default: 5).
++    @param plot: bool
++        boolean to generate plots
++        (Default: False).
++    @param maxtotaliters : int
++        Maximum number of iterations
++        (Default: 10^4).
++    @return H : 2d-array
++        An n-by-nsamples design matrix that has been normalized so factor values
++        are uniformly spaced between zero and one.
++    """
++    H = None
++
++    if 'niters' in kwargs.keys():
++        niters = kwargs['niters']
++    else:
++        niters = 1e2
++
++    if 'bounds' in kwargs.keys():
++        bounds = kwargs['bounds']
++    else:
++        bounds = np.zeros((n,2))
++        bounds[:,1]= 1.
++
++    if 'weight_matrix' in kwargs.keys():
++        weight_matrix = kwargs['weight_matrix']
++    else:
++        weight_matrix = np.eye(n)
++
++    if 't0' in kwargs.keys():
++        t0 = kwargs['t0']
++    else:
++        t0 = 0.9
++
++    if 'FAC' in kwargs.keys():
++        FAC = kwargs['FAC']
++    else:
++        FAC = 0.95
++
++    if 'plot' in kwargs.keys():
++        plot = kwargs['plot']
++    else:
++        plot = False
++
++    if 'maxtotaliters' in kwargs.keys():
++        maxtotaliters = kwargs['maxtotaliters']
++    else:
++        maxtotaliters = 1e4
++
++
++    H = _maximin(n, nsamples, bounds, niters, weight_matrix, t0, FAC, maxtotaliters, plot)
++
++    if plot:
++        if H.shape[1] == 2:
++            plt.scatter(H[:, 0], H[:, 1])
++            plt.title("Plot of the two dimensional input space")
++            plt.xlabel("x1")
++            plt.ylabel("x2")
++            plt.show()
++        elif H.shape[1] == 3:
++            fig = plt.figure()
++            ax = Axes3D(fig)
++            ax.scatter(H[:, 0], H[:, 1], H[:, 2])
++            plt.title("Plot of the three dimensional input space")
++            ax.set_xlabel("x1")
++            ax.set_ylabel("x2")
++            ax.set_zlabel("x3")
++            plt.show()
++
++        y = np.matmul(weight_matrix.T, H.T).T
++        if y.shape[1] == 1:
++            plt.scatter(y[:, 0], [0] * y.shape[0])
++            plt.title("Plot of the coordinate points in the one dimensional active subspace")
++            plt.xlabel("y1")
++            plt.show()
++        elif y.shape[1] == 2:
++            plt.scatter(y[:, 0], y[:, 1])
++            plt.title("Plot of the coordinate points in the two dimensional active subspace")
++            plt.xlabel("y1")
++            plt.ylabel("y2")
++            plt.show()
++        elif y.shape[1] == 3:
++            fig = plt.figure()
++            ax = Axes3D(fig)
++            ax.scatter(y[:, 0], y[:, 1], y[:, 2])
++            plt.title("Plot of the coordinate points in the three dimensional active subspace")
++            ax.set_xlabel("y1")
++            ax.set_ylabel("y2")
++            ax.set_zlabel("y3")
++            plt.show()
++    return H
++################################################################################
++
++def _unifsamp(n, bounds, samples):
++    # Fill points uniformly in each interval
++    u = np.random.rand(samples, n)
++    for i in range(samples):
++        # Generate the intervals
++        u[i,:] = u[i,:]*(bounds[:,1]- bounds[:,0]) + bounds[:,0]
++
++    return u
++
++################################################################################
++
++def _maximin(n, nsamples, bounds, niters, weight_matrix,t0,FAC,maxtotaliters,plot):
++    #initial sample
++    Hcandidate = _unifsamp(n, bounds, nsamples)
++    min_dist = np.min(_pdist(Hcandidate,weight_matrix))
++    curr_dist = min_dist
++
++    # Maximize the minimum distance between points using point exchange
++    Hbest = Hcandidate
++    min_dist_array = []
++    trans_dist_array = []
++
++    t = t0
++    FLAG = 0
++    iter = 0
++    totaliters = 0
++    while( iter < niters):
++        # random sample
++        pointsamp = _unifsamp(n, bounds, 1)
++        i= np.random.choice(range(nsamples),size=1)
++
++        # swap
++        point_i = Hcandidate[i,:]
++        Hcandidate[i,:] = pointsamp[0,:]
++
++        #calculate new min distance
++        temp_min_dist = np.min(_pdist(Hcandidate,weight_matrix))
++        # calculate acceptance probability
++        u = min(np.exp(-(curr_dist-temp_min_dist)/t),1)
++        # acceptance or rejection update
++        if u > np.random.uniform(size=1)[0]:
++            FLAG = 1
++            trans_dist_array.append(temp_min_dist)
++            t = t * FAC
++            curr_dist = temp_min_dist
++        else:
++            Hcandidate[i, :] = point_i
++
++        if min_dist < temp_min_dist:
++            Hbest = Hcandidate
++            min_dist = temp_min_dist
++            iter = 1
++        else:
++            iter += 1
++
++        # check FLAG and number of iterations
++        # temp update -- possibly successful but stagnated walk
++        if iter == niters and FLAG:
++            t = t*FAC
++            iter = 1
++            FLAG = 0
++
++        min_dist_array.append(min_dist)
++        totaliters += 1
++
++        if maxtotaliters < totaliters:
++            break
++
++
++    if plot:
++        plt.plot(min_dist_array)
++        plt.title("Maximum minimum distance during random walk")
++        plt.ylabel("Minimum distance between points")
++        plt.xlabel("Step index")
++        plt.show()
++    return Hbest
++
++################################################################################
++
++def _pdist(x,weight_matrix):
++    """
++    Calculate the pair-wise point distances of a matrix
++
++    Parameters
++    ----------
++    x : 2d-array
++        An m-by-n array of scalars, where there are m points in n dimensions.
++    weight_matrix : 2d-array
++        An n-by-k matrix
++    Returns
++    -------
++    d : array
++        A 1-by-b array of scalars, where b = m*(m - 1)/2. This array contains
++        all the pair-wise point distances, arranged in the order (1, 0),
++        (2, 0), ..., (m-1, 0), (2, 1), ..., (m-1, 1), ..., (m-1, m-2).
++
++    Examples
++    --------
++    ::
++
++        >>> x = np.array([[0.1629447, 0.8616334],
++        ...               [0.5811584, 0.3826752],
++        ...               [0.2270954, 0.4442068],
++        ...               [0.7670017, 0.7264718],
++        ...               [0.8253975, 0.1937736]])
++        >>> _pdist(x)
++        array([ 0.6358488,  0.4223272,  0.6189940,  0.9406808,  0.3593699,
++                0.3908118,  0.3087661,  0.6092392,  0.6486001,  0.5358894])
++
++    """
++
++    x = np.atleast_2d(x)
++    assert len(x.shape) == 2, 'Input array must be 2d-dimensional'
++
++    y = np.matmul(weight_matrix.T,x.T).T
++    m, n = y.shape
++
++    if m < 2:
++        return []
++
++    d = []
++    for i in range(m - 1):
++        for j in range(i + 1, m):
++            d.append((sum((y[j, :] - y[i, :]) ** 2)) ** 0.5)
++
++    return np.array(d)
++
++if __name__ == '__main__':
++    # maximin(2,100, niters=int(1e2), FAC=0.9, plot=True,maxtotaliters=1e4)
++    # maximin(3,100, iterations=int(1e2), FAC=0.9, plot=True)
++    #
++    #
++    # maximin(2,20, iterations=int(5e2),weight_matrix=np.array([[0.7,0.3]]).T, plot=True)
++    #
++    # maximin(3,100, iterations=int(5e2),weight_matrix=np.array([[0.7,0.3,0.1],[0.1,0.0,-0.7]]).T,
++    #     plot=True)
++
++    # try with the active subspace matrix
++    folder_name = "data/1:18/log10/2021_06_29_10:00"
++    pickle_data = load_obj(folder_name + "/sampling_rsampling_N_100000")
++
++    active_coordinates = {
++        QOI_NAMES[0]:[],
++        QOI_NAMES[1]:[],
++        QOI_NAMES[2]:[]
++    }
++    eig_max = {
++        QOI_NAMES[0]:None,
++        QOI_NAMES[1]:None,
++        QOI_NAMES[2]:None
++    }
++    for i in range(3):
++        cost_mat = pickle_data['FUNCTION_RESULTS']['FINAL_COST_MATRIX'][QOI_NAMES[i]]
++        eigs, eigvals = np.linalg.eigh(cost_mat)
++        eigenvalues_QoI = np.flip(eigs)
++        eigenvectors_QoI = np.flip(eigvals, axis=1)
++        eig_max_ind = np.argmax(np.cumsum(eigenvalues_QoI)/np.sum(eigenvalues_QoI) > 0.9) +1
++        print(eig_max_ind)
++        eig_max[QOI_NAMES[i]] = eig_max_ind
++        W1 = eigenvectors_QoI[:, :eig_max_ind]
++        if eig_max_ind == 1:
++            nsamples = 30
++        elif eig_max_ind == 2:
++            nsamples = 100
++        elif eig_max_ind == 3:
++            nsamples = 200
++        else:
++            nsamples = 400
++        y = maximin(W1.shape[0], nsamples, bounds = np.array([[-1,1] for i in range(W1.shape[0])]),niters=int(1e2),
++            weight_matrix=W1, plot=True,maxtotaliters=1e6)
++        active_coordinates[QOI_NAMES[i]] = y
++    print(active_coordinates)
++    save_obj([eig_max,active_coordinates], folder_name + "/active_coords_maximin_sampling_rsampling_N_1000")
+\ No newline at end of file
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_100/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_100/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_100/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_200/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_LocalSensitivity_Analysis.py
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_200/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_200/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_steady_state_param.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces_Parallel.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Active_Subspaces.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model.py b/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model.py
+rename to WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_space_solution_parameter_set.py
+diff --git a/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py b/WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py
+rename from WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py
+rename to WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP_Nondimensionalized.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_comparing_grid.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/mpi4pitest.py b/WholeCell/Trash/mpi4pitest.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/mpi4pitest.py
+rename to WholeCell/Trash/mpi4pitest.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Wild_Type.ipynb
+diff --git a/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py b/WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py
+rename from WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py
+rename to WholeCell/Trash/Deprecated_SingleMCP_Model/DhaB_DhaT_Model_SingleMCP.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/reduced_qoi.py b/WholeCell/DhaB_DhaT_Model/reduced_qoi.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/reduced_qoi.py
+rename to WholeCell/DhaB_DhaT_Model/reduced_qoi.py
+diff --git a/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py b/WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py
+rename from WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py
+rename to WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_SingleMCP.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/step_3_as.py b/WholeCell/Trash/step_3_as.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/step_3_as.py
+rename to WholeCell/Trash/step_3_as.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/plot_specific_parameter_set.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces.py b/WholeCell/DhaB_DhaT_Model/active_subspaces.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces.py
+rename to WholeCell/DhaB_DhaT_Model/active_subspaces.py
+diff --git a/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py b/WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py
+rename from WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py
+rename to WholeCell/Trash/Deprecated_SingleMCP_Model/Ratio_Simulations_WellMixed_Parallelized.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.ipynb
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Deprecated_Whole_Cell_Engineered_System_LocalSensitivity_Analysis.py
+diff --git a/WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/ReadMe.md b/WholeCell/Trash/Deprecated_SingleMCP_Model/ReadMe.md
+rename from WholeCell/DhaB_DhaT_Model/Deprecated_SingleMCP_Model/ReadMe.md
+rename to WholeCell/Trash/Deprecated_SingleMCP_Model/ReadMe.md
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE_Parallelized.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/ReadMe.md
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/subscript.sh b/WholeCell/DhaB_DhaT_Model/subscript.sh
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/subscript.sh
+rename to WholeCell/DhaB_DhaT_Model/subscript.sh
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/script_plot_doe.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/qoi_dhab_dhaT_model.py b/WholeCell/DhaB_DhaT_Model/qoi_dhab_dhaT_model.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/qoi_dhab_dhaT_model.py
+rename to WholeCell/DhaB_DhaT_Model/qoi_dhab_dhaT_model.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/Whole_Cell_Engineered_System_IcdE.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/constants.py b/WholeCell/DhaB_DhaT_Model/constants.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/constants.py
+rename to WholeCell/DhaB_DhaT_Model/constants.py
+diff --git a/WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py b/WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py
+rename from WholeCell/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py
+rename to WholeCell/Trash/Deprecated_DhaB_DhaT_IcdE_Model/steady_state_analysis.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_jac.py b/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_jac.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_jac.py
+rename to WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_jac.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/as_eigenvalue_plot.py b/WholeCell/Trash/as_eigenvalue_plot.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/as_eigenvalue_plot.py
+rename to WholeCell/Trash/as_eigenvalue_plot.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_local_sens_analysis.py b/WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_local_sens_analysis.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/dhaB_dhaT_model_local_sens_analysis.py
+rename to WholeCell/DhaB_DhaT_Model/dhaB_dhaT_model_local_sens_analysis.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/misc.py b/WholeCell/DhaB_DhaT_Model/misc.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/misc.py
+rename to WholeCell/DhaB_DhaT_Model/misc.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/class_inheritance_tests.py b/WholeCell/Trash/class_inheritance_tests.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/class_inheritance_tests.py
+rename to WholeCell/Trash/class_inheritance_tests.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces_dhaT_dhaB_model.py b/WholeCell/DhaB_DhaT_Model/active_subspaces_dhaT_dhaB_model.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/active_subspaces_dhaT_dhaB_model.py
+rename to WholeCell/DhaB_DhaT_Model/active_subspaces_dhaT_dhaB_model.py
+diff --git a/WholeCell/DhaB_DhaT_Model/object_oriented/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py b/WholeCell/Trash/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py
+rename from WholeCell/DhaB_DhaT_Model/object_oriented/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py
+rename to WholeCell/Trash/Trash/dhaB_dhaT_model_local_sens_analysis_plots.py
+diff --git a/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Active_Subspaces_Parallel.py b/WholeCell/Trash/DhaB_DhaT_Active_Subspaces_Parallel.py
+rename from WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Active_Subspaces_Parallel.py
+rename to WholeCell/Trash/DhaB_DhaT_Active_Subspaces_Parallel.py
+diff --git a/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model.py b/WholeCell/Trash/DhaB_DhaT_Model.py
+rename from WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model.py
+rename to WholeCell/Trash/DhaB_DhaT_Model.py
+diff --git a/WholeCell/DhaB_DhaT_Model/Deprecated_Ratio_Simulations_Parallel.py b/WholeCell/Trash/Deprecated_Ratio_Simulations_Parallel.py
+rename from WholeCell/DhaB_DhaT_Model/Deprecated_Ratio_Simulations_Parallel.py
+rename to WholeCell/Trash/Deprecated_Ratio_Simulations_Parallel.py
+diff --git a/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py b/WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py
+rename from WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py
+rename to WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis_Plots.py
+diff --git a/WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis.py b/WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis.py
+rename from WholeCell/DhaB_DhaT_Model/DhaB_DhaT_Model_LocalSensAnalysis.py
+rename to WholeCell/Trash/DhaB_DhaT_Model_LocalSensAnalysis.py
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_1/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_1/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_1/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_4/cost_mat/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_4/eigenvalues/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+diff --git a/WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt b/WholeCell/Trash/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename from WholeCell/DhaB_DhaT_Model/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
+rename to WholeCell/Trash/km_kc/maxN_4/eigenvectors/km_1.00e-07_1.00e-04_kc_1.00e-07_1.00e-04.txt
