@@ -133,7 +133,7 @@ class WildType:
         d[7] = - params['PermCellPropanol'] * self.cell_surf_cell_vol_ratio * (x[7] - x[7 + n_compounds_cell]) \
                - nmcps*params['PermMCPPropanol'] * self.MCP_surf_cell_vol_ratio * (x[7] - x[7- n_compounds_cell])
         
-        d[8] = - params['PermCellPropionyl'] * self.cell_surf_cell_vol_ratio * (x[8] - x[8 + n_compounds_cell]) \
+        d[8] = -R_Lf - params['PermCellPropionyl'] * self.cell_surf_cell_vol_ratio * (x[8] - x[8 + n_compounds_cell]) \
                - nmcps*params['PermMCPPropionyl'] * self.MCP_surf_cell_vol_ratio * (x[8] - x[8- n_compounds_cell])
         
         d[9] = R_Lf - params['PermCellPropionate'] * self.cell_surf_cell_vol_ratio * (x[9] - x[9 + n_compounds_cell]) -\

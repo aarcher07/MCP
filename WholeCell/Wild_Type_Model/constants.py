@@ -9,7 +9,7 @@ Editing History:
 import numpy as np
 
 HRS_TO_SECS = 60*60
-OD_TO_COUNT_CONC = 3.2e9
+OD_TO_COUNT_CONC = 1e9
 
 MODEL_PARAMETER_LIST = ['PermMCPPropanediol','PermMCPPropionaldehyde','PermMCPPropanol','PermMCPPropionyl','PermMCPPropionate',
                         'nmcps',

@@ -27,6 +27,8 @@ plt.plot(t, spl(t))
 plt.title('log(OD) fit to cubic spline transformed')
 plt.legend(['data', 'spline'], loc='upper right')
 plt.show()
+
+
 # create model
 
 # MCP geometry
@@ -41,9 +43,10 @@ cell_surface_area = 2*np.pi*cell_radius*cell_length
 cell_volume = 4*np.pi/3*(cell_radius)**3 + np.pi*(cell_length - 2*cell_radius)*(cell_radius**2)
 
 # external volume geometry
-external_volume = 0.002
+external_volume = 5e-5
 wild_type_model = WildType(spl, Time.iloc[-1], mcp_surface_area, mcp_volume,
                            cell_surface_area, cell_volume, external_volume)
+
 PermMCPPolar =10 ** -2
 PermMCPNonPolar = 5 * 10 ** -3
 
@@ -69,7 +72,7 @@ params = {'PermMCPPropanediol': PermMCPPolar,
             'KmQfPropionaldehyde':  0.5,
             'VmaxQr': (3e2)*(1e2),
             'KmQrPropanol':  0.5,
-            'VmaxLf': 0,
+            'VmaxLf': (1e2),
             'KmLPropionyl': 0.5}
 
 # initialize initial conditions
